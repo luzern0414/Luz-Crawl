@@ -1,0 +1,15 @@
+# Local runtime data: crawl memory, search history, browser profiles and downloads never enter the repository
+/opencli/memory/
+
+# Dependencies and caches
+**/node_modules/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Secrets, archives, logs
+.env
+.env.*
+*.zip
+*.log
+.DS_Store

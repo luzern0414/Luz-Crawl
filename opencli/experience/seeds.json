@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "type": "portable_route_hints_not_live_acceptance",
+  "verified_content_checked_at": "2026-10-24",
+  "verified_content_platforms": ["xhs","x","zhihu","douban","reddit","douyin","youtube","bilibili","wechat","weibo","instagram","tiktok","github","gitee","csdn","cnblogs","juejin","stackoverflow","devto","hackernews","v2ex","google","bing","ccgp","ggzy","chinabidding","qianlima","bidcenter","made-in-china"],
+  "routes": [
+    {"platform": "web", "when": "an old record says login_required or unavailable for a public docs page (login/error segment inside the path, or a password-input demo)", "action": "Those were false positives of pre-2026-10-28 gate rules; recapture the URL directly instead of asking the user to log in. See references/validation.md."},
+    {"platform": "douyin", "when": "single video share link (v.douyin.com or /video/ID) and the user wants the file", "action": "Anonymous playback works: run capture URL --download --profile <connected context_id> once. A dismissible login dialog over a rendered video element is not a login gate (also bilibili/tiktok/youtube); do not run headless-login or ask the user to log in. Output raw/media/video-*.mp4 is muxed (audio+video)."},
+    {"platform": "x", "when": "status contains only a short link", "action": "Open the DOM-discovered article or short link in the same browser; match the target status ID; do not archive the link shell as full article."},
+    {"platform": "xhs", "when": "search adapter reports ambiguous_option", "action": "Use this plugin's browser search URL and open signed note links; this error does not prove logout."},
+    {"platform": "wechat", "when": "search returns Sogou index candidates", "action": "Open the redirect and confirm mp.weixin.qq.com #js_content before counting a source as read."},
+    {"platform": "web", "when": "browser extension is disconnected", "action": "Inspect doctor extension disabled/connected state; do not switch to a non-browser scraper and call it browser capture."}
+  ]
+}
