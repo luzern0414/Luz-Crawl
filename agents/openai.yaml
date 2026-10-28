@@ -4,6 +4,6 @@ interface:
   icon_small: "./assets/icon-400.png"
   icon_large: "./assets/logo.png"
   brand_color: "#8FB396"
-  default_prompt: "使用 $luz-crawl 扫描浏览器插件连接，直接打开相关网页，抓取正文并保存可校验的来源证据。"
+  default_prompt: "使用 $luz-crawl 扫描浏览器插件连接，先静默读取网页，读不到再用可见浏览器补读，仍需登录时保留页面请用户登录后续接，抓取正文并保存可校验的来源证据。"
 policy:
   allow_implicit_invocation: true

@@ -1,6 +1,6 @@
 # 浏览器操作 API · 1.0.0
 
-LuzCrawl 2.7.0。供 Agent、脚本和其他模型使用；每次调用返回 JSON。所有动作先校验，再在后台打开本任务页面。单页正文不完整时会在已保存的浏览器配置中前台重试一次；前台结果仍不完整时保留页面和续接任务，并标记 partial；限流、冷却、预算耗尽和取消不会触发回退。batch 使用后台停放模式，不自动转前台。
+LuzCrawl 2.7.0。供 Agent、脚本和其他模型使用；每次调用返回 JSON。所有动作先校验，再在后台打开本任务页面。默认先静默读取；单页正文不完整时在已连接的可见 Edge 前台重试一次（没有已连接的浏览器就自动打开 Edge）；前台结果仍不完整时保留页面和续接任务，状态为 awaiting_user，请用户登录或处理后 continue；限流、冷却、预算耗尽和取消不会触发回退。batch 使用后台停放模式，不自动转前台。
 
 ```powershell
 node scripts/luz-crawl.mjs schema
@@ -55,26 +55,28 @@ actions.json：
 从同一个任务目录执行，Skill 与原生插件接口一致：
 
 ```powershell
-node scripts/luz-crawl.mjs batch --file jobs.json --concurrency 3 --out TASK_FOLDER --profile PROFILE_ID
-opencli luz-crawl batch --file jobs.json --concurrency 3 --out TASK_FOLDER --profile PROFILE_ID
+node scripts/luz-crawl.mjs batch --file jobs.json --out TASK_FOLDER
+opencli luz-crawl batch --file jobs.json --concurrency 4 --out TASK_FOLDER
 ```
 
-jobs.json 可为 URL 数组，或带步骤的任务数组：
+jobs.json 可为 URL 数组、带步骤的任务数组，或搜索任务（`platform` 用平台 ID，`read` 为要打开的详情数，0–20）：
 
 ```json
 [
   {"id":"site-a","url":"https://example.com/","steps":[{"action":"read"},{"action":"extract"}]},
-  {"id":"site-b","url":"https://example.org/"}
+  {"id":"site-b","url":"https://example.org/"},
+  {"id":"q1","platform":"github","query":"crawler retry backoff","read":1},
+  {"id":"q2","platform":"csdn","query":"爬虫 超时 重试"}
 ]
 ```
 
-也支持含 URL 的文本文件。全部1–500项先校验，通过后才开页；未知字段、非法 URL、无授权的写动作整批拒绝。步骤同 browser 的1–20步限制，包含 click / type / form / submit 时加 --allow-write。依赖搜索结果的详情另生成下一批，不猜详情 URL。
+也支持含 URL 的文本文件，每行先按单页采集的规则自动纠错。全部1–500项先校验，通过后才开页；未知字段、非法 URL、无授权的写动作整批拒绝。步骤同 browser 的1–20步限制，包含 click / type / form / submit 时加 --allow-write。依赖搜索结果的详情另生成下一批，不猜详情 URL。
 
-默认3、允许1–4个站点同时执行；已登记平台按平台ID共用队列，未知站按完整hostname排队，因此不同子域可能是不同队列。限制只对本次batch有效；Agent 不同时启动额外批次放大同站负载。每项独立浏览器任务，共用已确定的out，使用已有profile时复用其登录。每站内顺序执行，每次完成原子写入 batch_file；记录保持输入顺序，含 id、started_at、finished_at、status、stop_reason、browser及原有页面结果。程序中断后只把已落盘条目视为已记录，不自动重放未知结果的写操作。
+默认4、允许1–6条队列同时执行；已登记平台按平台ID共用队列，未知站按完整hostname排队，搜索任务按平台排队，因此不同子域可能是不同队列。限制只对本次batch有效；Agent 不同时启动额外批次放大同站负载。每项独立浏览器任务，共用已确定的out，使用已有profile时复用其登录。每站内顺序执行，每次完成原子写入 batch_file；记录保持输入顺序，含 id、started_at、finished_at、status、stop_reason、browser及原有页面结果。程序中断后只把已落盘条目视为已记录，不自动重放未知结果的写操作。
 
 批量 status=completed 表示每项为 captured/completed，其他情况 partial；这不等于所有查询、详情和统计均已验收。单页动作值在 `.results[].results[].value`，提取为 action=extract 的value；动作 completed 只代表派发与显式expect完成。应另验结果区域、实际相关卡片、详情正文、统计口径与字段。首页、页脚、样例、0条结果均按实际内容记录。
 
-登录/验证会保存task_id、关闭并park页面；限流保留冷却；只跳过对应队列的后续项（skipped / site_blocked），其他站继续。若任务标签关闭未确认，也暂停该队列。批量不会自动显示或前台重试。用pending查看，再continue TASK_ID重新打开供人工操作；续接不会自动重跑本批跳过的项，应观察当前状态后另作计划。
+登录/验证会保存task_id、关闭并park页面；限流保留冷却；只跳过对应队列的后续项（skipped / site_blocked），其他站继续。若任务标签关闭未确认，也暂停该队列。批量过程中不前台显示；整批结束后，命令行入口会对没拿到正文的网址和没有候选的搜索逐条补采一次，这一步沿用单页的读取顺序（必要时转可见浏览器），结果记在 `second_pass`。用pending查看，再continue TASK_ID重新打开供人工操作；续接不会自动重跑本批跳过的项，应观察当前状态后另作计划。
 
 ## 返回与续接
 
@@ -110,7 +112,14 @@ node scripts/luz-crawl.mjs policy --file policy.json
 }
 ```
 
-默认每任务最多 120 次操作、5 分钟派发预算；小红书 / 抖音 / TikTok 导航至少间隔 6 秒，X / 知乎至少 5 秒，1688 等至少 8 秒。间隔增加最多 15% 的抖动；条件等待逐步退避。每站滑动窗口限制导航与媒体请求，429 至少冷却 10 分钟；连续网络故障触发短期暂停。
+默认每任务最多 120 次操作、5 分钟派发预算；小红书 / 抖音 / TikTok 导航至少间隔 6 秒，X / 知乎至少 5 秒，1688 等至少 8 秒。间隔增加最多 15% 的抖动；条件等待逐步退避。每站按 10 分钟窗口分别限制页面打开与资源请求（图片、字体、媒体下载），额度自适应，不是固定值：
+
+- 起点：页面打开取 `max_requests_per_window`（默认 40，平台可单独设置），资源取其 4 倍；上限为起点的 4 倍，下限为起点的 1/4。
+- 增长：窗口内无失败时，额度用完可临时追加一次 50%；上个窗口用到 80% 以上且无失败，下个窗口额度提高 50%。
+- 收缩：429 / 平台限流时两种额度都减半并冷却（至少 10 分钟）；网络故障时对应额度降 20%，连续故障触发短期暂停。
+- 资源额度用完只让剩余图片 / 字体保留原地址，不阻塞页面打开。
+
+当前额度记录在 `opencli/memory/execution/` 的 `adaptive_limit` / `asset_adaptive_limit` 字段中。
 
 冷却按平台与浏览器配置写入 opencli/memory/execution/，跨 CLI 调用共享，不随发布包分发。站内公开备用入口只用于定位同一内容，不能用于规避冷却。节流不能保证平台不限制账号；页面内部请求数及单次浏览器命令耗时不等于本接口操作数。
 

@@ -23,11 +23,11 @@ node scripts/luz-crawl.mjs headless-login
 node scripts/luz-crawl.mjs search x "关键词" --headless --read 1
 ```
 
-采集、搜索、批量、collect、download、continue 和浏览器动作优先使用 `--profile ID` 或已保存的 browser_profile；后台任务在现有窗口创建非激活标签，关闭时保留用户其他标签。未选配置时静默启动上述 Edge；`--headless` 显式使用独立配置。一个 batch/collect 命令内复用同一浏览器。首次静默启动按当前 Edge 取得桌面 User-Agent 并缓存；可执行文件更新后重新取得。继承 HTTPS_PROXY / HTTP_PROXY / ALL_PROXY 中的代理，不输出凭据。
+采集、搜索、批量、collect、download、continue 和浏览器动作默认先静默启动上述 Edge 的独立配置；读不到正文时再到已连接的可见 Edge（已保存的 browser_profile，没有就自动打开 Edge）补读一次，仍不行就保留页面请用户登录，顺序见 SKILL.md“读取顺序”。显式 `--profile ID` 直接使用该可见配置，在现有窗口创建非激活标签，关闭时保留用户其他标签。并发会话各占一个静默配置槽（`browser-profile-edge`、`-2`…`-4`），槽满时排队最多 90 秒。一个 batch/collect 命令内复用同一浏览器。首次静默启动按当前 Edge 取得桌面 User-Agent 并缓存；可执行文件更新后重新取得。继承 HTTPS_PROXY / HTTP_PROXY / ALL_PROXY 中的代理，不输出凭据。
 
 需要本地 Playwright 和上述已安装的 Edge；可使用 Codex 随附运行时，或用 `LUZ_PLAYWRIGHT_MODULE` 指向现有 Playwright 入口。保留此 Skill 的 browser-extension/。不自动安装、不上传浏览器配置。
 
-已有登录的 Edge 可用 `--profile ID` 连接；经用户明确要求后用 `remember --profile ID` 保存选择。登录信息属于用户配置，同一 exe 配不同资料不代表复用登录。独立静默资料位于 `opencli/memory/browser-profile-edge/`，不复制、不提交、不打包，也不与用户 Default 混用。无法公开读取时，已连接配置会选中任务页并恢复窗口供手动登录；独立静默配置使用 `headless-login TASK_ID`，用户完成并关闭后再 `continue TASK_ID`。配置被占用时先结束对应任务，不删除活动锁。更新后重载扩展；静默启动也会主动重载，避免运行旧缓存脚本。
+已有登录的 Edge 可用 `--profile ID` 连接；经用户明确要求后用 `remember --profile ID` 保存选择。登录信息属于用户配置，同一 exe 配不同资料不代表复用登录。独立静默资料位于 `opencli/memory/browser-profile-edge/`，不复制、不提交、不打包，也不与用户 Default 混用。无法公开读取时，已连接配置会选中任务页并恢复窗口供手动登录；独立静默配置使用 `headless-login TASK_ID`，用户完成并关闭后再 `continue TASK_ID`。配置槽都被占用且排队超时时改用可见浏览器，不删除活动锁。设 `LUZ_NO_BROWSER_LAUNCH=1` 可禁止自动打开 Edge。更新后重载扩展；静默启动也会主动重载，避免运行旧缓存脚本。
 
 默认即为上述 Edge。只有显式选择 Playwright 自带 Chromium 时才设置：
 

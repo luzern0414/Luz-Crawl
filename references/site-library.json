@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-25",
+  "updated_at": "2026-10-28T07:00:00.000Z",
   "description": "可扩展公开网站入口库。probe 仅记录历史派发状态；completed 不代表数据已验收。verification 分别表示单次样本的页面、搜索、详情、统计和媒体验收，默认 untested。入口可失效，执行前仍须观察原站并补充新站。",
   "verification_states": [
     "verified",
@@ -5175,6 +5175,352 @@
         "statistics": "untested",
         "media": "untested"
       }
+    },
+    {
+      "id": "antd",
+      "name": "Ant Design",
+      "url": "https://ant.design/docs/spec/introduce-cn",
+      "kind": "design_system",
+      "queries": [
+        "表格",
+        "字体",
+        "数据格式",
+        "布局"
+      ],
+      "probe": {
+        "status": "completed",
+        "observations": 1,
+        "observed_at": "2026-10-28T07:00:00.000Z",
+        "last_action_status": "captured",
+        "last_stop_reason": "stable_after_2_scrolls",
+        "last_text_chars": 46928
+      },
+      "verification": {
+        "page": "verified",
+        "search": "untested",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "notes": [
+        "规范页 docs/spec/font-cn、layout-cn、data-format-cn 与组件页 components/table-cn 实测可读；后台字号 14/22、金额右对齐单位放表头。"
+      ]
+    },
+    {
+      "id": "procomponents",
+      "name": "Ant Design ProComponents",
+      "url": "https://procomponents.ant.design/components/table",
+      "kind": "design_system",
+      "queries": [
+        "ProTable",
+        "查询筛选"
+      ],
+      "probe": {
+        "status": "completed",
+        "observations": 1,
+        "observed_at": "2026-10-28T07:00:00.000Z",
+        "last_action_status": "captured",
+        "last_stop_reason": "stable_after_2_scrolls",
+        "last_text_chars": 13461
+      },
+      "verification": {
+        "page": "verified",
+        "search": "untested",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "notes": [
+        "ProTable 页实测可读：查询筛选、列设置、空值显示。"
+      ]
+    },
+    {
+      "id": "tdesign",
+      "name": "TDesign（腾讯）",
+      "url": "https://tdesign.tencent.com/",
+      "kind": "design_system",
+      "queries": [
+        "字体",
+        "表格"
+      ],
+      "probe": {
+        "status": "completed",
+        "observations": 1,
+        "observed_at": "2026-10-28T07:00:00.000Z",
+        "last_action_status": "captured",
+        "last_stop_reason": "stable_after_2_scrolls",
+        "last_text_chars": 12660
+      },
+      "verification": {
+        "page": "verified",
+        "search": "untested",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "notes": [
+        "design/fonts 与 vue-next/components/table 实测可读：桌面正文 14、最小 12、表格数字等宽。"
+      ]
+    },
+    {
+      "id": "arco",
+      "name": "Arco Design（字节）",
+      "url": "https://arco.design/react/components/table",
+      "kind": "design_system",
+      "queries": [
+        "表格",
+        "表单"
+      ],
+      "probe": {
+        "status": "completed",
+        "observations": 1,
+        "observed_at": "2026-10-28T07:00:00.000Z",
+        "last_action_status": "captured",
+        "last_stop_reason": "stable_after_2_scrolls",
+        "last_text_chars": 80459
+      },
+      "verification": {
+        "page": "verified",
+        "search": "untested",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "notes": [
+        "组件页实测可读，正文较长。"
+      ]
+    },
+    {
+      "id": "semi",
+      "name": "Semi Design（抖音）",
+      "url": "https://semi.design/zh-CN/show/table",
+      "kind": "design_system",
+      "queries": [
+        "表格"
+      ],
+      "probe": {
+        "status": "completed",
+        "observations": 1,
+        "observed_at": "2026-10-28T07:00:00.000Z",
+        "last_action_status": "captured",
+        "last_stop_reason": "stable_after_2_scrolls",
+        "last_text_chars": 78349
+      },
+      "verification": {
+        "page": "partial",
+        "search": "untested",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "notes": [
+        "组件页内容很长，滚动预算内为 partial，正文已取得。"
+      ]
+    },
+    {
+      "id": "element-plus",
+      "name": "Element Plus",
+      "url": "https://element-plus.org/zh-CN/component/table.html",
+      "kind": "design_system",
+      "queries": [
+        "表格",
+        "筛选"
+      ],
+      "probe": {
+        "status": "completed",
+        "observations": 1,
+        "observed_at": "2026-10-28T07:00:00.000Z",
+        "last_action_status": "captured",
+        "last_stop_reason": "stable_after_2_scrolls",
+        "last_text_chars": 21666
+      },
+      "verification": {
+        "page": "verified",
+        "search": "untested",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "notes": [
+        "组件页实测可读。"
+      ]
+    },
+    {
+      "id": "carbon",
+      "name": "Carbon（IBM）",
+      "url": "https://carbondesignsystem.com/components/data-table/usage/",
+      "kind": "design_system",
+      "queries": [
+        "data table",
+        "density"
+      ],
+      "probe": {
+        "status": "completed",
+        "observations": 1,
+        "observed_at": "2026-10-28T07:00:00.000Z",
+        "last_action_status": "captured",
+        "last_stop_reason": "stable_after_2_scrolls",
+        "last_text_chars": 15021
+      },
+      "verification": {
+        "page": "verified",
+        "search": "untested",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "notes": [
+        "Data table usage 实测可读：五档行高、表头与行同高、工具栏匹配行高。"
+      ]
+    },
+    {
+      "id": "polaris",
+      "name": "Shopify Polaris",
+      "url": "https://polaris.shopify.com/components/tables/index-table",
+      "kind": "design_system",
+      "queries": [
+        "index table"
+      ],
+      "probe": {
+        "status": "completed",
+        "observations": 1,
+        "observed_at": "2026-10-28T07:00:00.000Z",
+        "last_action_status": "captured",
+        "last_stop_reason": "stable_after_2_scrolls",
+        "last_text_chars": 1957
+      },
+      "verification": {
+        "page": "verified",
+        "search": "untested",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "notes": [
+        "组件页正文较短。"
+      ]
+    },
+    {
+      "id": "atlassian-design",
+      "name": "Atlassian Design",
+      "url": "https://atlassian.design/components/dynamic-table/usage",
+      "kind": "design_system",
+      "queries": [
+        "dynamic table"
+      ],
+      "probe": {
+        "status": "completed",
+        "observations": 1,
+        "observed_at": "2026-10-28T07:00:00.000Z",
+        "last_action_status": "captured",
+        "last_stop_reason": "stable_after_2_scrolls",
+        "last_text_chars": 3620
+      },
+      "verification": {
+        "page": "partial",
+        "search": "untested",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "notes": [
+        "Usage 页在滚动预算内为 partial。"
+      ]
+    },
+    {
+      "id": "nngroup",
+      "name": "Nielsen Norman Group",
+      "url": "https://www.nngroup.com/articles/",
+      "kind": "design_system",
+      "queries": [
+        "data tables",
+        "dashboards",
+        "filters"
+      ],
+      "probe": {
+        "status": "completed",
+        "observations": 1,
+        "observed_at": "2026-10-28T07:00:00.000Z",
+        "last_action_status": "captured",
+        "last_stop_reason": "stable_after_2_scrolls",
+        "last_text_chars": 15587
+      },
+      "verification": {
+        "page": "verified",
+        "search": "untested",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "notes": [
+        "文章页实测可读：数据表格四类任务、驾驶舱、筛选与分面。"
+      ]
+    },
+    {
+      "id": "vant",
+      "name": "Vant",
+      "url": "https://vant-ui.github.io/vant/#/zh-CN",
+      "kind": "design_system",
+      "queries": [
+        "移动组件"
+      ],
+      "probe": {
+        "status": "untested"
+      },
+      "verification": {
+        "page": "untested",
+        "search": "untested",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "notes": [
+        "移动端与小程序组件参考，尚未实测。"
+      ]
+    },
+    {
+      "id": "nutui",
+      "name": "NutUI（京东）",
+      "url": "https://nutui.jd.com/",
+      "kind": "design_system",
+      "queries": [
+        "小程序组件"
+      ],
+      "probe": {
+        "status": "untested"
+      },
+      "verification": {
+        "page": "untested",
+        "search": "untested",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "notes": [
+        "京东移动端与小程序组件参考，尚未实测。"
+      ]
+    },
+    {
+      "id": "wechat-design",
+      "name": "微信小程序设计指南",
+      "url": "https://developers.weixin.qq.com/miniprogram/design/",
+      "kind": "design_system",
+      "queries": [
+        "小程序设计"
+      ],
+      "probe": {
+        "status": "untested"
+      },
+      "verification": {
+        "page": "untested",
+        "search": "untested",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "notes": [
+        "官方设计指南，尚未实测。"
+      ]
     }
   ]
 }
