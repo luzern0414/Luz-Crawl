@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-28T07:00:00.000Z",
+  "updated_at": "2026-10-28T07:32:52.276Z",
   "description": "可扩展公开网站入口库。probe 仅记录历史派发状态；completed 不代表数据已验收。verification 分别表示单次样本的页面、搜索、详情、统计和媒体验收，默认 untested。入口可失效，执行前仍须观察原站并补充新站。",
   "verification_states": [
     "verified",
@@ -16,16 +16,16 @@
       "url": "https://search.ccgp.gov.cn/",
       "kind": "national_procurement",
       "probe": {
-        "status": "visited",
-        "observations": 1,
-        "observed_at": "2026-10-25T10:55:06.887Z",
+        "status": "completed",
+        "observations": 2,
+        "observed_at": "2026-10-28T07:32:06.543Z",
         "last_action_status": "captured",
         "last_stop_reason": "stable_after_3_scrolls",
-        "last_text_chars": 485
+        "last_text_chars": 3294
       },
       "verification": {
         "page": "untested",
-        "search": "untested",
+        "search": "verified",
         "detail": "untested",
         "statistics": "untested",
         "media": "untested"
@@ -37,16 +37,16 @@
       "url": "https://www.ggzy.gov.cn/",
       "kind": "national交易",
       "probe": {
-        "status": "visited",
-        "observations": 9,
-        "observed_at": "2026-10-25T11:00:22.186Z",
+        "status": "completed",
+        "observations": 10,
+        "observed_at": "2026-10-28T07:32:52.276Z",
         "last_action_status": "captured",
         "last_stop_reason": "stable_after_3_scrolls",
-        "last_text_chars": 423
+        "last_text_chars": 2199
       },
       "verification": {
         "page": "untested",
-        "search": "untested",
+        "search": "verified",
         "detail": "untested",
         "statistics": "untested",
         "media": "untested"
@@ -5189,11 +5189,11 @@
       ],
       "probe": {
         "status": "completed",
-        "observations": 1,
-        "observed_at": "2026-10-28T07:00:00.000Z",
+        "observations": 2,
+        "observed_at": "2026-10-28T07:29:31.043Z",
         "last_action_status": "captured",
         "last_stop_reason": "stable_after_2_scrolls",
-        "last_text_chars": 46928
+        "last_text_chars": 1939
       },
       "verification": {
         "page": "verified",
@@ -5522,5 +5522,4 @@
         "官方设计指南，尚未实测。"
       ]
     }
-  ]
-}
+  

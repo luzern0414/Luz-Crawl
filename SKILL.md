@@ -87,13 +87,16 @@ node scripts/luz-crawl.mjs cancel TASK_ID
 
 ## 每次调用后沉淀
 
-开始前先运行 `experience --query "关键词" [--platform ID]`：返回本机记下的偏好与经验（notes）、可复用的路线提示、近期同类采集结果和好用的关键词，照此安排路线。结束前把本次学到的东西记下来：
+五个 Luz 技能用同一套经验格式和命令。开始前运行 `experience --query "关键词" [--platform ID]`，返回本机的偏好与经验、可复用的路线提示、近期同类采集结果和好用的关键词，照此安排路线（仍要重新访问真实页面）。结束前记下本次学到的东西：
 
-- 采集结果自动记录：同一平台、网址和关键词只保留一条，新结果替换旧结果（旧状态留在 `previous_outcome`）；总数超过 900 条时自动合并，只保留最新的 800 条，`experience --compact` 可手动整理。
-- 用户说出的偏好、实测有效或失败的路线与参数，用 `remember --kind preference|lesson|fact --key 主题 --note "一句话" [--platform ID]` 记录。同一主题再记会替换原文，只保留上一版；偏好最多 60 条、经验和事实各 120 条，超出时先删使用次数少、最久未确认的。
-- 记一般规律，不记一次性的任务细节；不记手机号、密码、Cookie、令牌和客户名称（命令会拒绝明显的敏感内容）。可跨用户复用的路线提示写进 `opencli/experience/seeds.json`，随仓库发布。
+| 层 | 位置 | 内容与写法 |
+|---|---|---|
+| 采集结果（自动） | `opencli/memory/events/`（本机） | 同一平台、网址和关键词只留一条，新结果替换旧结果，旧状态记在 `previous_outcome`；超过 900 条自动合并到最新 800 条，`experience --compact` 可手动整理 |
+| 偏好与经验 | `opencli/memory/notes.json`（本机） | `note --kind preference\|lesson\|fact --key 主题 --text "一句话" [--why 原因] [--platform ID]`；同一主题再记就替换原文、只留上一版；偏好 60、经验 120、事实 120 条上限，超出先删用得少、最久未确认的；`list`、`prune`、`check` 查看和整理 |
+| 公开路线提示 | `opencli/experience/seeds.json`（随仓库发布） | 对所有用户都有用的经验加 `--public [--when "适用场景"]`，按主题键写入、同主题替换、最多 60 条；偏好不能公开 |
+| 站点库 | `references/site-library.json`（随仓库发布） | 采集、搜索、批量结束后自动更新已收录站点的实测结论（打开、搜索、详情）与观测时间；不自动收录新站点 |
 
-这些记录都在 `opencli/memory/`，只留在本机。
+`notes.json` 的格式与其他技能一致：`{"schema_version":"1.0","caps":{...},"notes":[{key, kind, text, why, uses, first_seen, last_confirmed, previous}]}`。只记一般规律，不记一次性任务细节；写入时拒绝手机号、邮箱、微信号、个人路径和带值的密码、令牌，客户名称自行避免。旧命令 `remember --note` 仍可用。
 
 ## 保存、下载与记忆
 
