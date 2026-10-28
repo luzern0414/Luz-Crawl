@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-28T07:42:53.515Z",
+  "updated_at": "2026-10-28T07:48:38.045Z",
   "description": "可扩展公开网站入口库。probe 仅记录历史派发状态；completed 不代表数据已验收。verification 分别表示单次样本的页面、搜索、详情、统计和媒体验收，默认 untested。入口可失效，执行前仍须观察原站并补充新站。",
   "verification_states": [
     "verified",
@@ -17,11 +17,11 @@
       "kind": "national_procurement",
       "probe": {
         "status": "completed",
-        "observations": 5,
-        "observed_at": "2026-10-28T07:37:43.085Z",
+        "observations": 6,
+        "observed_at": "2026-10-28T07:43:43.186Z",
         "last_action_status": "partial",
         "last_stop_reason": "scroll_budget",
-        "last_text_chars": 3635
+        "last_text_chars": 5164
       },
       "verification": {
         "page": "untested",
@@ -38,11 +38,11 @@
       "kind": "national交易",
       "probe": {
         "status": "completed",
-        "observations": 14,
-        "observed_at": "2026-10-28T07:42:53.515Z",
+        "observations": 17,
+        "observed_at": "2026-10-28T07:48:38.045Z",
         "last_action_status": "captured",
         "last_stop_reason": "stable_after_2_scrolls",
-        "last_text_chars": 1387
+        "last_text_chars": 1998
       },
       "verification": {
         "page": "untested",
