@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-28T07:32:52.276Z",
+  "updated_at": "2026-10-28T07:42:53.515Z",
   "description": "可扩展公开网站入口库。probe 仅记录历史派发状态；completed 不代表数据已验收。verification 分别表示单次样本的页面、搜索、详情、统计和媒体验收，默认 untested。入口可失效，执行前仍须观察原站并补充新站。",
   "verification_states": [
     "verified",
@@ -17,16 +17,16 @@
       "kind": "national_procurement",
       "probe": {
         "status": "completed",
-        "observations": 2,
-        "observed_at": "2026-10-28T07:32:06.543Z",
-        "last_action_status": "captured",
-        "last_stop_reason": "stable_after_3_scrolls",
-        "last_text_chars": 3294
+        "observations": 5,
+        "observed_at": "2026-10-28T07:37:43.085Z",
+        "last_action_status": "partial",
+        "last_stop_reason": "scroll_budget",
+        "last_text_chars": 3635
       },
       "verification": {
         "page": "untested",
         "search": "verified",
-        "detail": "untested",
+        "detail": "partial",
         "statistics": "untested",
         "media": "untested"
       }
@@ -38,16 +38,16 @@
       "kind": "national交易",
       "probe": {
         "status": "completed",
-        "observations": 10,
-        "observed_at": "2026-10-28T07:32:52.276Z",
+        "observations": 14,
+        "observed_at": "2026-10-28T07:42:53.515Z",
         "last_action_status": "captured",
-        "last_stop_reason": "stable_after_3_scrolls",
-        "last_text_chars": 2199
+        "last_stop_reason": "stable_after_2_scrolls",
+        "last_text_chars": 1387
       },
       "verification": {
         "page": "untested",
         "search": "verified",
-        "detail": "untested",
+        "detail": "verified",
         "statistics": "untested",
         "media": "untested"
       },
@@ -5189,11 +5189,11 @@
       ],
       "probe": {
         "status": "completed",
-        "observations": 2,
-        "observed_at": "2026-10-28T07:29:31.043Z",
+        "observations": 3,
+        "observed_at": "2026-10-28T07:38:27.357Z",
         "last_action_status": "captured",
         "last_stop_reason": "stable_after_2_scrolls",
-        "last_text_chars": 1939
+        "last_text_chars": 5483
       },
       "verification": {
         "page": "verified",
@@ -5245,11 +5245,11 @@
       ],
       "probe": {
         "status": "completed",
-        "observations": 1,
-        "observed_at": "2026-10-28T07:00:00.000Z",
+        "observations": 2,
+        "observed_at": "2026-10-28T07:38:27.357Z",
         "last_action_status": "captured",
         "last_stop_reason": "stable_after_2_scrolls",
-        "last_text_chars": 12660
+        "last_text_chars": 869
       },
       "verification": {
         "page": "verified",
@@ -5328,11 +5328,11 @@
       ],
       "probe": {
         "status": "completed",
-        "observations": 1,
-        "observed_at": "2026-10-28T07:00:00.000Z",
+        "observations": 2,
+        "observed_at": "2026-10-28T07:38:27.357Z",
         "last_action_status": "captured",
         "last_stop_reason": "stable_after_2_scrolls",
-        "last_text_chars": 21666
+        "last_text_chars": 3027
       },
       "verification": {
         "page": "verified",
@@ -5439,11 +5439,11 @@
       ],
       "probe": {
         "status": "completed",
-        "observations": 1,
-        "observed_at": "2026-10-28T07:00:00.000Z",
+        "observations": 2,
+        "observed_at": "2026-10-28T07:38:27.357Z",
         "last_action_status": "captured",
         "last_stop_reason": "stable_after_2_scrolls",
-        "last_text_chars": 15587
+        "last_text_chars": 5584
       },
       "verification": {
         "page": "verified",
@@ -5522,4 +5522,5 @@
         "官方设计指南，尚未实测。"
       ]
     }
-  
+  ]
+}
