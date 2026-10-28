@@ -14,14 +14,14 @@ Get-Content actions.json -Raw | node scripts/luz-crawl.mjs browser "https://exam
 
 | 动作 | 参数与结果 |
 | :--- | :--- |
-| `read` | 可选 selector / target、max_chars；返回可见文字与前 40 个控件 |
+| `read` | 可选 selector / target、max_chars；不给目标时读整个文档（不要求 body 已有尺寸）；返回可见文字与前 40 个控件 |
 | `locate` | 可选 selector / target；返回候选、可复用选择器、视口与文档坐标 |
 | `click` | 唯一可见目标；检查遮挡后派发一次 DOM 点击；同步 window.open 的 HTTP(S) 目标在同一任务页导航 |
 | `type` | 唯一输入框与 text；触发 input / change |
 | `form` | 表单 selector / target、fields；先检查全部字段，再填文本、下拉或勾选 |
 | `submit` | 唯一表单，可选 submitter 选择器；校验必填项后提交一次 |
 | `scroll` | direction / amount；支持容器，或目标 + into_view |
-| `wait_for` | 等待 visible / hidden / text / value / url；支持 stable 1–3 次确认 |
+| `wait_for` | 等待 visible / hidden / text / value / url；支持 stable 1–3 次确认。`url` 可写完整网址（完全相同才满足），或以 `/`、`?`、`#` 开头的相对路径（按前缀匹配，例如 `/page2.html`）；网址对上且新页面已渲染出正文才算满足，紧接着的 read 不会读到空白页 |
 | `wait` | ms 1–30000；受任务总时间预算约束 |
 | `extract` | 可选 comments；一次返回正文快照与滚动位置 |
 | `screenshot` | 可选 full_page；图片写入 raw/browser-actions/ |
