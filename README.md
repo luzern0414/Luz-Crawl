@@ -58,4 +58,4 @@ references/           安装、平台、证据、校验、网站调研说明与�
 
 ## 许可
 
-PolyForm Noncommercial 1.0.0（见 [LICENSE](LICENSE)），仅限非商业使用。浏览器扩展中来自上游的部分保留 Apache-2.0 声明，见 [NOTICE](NOTICE) 与 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
+[PolyForm Noncommercial 1.0.0](LICENSE)：非商业用途可以自由使用、复制、修改和分发，禁止任何商业用途；如需商用请先联系作者。浏览器扩展中来自上游的部分保留 Apache-2.0 声明，见 [NOTICE](NOTICE) 与 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
