@@ -91,6 +91,83 @@
       "when": "会员列表组件库调研评测：batch 采集全部成功，但 py -c 解析管道报错；复现确认输出本身是合法 UTF-8 JSON",
       "action": "解析命令输出时读任务目录里的 batch-*.json 或 content.json；要接管道就用 py -X utf8、ConvertFrom-Json 或 Node，Windows 上不加 -X utf8 的 Python 按 GBK 读，中文吞掉引号会报 JSON 解析错误",
       "updated": "2026-10-29"
+    },
+    {
+      "key": "cn-delivery-h5-blocked",
+      "platform": "web",
+      "when": "2026-10-29 商用点单界面调研实测（任务 026）",
+      "action": "国内外卖平台的网页版不适合静默采集：美团外卖 H5 对自动化浏览器只返回“网络不太给力”，饿了么 H5 直接跳登录；学点单界面优先用用户录屏，或京东手机商品页、有赞店铺页这类公开页",
+      "updated": "2026-10-29"
+    },
+    {
+      "key": "public-commerce-pages",
+      "platform": "web",
+      "when": "2026-10-29 用 iPhone 设备模拟逐页截图验证",
+      "action": "公开可看的电商移动页：京东商品页 item.m.jd.com/product/编号.html（价格条、倒计时、预约人数、底部操作栏）；有赞店铺用 detail.youzan.com/show/goods/newest?kdt_id=店铺编号 进入（券后价、满折、商品列表），不需要登录",
+      "updated": "2026-10-29"
+    },
+    {
+      "key": "google-silent-captcha",
+      "platform": "google",
+      "when": "批量英文检索、发现 Baymard / NN/g 等站点文章入口",
+      "action": "静默批量用 Google 搜索会触发人机验证并停放整条 Google 队列；英文资料改用 Bing 加 site: 限定（如 site:baymard.com、site:nngroup.com）能稳定拿到候选。",
+      "updated": "2026-10-29"
+    },
+    {
+      "key": "baymard-premium-guidelines",
+      "platform": "web",
+      "when": "引用 Baymard 研究结论时选网址",
+      "action": "Baymard 的 /guidelines/ 页正文被付费遮盖成 xxxx，只能取到标题和问题陈述；免费全文在 /research-articles/ 下，旧 /blog/ 地址已迁到这里。",
+      "updated": "2026-10-29"
+    },
+    {
+      "key": "cn-price-law-sources",
+      "platform": "web",
+      "when": "调研价格展示、划线价、促销合规",
+      "action": "中国价格合规原文可直接读：明码标价和禁止价格欺诈规定（gov.cn 公报、samr 规章库）、规范促销行为暂行规定（gov.cn 政策库）、互联网平台价格行为规则（samr 政府信息公开页，2026-04-10施行）、电子商务法（npc.gov.cn）；GB/T 46862 外卖标准和淘宝价格管理规则全文读不到。",
+      "updated": "2026-10-29"
+    },
+    {
+      "key": "dribbble-shot-images",
+      "platform": "dribbble",
+      "when": "需要看 Dribbble 作品大图",
+      "action": "Dribbble 搜索页（dribbble.com/search/关键词）只能拿到标题、作者、点赞和浏览数，懒加载图片只下载 3 张左右；按点赞排序后把作品页 /shots/ID 放进 batch 并加 --download，可下载 1024 到 6400 像素原图，视频作品下载 mp4 后用本地 ffmpeg 抽帧查看",
+      "updated": "2026-10-29"
+    },
+    {
+      "key": "zcool-work-discovery",
+      "platform": "zcool",
+      "when": "要找站酷作品详情页",
+      "action": "站酷站内搜索结果卡片没有作品链接（卡片是按钮，无 href），且部分关键词匿名返回“没有找到”；用 search web 加 site:zcool.com.cn 关键词 从必应拿 /work/ID.html 链接，再 batch 加 --download 采作品页，正文图在 w_1280 参数的图片里，部分作品是 4800 宽的 gif",
+      "updated": "2026-10-29"
+    },
+    {
+      "key": "uinotes-real-app-screens",
+      "platform": "web",
+      "when": "需要真实上线 App 或小程序截图",
+      "action": "UI Notes（uinotes.com）App 详情页匿名可读，含 6 张 480 宽应用商店截图和 40 个截图页链接；单张截图页 /pin/ID 匿名可下 1170x2532 原图；按功能筛选（?functions=）需要登录。收录喜茶、瑞幸、肯德基、盒马、叮咚、小象超市、饿了么等",
+      "updated": "2026-10-29"
+    },
+    {
+      "key": "tdesign-docs-tabs",
+      "platform": "web",
+      "when": "采集 tdesign.tencent.com 组件文档",
+      "action": "TDesign 组件文档默认页签只有示例标题（示例在 iframe 里），API 与 CSS 变量要采 ?tab=api，用法规则采 ?tab=design",
+      "updated": "2026-10-29"
+    },
+    {
+      "key": "github-source-files",
+      "platform": "github",
+      "when": "需要逐个读取 GitHub 仓库里的源码文件",
+      "action": "读 GitHub 仓库源码用 github.com/<repo>/blob/<branch>/<path> 页面（约 10-20 秒一页，正文含完整代码）；raw.githubusercontent.com 在浏览器里报 transient_failure 后触发冷却，不要用",
+      "updated": "2026-10-29"
+    },
+    {
+      "key": "image-url-capture",
+      "platform": "web",
+      "when": "文档里的规范表格是图片，需要单独采集图片",
+      "action": "直接采集图片网址（.png/.jpg）没有文字正文会被判 awaiting_user，这是误报：截图 raw/page.png 已含整张图，读图即可，不请用户登录",
+      "updated": "2026-10-29"
     }
   ]
 }

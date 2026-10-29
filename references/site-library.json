@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-29T02:55:59.158Z",
+  "updated_at": "2026-10-29T08:32:47.168Z",
   "description": "可扩展公开网站入口库。probe 仅记录历史派发状态；completed 不代表数据已验收。verification 分别表示单次样本的页面、搜索、详情、统计和媒体验收，默认 untested。入口可失效，执行前仍须观察原站并补充新站。",
   "verification_states": [
     "verified",
@@ -17,11 +17,11 @@
       "kind": "national_procurement",
       "probe": {
         "status": "completed",
-        "observations": 17,
-        "observed_at": "2026-10-29T01:42:18.344Z",
+        "observations": 20,
+        "observed_at": "2026-10-29T07:27:13.928Z",
         "last_action_status": "partial",
         "last_stop_reason": "scroll_budget",
-        "last_text_chars": 5081
+        "last_text_chars": 5164
       },
       "verification": {
         "page": "verified",
@@ -47,11 +47,11 @@
       "kind": "national交易",
       "probe": {
         "status": "completed",
-        "observations": 37,
-        "observed_at": "2026-10-29T01:47:11.381Z",
+        "observations": 45,
+        "observed_at": "2026-10-29T07:32:37.122Z",
         "last_action_status": "captured",
         "last_stop_reason": "stable_after_2_scrolls",
-        "last_text_chars": 2748
+        "last_text_chars": 1502
       },
       "verification": {
         "page": "verified",
@@ -78,11 +78,11 @@
       "kind": "provincial交易",
       "probe": {
         "status": "completed",
-        "observations": 2,
-        "observed_at": "2026-10-29T00:17:33.087Z",
+        "observations": 5,
+        "observed_at": "2026-10-29T07:28:01.437Z",
         "last_action_status": "partial",
         "last_stop_reason": "stable_after_3_scrolls",
-        "last_text_chars": 2192
+        "last_text_chars": 2218
       },
       "verification": {
         "page": "verified",
@@ -123,16 +123,16 @@
       "kind": "local采购",
       "probe": {
         "status": "completed",
-        "observations": 4,
-        "observed_at": "2026-10-29T00:36:18.749Z",
-        "last_action_status": "captured",
-        "last_stop_reason": "stable_after_3_scrolls",
-        "last_text_chars": 119
+        "observations": 6,
+        "observed_at": "2026-10-29T07:23:22.997Z",
+        "last_action_status": "awaiting_user",
+        "last_stop_reason": "verification_required",
+        "last_text_chars": 17
       },
       "verification": {
         "page": "untested",
         "search": "verified",
-        "detail": "untested",
+        "detail": "blocked",
         "statistics": "untested",
         "media": "untested"
       }
@@ -233,11 +233,11 @@
       "kind": "广东招标目录",
       "probe": {
         "status": "completed",
-        "observations": 4,
-        "observed_at": "2026-10-29T00:36:55.695Z",
+        "observations": 6,
+        "observed_at": "2026-10-29T07:27:27.863Z",
         "last_action_status": "partial",
         "last_stop_reason": "scroll_budget",
-        "last_text_chars": 6407
+        "last_text_chars": 6194
       },
       "verification": {
         "page": "untested",
@@ -834,16 +834,16 @@
       "kind": "government",
       "probe": {
         "status": "completed",
-        "observations": 1,
-        "observed_at": "2026-10-25T11:50:40.268Z",
-        "last_action_status": "completed",
-        "last_stop_reason": "browser_actions_complete",
-        "last_text_chars": 1124
+        "observations": 2,
+        "observed_at": "2026-10-29T07:24:42.829Z",
+        "last_action_status": "captured",
+        "last_stop_reason": "stable_after_2_scrolls",
+        "last_text_chars": 6958
       },
       "verification": {
         "page": "untested",
         "search": "untested",
-        "detail": "untested",
+        "detail": "verified",
         "statistics": "untested",
         "media": "untested"
       }
@@ -1133,11 +1133,11 @@
       "kind": "tender_aggregator",
       "probe": {
         "status": "completed",
-        "observations": 14,
-        "observed_at": "2026-10-29T01:42:39.008Z",
+        "observations": 17,
+        "observed_at": "2026-10-29T07:27:47.260Z",
         "last_action_status": "captured",
         "last_stop_reason": "stable_after_3_scrolls",
-        "last_text_chars": 1814
+        "last_text_chars": 1866
       },
       "verification": {
         "page": "verified",
@@ -1213,8 +1213,8 @@
       "kind": "tender_aggregator",
       "probe": {
         "status": "completed",
-        "observations": 10,
-        "observed_at": "2026-10-29T01:41:57.118Z",
+        "observations": 13,
+        "observed_at": "2026-10-29T07:28:01.452Z",
         "last_action_status": "partial",
         "last_stop_reason": "stable_after_3_scrolls",
         "last_text_chars": 49
@@ -1243,11 +1243,11 @@
       "kind": "tender_aggregator",
       "probe": {
         "status": "completed",
-        "observations": 23,
-        "observed_at": "2026-10-29T01:42:30.905Z",
+        "observations": 26,
+        "observed_at": "2026-10-29T07:27:17.577Z",
         "last_action_status": "captured",
         "last_stop_reason": "stable_after_3_scrolls",
-        "last_text_chars": 4513
+        "last_text_chars": 4974
       },
       "verification": {
         "page": "verified",
@@ -1678,11 +1678,11 @@
       "kind": "state_enterprise",
       "probe": {
         "status": "completed",
-        "observations": 14,
-        "observed_at": "2026-10-29T01:41:57.111Z",
+        "observations": 25,
+        "observed_at": "2026-10-29T07:33:02.597Z",
         "last_action_status": "captured",
-        "last_stop_reason": "stable_after_3_scrolls",
-        "last_text_chars": 1731
+        "last_stop_reason": "stable_after_2_scrolls",
+        "last_text_chars": 1181
       },
       "verification": {
         "page": "verified",
@@ -3396,16 +3396,16 @@
       ],
       "probe": {
         "status": "completed",
-        "observations": 1,
-        "observed_at": "2026-10-25T11:30:22.287Z",
-        "last_action_status": "completed",
-        "last_stop_reason": "browser_actions_complete",
-        "last_text_chars": 120
+        "observations": 3,
+        "observed_at": "2026-10-29T08:10:25.404Z",
+        "last_action_status": "captured",
+        "last_stop_reason": "stable_after_2_scrolls",
+        "last_text_chars": 513
       },
       "verification": {
         "page": "untested",
         "search": "untested",
-        "detail": "untested",
+        "detail": "verified",
         "statistics": "untested",
         "media": "untested"
       }
@@ -3630,16 +3630,16 @@
       ],
       "probe": {
         "status": "completed",
-        "observations": 1,
-        "observed_at": "2026-10-25T11:31:33.242Z",
-        "last_action_status": "completed",
-        "last_stop_reason": "browser_actions_complete",
-        "last_text_chars": 879
+        "observations": 2,
+        "observed_at": "2026-10-29T07:56:00.960Z",
+        "last_action_status": "captured",
+        "last_stop_reason": "stable_after_2_scrolls",
+        "last_text_chars": 3211
       },
       "verification": {
         "page": "untested",
         "search": "untested",
-        "detail": "untested",
+        "detail": "verified",
         "statistics": "untested",
         "media": "untested"
       }
@@ -4183,16 +4183,16 @@
       ],
       "probe": {
         "status": "completed",
-        "observations": 1,
-        "observed_at": "2026-10-25T11:37:06.266Z",
-        "last_action_status": "completed",
-        "last_stop_reason": "browser_actions_complete",
-        "last_text_chars": 4144
+        "observations": 6,
+        "observed_at": "2026-10-29T08:13:50.262Z",
+        "last_action_status": "failed",
+        "last_stop_reason": "unavailable",
+        "last_text_chars": 0
       },
       "verification": {
         "page": "untested",
         "search": "untested",
-        "detail": "untested",
+        "detail": "failed",
         "statistics": "untested",
         "media": "untested"
       }
@@ -4210,17 +4210,17 @@
         "UI"
       ],
       "probe": {
-        "status": "failed",
-        "observations": 1,
-        "observed_at": "2026-10-25T11:37:16.972Z",
-        "last_action_status": "failed",
-        "last_stop_reason": "target_not_found",
-        "last_text_chars": 0
+        "status": "completed",
+        "observations": 65,
+        "observed_at": "2026-10-29T08:23:04.644Z",
+        "last_action_status": "captured",
+        "last_stop_reason": "stable_after_2_scrolls",
+        "last_text_chars": 2005
       },
       "verification": {
         "page": "untested",
         "search": "untested",
-        "detail": "untested",
+        "detail": "verified",
         "statistics": "untested",
         "media": "untested"
       }
@@ -4295,16 +4295,16 @@
       ],
       "probe": {
         "status": "completed",
-        "observations": 2,
-        "observed_at": "2026-10-25T12:11:45.147Z",
-        "last_action_status": "completed",
-        "last_stop_reason": "browser_actions_complete",
-        "last_text_chars": 180
+        "observations": 47,
+        "observed_at": "2026-10-29T08:24:41.968Z",
+        "last_action_status": "captured",
+        "last_stop_reason": "stable_after_2_scrolls",
+        "last_text_chars": 1174
       },
       "verification": {
         "page": "blocked",
         "search": "untested",
-        "detail": "untested",
+        "detail": "verified",
         "statistics": "untested",
         "media": "untested"
       },
@@ -4354,16 +4354,16 @@
       ],
       "probe": {
         "status": "completed",
-        "observations": 1,
-        "observed_at": "2026-10-25T11:38:18.186Z",
-        "last_action_status": "completed",
-        "last_stop_reason": "browser_actions_complete",
+        "observations": 8,
+        "observed_at": "2026-10-29T08:13:50.262Z",
+        "last_action_status": "awaiting_user",
+        "last_stop_reason": "transient_failure",
         "last_text_chars": 21
       },
       "verification": {
         "page": "untested",
         "search": "untested",
-        "detail": "untested",
+        "detail": "blocked",
         "statistics": "untested",
         "media": "untested"
       }
@@ -4438,16 +4438,16 @@
       ],
       "probe": {
         "status": "completed",
-        "observations": 1,
-        "observed_at": "2026-10-25T11:38:55.355Z",
-        "last_action_status": "completed",
-        "last_stop_reason": "browser_actions_complete",
-        "last_text_chars": 6452
+        "observations": 3,
+        "observed_at": "2026-10-29T08:10:25.404Z",
+        "last_action_status": "failed",
+        "last_stop_reason": "transient_failure",
+        "last_text_chars": 0
       },
       "verification": {
         "page": "untested",
         "search": "untested",
-        "detail": "untested",
+        "detail": "failed",
         "statistics": "untested",
         "media": "untested"
       }
@@ -4522,16 +4522,16 @@
       ],
       "probe": {
         "status": "completed",
-        "observations": 1,
-        "observed_at": "2026-10-25T11:39:16.374Z",
-        "last_action_status": "completed",
-        "last_stop_reason": "browser_actions_complete",
-        "last_text_chars": 1949
+        "observations": 2,
+        "observed_at": "2026-10-29T07:49:52.355Z",
+        "last_action_status": "awaiting_user",
+        "last_stop_reason": "unavailable",
+        "last_text_chars": 255
       },
       "verification": {
         "page": "untested",
         "search": "untested",
-        "detail": "untested",
+        "detail": "blocked",
         "statistics": "untested",
         "media": "untested"
       }
@@ -4550,14 +4550,14 @@
       ],
       "probe": {
         "status": "completed",
-        "observations": 1,
-        "observed_at": "2026-10-25T11:39:35.270Z",
-        "last_action_status": "completed",
-        "last_stop_reason": "browser_actions_complete",
-        "last_text_chars": 5212
+        "observations": 2,
+        "observed_at": "2026-10-29T07:22:40.405Z",
+        "last_action_status": "captured",
+        "last_stop_reason": "stable_after_2_scrolls",
+        "last_text_chars": 62
       },
       "verification": {
-        "page": "untested",
+        "page": "verified",
         "search": "untested",
         "detail": "untested",
         "statistics": "untested",
@@ -4662,16 +4662,16 @@
       ],
       "probe": {
         "status": "completed",
-        "observations": 1,
-        "observed_at": "2026-10-25T11:40:51.261Z",
-        "last_action_status": "completed",
-        "last_stop_reason": "browser_actions_complete",
-        "last_text_chars": 2197
+        "observations": 2,
+        "observed_at": "2026-10-29T07:49:52.355Z",
+        "last_action_status": "captured",
+        "last_stop_reason": "stable_after_2_scrolls",
+        "last_text_chars": 717
       },
       "verification": {
         "page": "untested",
         "search": "untested",
-        "detail": "untested",
+        "detail": "verified",
         "statistics": "untested",
         "media": "untested"
       }
@@ -5514,11 +5514,11 @@
       ],
       "probe": {
         "status": "completed",
-        "observations": 2,
-        "observed_at": "2026-10-28T07:38:27.357Z",
+        "observations": 28,
+        "observed_at": "2026-10-29T08:20:15.126Z",
         "last_action_status": "captured",
         "last_stop_reason": "stable_after_2_scrolls",
-        "last_text_chars": 869
+        "last_text_chars": 321
       },
       "verification": {
         "page": "verified",
@@ -5542,11 +5542,11 @@
       ],
       "probe": {
         "status": "completed",
-        "observations": 1,
-        "observed_at": "2026-10-28T07:00:00.000Z",
+        "observations": 2,
+        "observed_at": "2026-10-29T08:32:47.168Z",
         "last_action_status": "captured",
         "last_stop_reason": "stable_after_2_scrolls",
-        "last_text_chars": 80459
+        "last_text_chars": 441
       },
       "verification": {
         "page": "verified",
@@ -5569,11 +5569,11 @@
       ],
       "probe": {
         "status": "completed",
-        "observations": 1,
-        "observed_at": "2026-10-28T07:00:00.000Z",
-        "last_action_status": "captured",
-        "last_stop_reason": "stable_after_2_scrolls",
-        "last_text_chars": 78349
+        "observations": 2,
+        "observed_at": "2026-10-29T08:32:47.168Z",
+        "last_action_status": "partial",
+        "last_stop_reason": "scroll_budget",
+        "last_text_chars": 17808
       },
       "verification": {
         "page": "partial",
@@ -5625,11 +5625,11 @@
       ],
       "probe": {
         "status": "completed",
-        "observations": 5,
-        "observed_at": "2026-10-29T01:35:50.460Z",
+        "observations": 6,
+        "observed_at": "2026-10-29T08:32:47.168Z",
         "last_action_status": "captured",
         "last_stop_reason": "stable_after_2_scrolls",
-        "last_text_chars": 15862
+        "last_text_chars": 15732
       },
       "verification": {
         "page": "verified",
@@ -5679,11 +5679,11 @@
       ],
       "probe": {
         "status": "completed",
-        "observations": 2,
-        "observed_at": "2026-10-29T01:05:06.147Z",
+        "observations": 3,
+        "observed_at": "2026-10-29T08:32:47.168Z",
         "last_action_status": "partial",
         "last_stop_reason": "scroll_budget",
-        "last_text_chars": 10248
+        "last_text_chars": 6801
       },
       "verification": {
         "page": "partial",
@@ -5708,11 +5708,11 @@
       ],
       "probe": {
         "status": "completed",
-        "observations": 12,
-        "observed_at": "2026-10-29T01:19:25.122Z",
+        "observations": 24,
+        "observed_at": "2026-10-29T08:32:47.168Z",
         "last_action_status": "captured",
         "last_stop_reason": "stable_after_2_scrolls",
-        "last_text_chars": 8011
+        "last_text_chars": 11381
       },
       "verification": {
         "page": "verified",
@@ -5734,12 +5734,17 @@
         "移动组件"
       ],
       "probe": {
-        "status": "untested"
+        "status": "completed",
+        "observations": 18,
+        "observed_at": "2026-10-29T08:20:15.126Z",
+        "last_action_status": "captured",
+        "last_stop_reason": "stable_after_2_scrolls",
+        "last_text_chars": 4000
       },
       "verification": {
         "page": "untested",
         "search": "untested",
-        "detail": "untested",
+        "detail": "verified",
         "statistics": "untested",
         "media": "untested"
       },
@@ -5756,12 +5761,17 @@
         "小程序组件"
       ],
       "probe": {
-        "status": "untested"
+        "status": "completed",
+        "observations": 23,
+        "observed_at": "2026-10-29T07:55:43.210Z",
+        "last_action_status": "captured",
+        "last_stop_reason": "stable_after_2_scrolls",
+        "last_text_chars": 1704
       },
       "verification": {
         "page": "untested",
         "search": "untested",
-        "detail": "untested",
+        "detail": "verified",
         "statistics": "untested",
         "media": "untested"
       },
@@ -5779,11 +5789,11 @@
       ],
       "probe": {
         "status": "completed",
-        "observations": 4,
-        "observed_at": "2026-10-29T01:57:25.173Z",
-        "last_action_status": "captured",
-        "last_stop_reason": "stable_after_2_scrolls",
-        "last_text_chars": 251
+        "observations": 9,
+        "observed_at": "2026-10-29T08:26:34.850Z",
+        "last_action_status": "partial",
+        "last_stop_reason": "scroll_budget",
+        "last_text_chars": 4313
       },
       "verification": {
         "page": "untested",
@@ -5962,11 +5972,11 @@
       ],
       "probe": {
         "status": "completed",
-        "observations": 20,
-        "observed_at": "2026-10-29T01:42:31.596Z",
+        "observations": 24,
+        "observed_at": "2026-10-29T07:27:25.995Z",
         "last_action_status": "captured",
         "last_stop_reason": "stable_after_3_scrolls",
-        "last_text_chars": 3457
+        "last_text_chars": 3590
       }
     },
     {
@@ -6043,11 +6053,11 @@
       ],
       "probe": {
         "status": "completed",
-        "observations": 12,
-        "observed_at": "2026-10-29T01:41:47.066Z",
+        "observations": 17,
+        "observed_at": "2026-10-29T07:31:11.172Z",
         "last_action_status": "captured",
-        "last_stop_reason": "stable_after_3_scrolls",
-        "last_text_chars": 3164
+        "last_stop_reason": "stable_after_2_scrolls",
+        "last_text_chars": 2033
       }
     },
     {
