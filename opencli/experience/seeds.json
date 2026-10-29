@@ -168,6 +168,27 @@
       "when": "文档里的规范表格是图片，需要单独采集图片",
       "action": "直接采集图片网址（.png/.jpg）没有文字正文会被判 awaiting_user，这是误报：截图 raw/page.png 已含整张图，读图即可，不请用户登录",
       "updated": "2026-10-29"
+    },
+    {
+      "key": "docs-hash-route-read-github-md",
+      "platform": "web",
+      "when": "a docs site uses hash routing and the capture stays partial",
+      "action": "文档站用 # 路由（如 apolloconfig.com/#/zh/...）常被判 partial；同一文档在 GitHub 有 md 原文时改读 GitHub 页，正文完整稳定",
+      "updated": "2026-10-29"
+    },
+    {
+      "key": "cn-law-pages",
+      "platform": "web",
+      "when": "verifying Chinese laws or national standards from official sites",
+      "action": "法规原文：cac.gov.cn 全文分页，后续页地址是 _2.htm，要逐页读；gov.cn 公报版会省略附表（如会计档案保管期限表），附表另找财政厅或维基文库；openstd.samr.gov.cn 只读得到国标元数据，正文用可靠转载并标明",
+      "updated": "2026-10-29"
+    },
+    {
+      "key": "moved-docs-2026",
+      "platform": "web",
+      "when": "a known docs URL redirects, 404s or returns no body text",
+      "action": "已迁址：Gunicorn 信号文档在 gunicorn.org/signals/（docs.gunicorn.org 旧址 404）；Elastic ECS 在 elastic.co/docs/reference/ecs（字段要逐个读子页）；OWASP Top 10 在 top10.owasp.org；GitHub 上的 PDF 页面没有正文，换 md 原文或转载；部分 CSDN 博客会 blocked",
+      "updated": "2026-10-29"
     }
   ]
 }
