@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-29T08:32:47.168Z",
+  "updated_at": "2026-10-29T08:54:09.435Z",
   "description": "可扩展公开网站入口库。probe 仅记录历史派发状态；completed 不代表数据已验收。verification 分别表示单次样本的页面、搜索、详情、统计和媒体验收，默认 untested。入口可失效，执行前仍须观察原站并补充新站。",
   "verification_states": [
     "verified",
@@ -4211,11 +4211,11 @@
       ],
       "probe": {
         "status": "completed",
-        "observations": 65,
-        "observed_at": "2026-10-29T08:23:04.644Z",
+        "observations": 66,
+        "observed_at": "2026-10-29T08:50:05.248Z",
         "last_action_status": "captured",
         "last_stop_reason": "stable_after_2_scrolls",
-        "last_text_chars": 2005
+        "last_text_chars": 4805
       },
       "verification": {
         "page": "untested",
@@ -5789,11 +5789,11 @@
       ],
       "probe": {
         "status": "completed",
-        "observations": 9,
-        "observed_at": "2026-10-29T08:26:34.850Z",
-        "last_action_status": "partial",
-        "last_stop_reason": "scroll_budget",
-        "last_text_chars": 4313
+        "observations": 12,
+        "observed_at": "2026-10-29T08:54:09.435Z",
+        "last_action_status": "captured",
+        "last_stop_reason": "stable_after_2_scrolls",
+        "last_text_chars": 1008
       },
       "verification": {
         "page": "untested",
