@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-28T07:48:38.045Z",
+  "updated_at": "2026-10-29T00:15:14.762Z",
   "description": "可扩展公开网站入口库。probe 仅记录历史派发状态；completed 不代表数据已验收。verification 分别表示单次样本的页面、搜索、详情、统计和媒体验收，默认 untested。入口可失效，执行前仍须观察原站并补充新站。",
   "verification_states": [
     "verified",
@@ -17,19 +17,28 @@
       "kind": "national_procurement",
       "probe": {
         "status": "completed",
-        "observations": 6,
-        "observed_at": "2026-10-28T07:43:43.186Z",
+        "observations": 7,
+        "observed_at": "2026-10-29T00:14:10.636Z",
         "last_action_status": "partial",
         "last_stop_reason": "scroll_budget",
-        "last_text_chars": 5164
+        "last_text_chars": 5155
       },
       "verification": {
-        "page": "untested",
+        "page": "verified",
         "search": "verified",
         "detail": "partial",
         "statistics": "untested",
         "media": "untested"
-      }
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://search.ccgp.gov.cn/bxsearch?searchtype=1&kw=%E7%A9%BA%E8%B0%83",
+        "search_method": "站内搜索地址模板",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 20 条含关键词结果，已打开并读到详情正文；“电梯”复测 20 条，详情可读"
+      ]
     },
     {
       "id": "ggzy",
@@ -38,22 +47,29 @@
       "kind": "national交易",
       "probe": {
         "status": "completed",
-        "observations": 17,
-        "observed_at": "2026-10-28T07:48:38.045Z",
+        "observations": 18,
+        "observed_at": "2026-10-29T00:14:07.058Z",
         "last_action_status": "captured",
-        "last_stop_reason": "stable_after_2_scrolls",
-        "last_text_chars": 1998
+        "last_stop_reason": "stable_after_3_scrolls",
+        "last_text_chars": 2458
       },
       "verification": {
-        "page": "untested",
+        "page": "verified",
         "search": "verified",
         "detail": "verified",
         "statistics": "untested",
         "media": "untested"
       },
       "notes": [
-        "全国公共资源详情外层 /html/a/ 可能仅含标题日期；从本次DOM读取iframe的真实src后打开正文。已实测 /html/b/ 正文包含公告及公开联系方式，不能猜URL替换路径。"
-      ]
+        "全国公共资源详情外层 /html/a/ 可能仅含标题日期；从本次DOM读取iframe的真实src后打开正文。已实测 /html/b/ 正文包含公告及公开联系方式，不能猜URL替换路径。",
+        "2026-10-29 站内搜索“空调”返回 20 条含关键词结果，已打开并读到详情正文；“电梯”复测 20 条，详情可读"
+      ],
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://www.ggzy.gov.cn/deal/dealList.html?DEAL_TIME=05&FINDTXT=%E7%A9%BA%E8%B0%83",
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      }
     },
     {
       "id": "gdggzy",
@@ -75,11 +91,11 @@
         "statistics": "untested",
         "media": "untested"
       },
-      "verified_at": "2026-10-25",
+      "verified_at": "2026-10-29",
       "route": {
         "input": "input[placeholder=\"请输入关键字搜索\"]",
         "search": "div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > i:nth-of-type(1)",
-        "query_sample": "门窗",
+        "query_sample": "空调",
         "observed_search_url": "https://ygp.gdzwfw.gov.cn/ggzy-portal/#/440000/search/jygg?keywords=%E9%97%A8%E7%AA%97",
         "result_title_selector": "h3.title span[title]",
         "detail_wait": {
@@ -89,13 +105,15 @@
           "timeout_ms": 12000,
           "stable": 2
         },
-        "detail_sample_project_code": "4412857270840732607270605"
+        "detail_sample_project_code": "4412857270840732607270605",
+        "search_method": "填写搜索框并点击搜索按钮"
       },
       "notes": [
         "2026-10-25 原站填写门窗并点击，省级、全部交易类型、最近1年返回10条可见公告，页面显示2页；不是全站历史总量。",
         "搜索结果标题是含高亮子节点的 h3/span，不能仅取 a 链接；右侧热门搜索不是本次查询结果。选择器来自当次DOM，复用前重新观察。",
         "实际点击大旺中学门窗改造事前绩效评估标题后，详情延迟加载；先等待采购项目编码等正文标志，不能仅等日期或固定1秒。",
-        "详情样本读到项目业主、中选机构、合同编号、5600.00及服务内容；它是工程造价咨询合同公开，金额不是门窗工程预算，也不是待投标门窗订单。平台汇总不作为门窗类目统计。"
+        "详情样本读到项目业主、中选机构、合同编号、5600.00及服务内容；它是工程造价咨询合同公开，金额不是门窗工程预算，也不是待投标门窗订单。平台汇总不作为门窗类目统计。",
+        "2026-10-29 已执行站内搜索，结果页未出现含关键词的公告；可能为结果异步加载或点中非结果控件，需按当前 DOM 复核"
       ]
     },
     {
@@ -125,20 +143,28 @@
       "url": "https://www.chinabidding.com/",
       "kind": "national招标",
       "probe": {
-        "status": "visited",
-        "observations": 1,
-        "observed_at": "2026-10-25T10:55:15.371Z",
-        "last_action_status": "partial",
+        "status": "completed",
+        "observations": 2,
+        "observed_at": "2026-10-29T00:15:06.822Z",
+        "last_action_status": "awaiting_user",
         "last_stop_reason": "stable_after_3_scrolls",
         "last_text_chars": 0
       },
       "verification": {
-        "page": "untested",
-        "search": "untested",
+        "page": "blocked",
+        "search": "blocked",
         "detail": "untested",
         "statistics": "untested",
         "media": "untested"
-      }
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "no_visible_search",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 搜索被拦截：stable_after_3_scrolls"
+      ]
     },
     {
       "id": "qianlima",
@@ -147,19 +173,28 @@
       "kind": "招标目录",
       "probe": {
         "status": "completed",
-        "observations": 2,
-        "observed_at": "2026-10-25T11:05:49.933Z",
-        "last_action_status": "partial",
-        "last_stop_reason": "scroll_budget",
-        "last_text_chars": 4948
+        "observations": 3,
+        "observed_at": "2026-10-29T00:14:52.796Z",
+        "last_action_status": "captured",
+        "last_stop_reason": "stable_after_3_scrolls",
+        "last_text_chars": 2397
       },
       "verification": {
-        "page": "untested",
-        "search": "untested",
-        "detail": "untested",
+        "page": "verified",
+        "search": "verified",
+        "detail": "verified",
         "statistics": "untested",
         "media": "untested"
-      }
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://search.qianlima.com/?q=%E7%A9%BA%E8%B0%83#/",
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 20 条含关键词结果，已打开并读到详情正文；“电梯”复测 20 条"
+      ]
     },
     {
       "id": "bidcenter",
@@ -175,12 +210,21 @@
         "last_text_chars": 6903
       },
       "verification": {
-        "page": "untested",
-        "search": "untested",
-        "detail": "untested",
+        "page": "verified",
+        "search": "verified",
+        "detail": "verified",
         "statistics": "untested",
         "media": "untested"
-      }
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://search.bidcenter.com.cn/search?keywords=%E7%A9%BA%E8%B0%83&mod=0",
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 19 条含关键词结果，已打开并读到详情正文；“电梯”复测 2 条"
+      ]
     },
     {
       "id": "gd-bidcenter",
@@ -238,12 +282,20 @@
         "last_text_chars": 542
       },
       "verification": {
-        "page": "untested",
-        "search": "untested",
+        "page": "verified",
+        "search": "blocked",
         "detail": "untested",
         "statistics": "untested",
         "media": "untested"
-      }
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "站内搜索地址模板",
+        "query_sample": "华为"
+      },
+      "notes": [
+        "2026-10-29 搜索被拦截：stable_after_3_scrolls"
+      ]
     },
     {
       "id": "tianyancha",
@@ -259,12 +311,20 @@
         "last_text_chars": 0
       },
       "verification": {
-        "page": "untested",
-        "search": "untested",
+        "page": "verified",
+        "search": "partial",
         "detail": "untested",
         "statistics": "untested",
         "media": "untested"
-      }
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "站内搜索地址模板",
+        "query_sample": "华为"
+      },
+      "notes": [
+        "2026-10-29 搜索后结果列表在正文中可见（含关键词 162 处），结果行由前端点击事件跳转、没有链接地址，详情需在页面中点击"
+      ]
     },
     {
       "id": "made-in-china",
@@ -302,14 +362,21 @@
       },
       "verification": {
         "page": "untested",
-        "search": "untested",
+        "search": "blocked",
         "detail": "untested",
         "statistics": "untested",
         "media": "untested"
       },
       "notes": [
-        "首页可打开不代表查询完成；搜索可能新开页，必须核验结果地址、卡片与详情。"
-      ]
+        "首页可打开不代表查询完成；搜索可能新开页，必须核验结果地址、卡片与详情。",
+        "2026-10-29 搜索被拦截：stable_after_3_scrolls"
+      ],
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://www.yfbzb.com/search/invitedBidSearch?defaultSearch=true&keyword=%E7%A9%BA%E8%B0%83",
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      }
     },
     {
       "id": "zhaobiao",
@@ -346,12 +413,20 @@
         "last_text_chars": 3743
       },
       "verification": {
-        "page": "untested",
-        "search": "untested",
+        "page": "verified",
+        "search": "failed",
         "detail": "untested",
         "statistics": "untested",
         "media": "untested"
-      }
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "no_visible_search",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框；需从栏目列表页或站内检索页进入"
+      ]
     },
     {
       "id": "jczh",
@@ -625,7 +700,7 @@
         "statistics": "untested",
         "media": "untested"
       },
-      "verified_at": "2026-10-25",
+      "verified_at": "2026-10-29",
       "route": {
         "entry": "https://gdgpo.czt.gd.gov.cn/maincms-web/noticeInformationGd",
         "input": "form > div:nth-of-type(5) input",
@@ -633,11 +708,13 @@
           "role": "button",
           "name": "查询"
         },
-        "query_sample": "门窗",
+        "query_sample": "空调",
         "observed_result_count": 5,
         "homepage_close": ".noticeCloseBtn",
         "homepage_entry": ".homeTop_r[data-v-ff2046d6] > span",
-        "detail": ".el-table__body tbody tr:first-child td:first-child .cell > span"
+        "detail": ".el-table__body tbody tr:first-child td:first-child .cell > span",
+        "observed_search_url": "https://gdgpo.czt.gd.gov.cn/maincms-web/fullSearchingGd?searchKey=%E7%A9%BA%E8%B0%83",
+        "search_method": "填写搜索框并点击搜索按钮"
       },
       "notes": [
         "首页实际公告可读。搜索按钮同步 window.open，新版会在原任务标签导航。",
@@ -645,7 +722,8 @@
         "2026-10-25 已从首页点击采购公告 MORE 的 span 进入采购项目信息列表，实际填写标题“门窗”、核对输入值并点击“查询”，返回5条相关项目。",
         "首页服务指引可用自身 .noticeCloseBtn 关闭；MORE 父容器不触发导航，必须点击实际 span 并核对落地地址。",
         "全站检索0条不是无相关信息：优先复用采购项目信息列表的真实查询控件，不能用外部搜索引擎替代。",
-        "第一条阳西县书村初级中学项目详情已打开，显示2026-09-29采购计划及编号；金额、需求等正文值仍空白，详情只记partial，不作为当前可投标机会。"
+        "第一条阳西县书村初级中学项目详情已打开，显示2026-09-29采购计划及编号；金额、需求等正文值仍空白，详情只记partial，不作为当前可投标机会。",
+        "2026-10-29 已执行站内搜索，结果页未出现含关键词的公告；可能为结果异步加载或点中非结果控件，需按当前 DOM 复核"
       ]
     },
     {
@@ -684,11 +762,20 @@
       },
       "verification": {
         "page": "untested",
-        "search": "untested",
-        "detail": "untested",
+        "search": "verified",
+        "detail": "verified",
         "statistics": "untested",
         "media": "untested"
-      }
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://ywtb.gzggzy.cn/fulltext_searching.html?wd=%E7%A9%BA%E8%B0%83",
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 10 条含关键词结果，已打开并读到详情正文；“电梯”复测 6 条，详情可读"
+      ]
     },
     {
       "id": "szggzy",
@@ -704,12 +791,20 @@
         "last_text_chars": 1982
       },
       "verification": {
-        "page": "untested",
-        "search": "untested",
-        "detail": "untested",
+        "page": "verified",
+        "search": "verified",
+        "detail": "verified",
         "statistics": "untested",
         "media": "untested"
-      }
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 8 条含关键词结果，已打开并读到详情正文；“电梯”复测 10 条，详情可读"
+      ]
     },
     {
       "id": "dgggzy",
@@ -865,19 +960,28 @@
       "kind": "government",
       "probe": {
         "status": "completed",
-        "observations": 1,
-        "observed_at": "2026-10-25T11:51:31.225Z",
-        "last_action_status": "completed",
-        "last_stop_reason": "browser_actions_complete",
-        "last_text_chars": 1517
+        "observations": 2,
+        "observed_at": "2026-10-29T00:14:56.204Z",
+        "last_action_status": "partial",
+        "last_stop_reason": "stable_after_3_scrolls",
+        "last_text_chars": 847
       },
       "verification": {
-        "page": "untested",
-        "search": "untested",
+        "page": "verified",
+        "search": "partial",
         "detail": "untested",
         "statistics": "untested",
         "media": "untested"
-      }
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://ctbpsp.com/#/bulletinList?keyWords=%E7%A9%BA%E8%B0%83",
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 搜索后结果列表在正文中可见（含关键词 10 处），结果行由前端点击事件跳转、没有链接地址，详情需在页面中点击"
+      ]
     },
     {
       "id": "ctbpsp",
@@ -893,12 +997,20 @@
         "last_text_chars": 945
       },
       "verification": {
-        "page": "untested",
-        "search": "untested",
+        "page": "verified",
+        "search": "partial",
         "detail": "untested",
         "statistics": "untested",
         "media": "untested"
-      }
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 搜索后结果列表在正文中可见（含关键词 10 处），结果行由前端点击事件跳转、没有链接地址，详情需在页面中点击"
+      ]
     },
     {
       "id": "zycg",
@@ -907,19 +1019,28 @@
       "kind": "government",
       "probe": {
         "status": "completed",
-        "observations": 1,
-        "observed_at": "2026-10-25T11:51:53.235Z",
-        "last_action_status": "completed",
-        "last_stop_reason": "browser_actions_complete",
-        "last_text_chars": 3327
+        "observations": 2,
+        "observed_at": "2026-10-29T00:14:40.789Z",
+        "last_action_status": "captured",
+        "last_stop_reason": "stable_after_3_scrolls",
+        "last_text_chars": 317
       },
       "verification": {
-        "page": "untested",
-        "search": "untested",
-        "detail": "untested",
+        "page": "verified",
+        "search": "verified",
+        "detail": "verified",
         "statistics": "untested",
         "media": "untested"
-      }
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://www.zycg.gov.cn/freecms/site/zygjjgzfcgzx/searchlist/index.html?searchContent=%E7%A9%BA%E8%B0%83",
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 10 条含关键词结果，已打开并读到详情正文；“电梯”复测 10 条，详情可读"
+      ]
     },
     {
       "id": "chinabidding-gov",
@@ -1012,19 +1133,28 @@
       "kind": "tender_aggregator",
       "probe": {
         "status": "completed",
-        "observations": 1,
-        "observed_at": "2026-10-25T11:52:35.332Z",
-        "last_action_status": "completed",
-        "last_stop_reason": "browser_actions_complete",
-        "last_text_chars": 4957
+        "observations": 2,
+        "observed_at": "2026-10-29T00:15:02.464Z",
+        "last_action_status": "captured",
+        "last_stop_reason": "stable_after_3_scrolls",
+        "last_text_chars": 1938
       },
       "verification": {
-        "page": "untested",
-        "search": "untested",
-        "detail": "untested",
+        "page": "verified",
+        "search": "verified",
+        "detail": "verified",
         "statistics": "untested",
         "media": "untested"
-      }
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://ss.ebnew.com/tradingSearch/index.htm?key=%E7%A9%BA%E8%B0%83",
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "华为"
+      },
+      "notes": [
+        "2026-10-29 已执行站内搜索，结果页未出现含关键词的公告；可能为结果异步加载或点中非结果控件，需按当前 DOM 复核"
+      ]
     },
     {
       "id": "zbytb",
@@ -1040,12 +1170,20 @@
         "last_text_chars": 0
       },
       "verification": {
-        "page": "untested",
-        "search": "untested",
+        "page": "verified",
+        "search": "failed",
         "detail": "untested",
         "statistics": "untested",
         "media": "untested"
-      }
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "no_visible_search",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框；需从栏目列表页或站内检索页进入"
+      ]
     },
     {
       "id": "86ztb",
@@ -1082,12 +1220,21 @@
         "last_text_chars": 7993
       },
       "verification": {
-        "page": "untested",
-        "search": "untested",
-        "detail": "untested",
+        "page": "verified",
+        "search": "verified",
+        "detail": "verified",
         "statistics": "untested",
         "media": "untested"
-      }
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://www.jianyu360.cn/jylab/supsearch/index.html?keywords=%E7%A9%BA%E8%B0%83&selectType=title&searchGroup=1",
+        "search_method": "搜索框回车",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 3 条含关键词结果，已打开并读到详情正文；“电梯”复测 3 条"
+      ]
     },
     {
       "id": "zhaobiao-cn",
@@ -1103,12 +1250,20 @@
         "last_text_chars": 15600
       },
       "verification": {
-        "page": "untested",
-        "search": "untested",
+        "page": "verified",
+        "search": "verified",
         "detail": "untested",
         "statistics": "untested",
         "media": "untested"
-      }
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 51 条含关键词结果，详情未读；“电梯”复测 50 条"
+      ]
     },
     {
       "id": "chinabidding-portal",
@@ -1145,12 +1300,21 @@
         "last_text_chars": 5369
       },
       "verification": {
-        "page": "untested",
-        "search": "untested",
+        "page": "verified",
+        "search": "failed",
         "detail": "untested",
         "statistics": "untested",
         "media": "untested"
-      }
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://jst.cbi360.net/company?companyname=%E7%A9%BA%E8%B0%83",
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 已执行站内搜索，结果页未出现含关键词的公告；可能为结果异步加载或点中非结果控件，需按当前 DOM 复核"
+      ]
     },
     {
       "id": "jianzhuku",
@@ -1167,11 +1331,19 @@
       },
       "verification": {
         "page": "untested",
-        "search": "untested",
-        "detail": "untested",
+        "search": "verified",
+        "detail": "verified",
         "statistics": "untested",
         "media": "untested"
-      }
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 1 条含关键词结果，已打开并读到详情正文；“电梯”复测 0 条"
+      ]
     },
     {
       "id": "lubanlebiao",
@@ -1292,12 +1464,20 @@
         "last_text_chars": 4132
       },
       "verification": {
-        "page": "untested",
-        "search": "untested",
+        "page": "verified",
+        "search": "failed",
         "detail": "untested",
         "statistics": "untested",
         "media": "untested"
-      }
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 已执行站内搜索，结果页未出现含关键词的公告；可能为结果异步加载或点中非结果控件，需按当前 DOM 复核"
+      ]
     },
     {
       "id": "crec",
@@ -1313,12 +1493,20 @@
         "last_text_chars": 1848
       },
       "verification": {
-        "page": "untested",
-        "search": "untested",
+        "page": "verified",
+        "search": "failed",
         "detail": "untested",
         "statistics": "untested",
         "media": "untested"
-      }
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "no_visible_search",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框；需从栏目列表页或站内检索页进入"
+      ]
     },
     {
       "id": "crcc",
@@ -1334,12 +1522,20 @@
         "last_text_chars": 5044
       },
       "verification": {
-        "page": "untested",
-        "search": "untested",
+        "page": "verified",
+        "search": "failed",
         "detail": "untested",
         "statistics": "untested",
         "media": "untested"
-      }
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "search_toggle_without_input",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框；需从栏目列表页或站内检索页进入"
+      ]
     },
     {
       "id": "ccccltd",
@@ -1355,12 +1551,20 @@
         "last_text_chars": 0
       },
       "verification": {
-        "page": "untested",
-        "search": "untested",
+        "page": "verified",
+        "search": "failed",
         "detail": "untested",
         "statistics": "untested",
         "media": "untested"
-      }
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "no_visible_search",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框（地址无法访问）；需从栏目列表页或站内检索页进入"
+      ]
     },
     {
       "id": "crbidding",
@@ -1481,12 +1685,21 @@
         "last_text_chars": 2375
       },
       "verification": {
-        "page": "untested",
-        "search": "untested",
-        "detail": "untested",
+        "page": "verified",
+        "search": "verified",
+        "detail": "verified",
         "statistics": "untested",
         "media": "untested"
-      }
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://www.bidding.csg.cn/dbsearch.jspx?q=%E7%A9%BA%E8%B0%83",
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 11 条含关键词结果，已打开并读到详情正文；“电梯”复测 14 条，详情可读"
+      ]
     },
     {
       "id": "cgnpc",
@@ -1502,12 +1715,20 @@
         "last_text_chars": 3124
       },
       "verification": {
-        "page": "untested",
-        "search": "untested",
+        "page": "verified",
+        "search": "failed",
         "detail": "untested",
         "statistics": "untested",
         "media": "untested"
-      }
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 已执行站内搜索，结果页未出现含关键词的公告；可能为结果异步加载或点中非结果控件，需按当前 DOM 复核"
+      ]
     },
     {
       "id": "gsxt",
@@ -1523,12 +1744,19 @@
         "last_text_chars": 0
       },
       "verification": {
-        "page": "untested",
-        "search": "untested",
+        "page": "verified",
+        "search": "failed",
         "detail": "untested",
         "statistics": "untested",
         "media": "untested"
-      }
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "query_sample": "华为"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框（连接中断）；需从栏目列表页或站内检索页进入"
+      ]
     },
     {
       "id": "creditchina",
@@ -1544,12 +1772,20 @@
         "last_text_chars": 0
       },
       "verification": {
-        "page": "untested",
-        "search": "untested",
+        "page": "verified",
+        "search": "blocked",
         "detail": "untested",
         "statistics": "untested",
         "media": "untested"
-      }
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "no_visible_search",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 搜索被拦截：stable_after_3_scrolls"
+      ]
     },
     {
       "id": "aiqicha",
@@ -1565,12 +1801,20 @@
         "last_text_chars": 17
       },
       "verification": {
-        "page": "untested",
-        "search": "untested",
+        "page": "verified",
+        "search": "blocked",
         "detail": "untested",
         "statistics": "untested",
         "media": "untested"
-      }
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "站内搜索地址模板",
+        "query_sample": "华为"
+      },
+      "notes": [
+        "2026-10-29 搜索被拦截：需要登录"
+      ]
     },
     {
       "id": "qixin",
@@ -1586,12 +1830,20 @@
         "last_text_chars": 1111
       },
       "verification": {
-        "page": "untested",
-        "search": "untested",
+        "page": "verified",
+        "search": "blocked",
         "detail": "untested",
         "statistics": "untested",
         "media": "untested"
-      }
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "华为"
+      },
+      "notes": [
+        "2026-10-29 搜索被拦截：需要登录"
+      ]
     },
     {
       "id": "tianyan-qy",
@@ -5143,12 +5395,20 @@
         "last_text_chars": 3429
       },
       "verification": {
-        "page": "untested",
-        "search": "untested",
+        "page": "verified",
+        "search": "failed",
         "detail": "untested",
         "statistics": "untested",
         "media": "untested"
-      }
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 已执行站内搜索，结果页未出现含关键词的公告；可能为结果异步加载或点中非结果控件，需按当前 DOM 复核"
+      ]
     },
     {
       "id": "caigou2003",
@@ -5170,11 +5430,20 @@
       },
       "verification": {
         "page": "untested",
-        "search": "untested",
-        "detail": "untested",
+        "search": "verified",
+        "detail": "verified",
         "statistics": "untested",
         "media": "untested"
-      }
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://www.caigou2003.com/web/search-result-list.html?inputSearch=%E7%A9%BA%E8%B0%83",
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 3 条含关键词结果，已打开并读到详情正文；“电梯”复测 3 条，详情可读"
+      ]
     },
     {
       "id": "antd",
@@ -5520,6 +5789,3474 @@
       },
       "notes": [
         "官方设计指南，尚未实测。"
+      ]
+    },
+    {
+      "id": "plap",
+      "name": "军队采购网",
+      "url": "https://www.plap.mil.cn/",
+      "kind": "national_procurement",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 已执行站内搜索，结果页未出现含关键词的公告；可能为结果异步加载或点中非结果控件，需按当前 DOM 复核"
+      ]
+    },
+    {
+      "id": "zgzfcgw",
+      "name": "中国政府采购招标网",
+      "url": "https://www.chinabidding.org.cn/",
+      "kind": "national_procurement",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "no_visible_search",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框；需从栏目列表页或站内检索页进入"
+      ]
+    },
+    {
+      "id": "xunbiaobao",
+      "name": "百度寻标宝",
+      "url": "https://xunbiaobao.baidu.com/",
+      "kind": "tender_aggregator",
+      "verification": {
+        "page": "verified",
+        "search": "verified",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://xunbiaobao.baidu.com/s?q=%E7%A9%BA%E8%B0%83&tab=0",
+        "search_method": "搜索框回车",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 3 条含关键词结果，已打开并读到详情正文；“电梯”复测 0 条"
+      ]
+    },
+    {
+      "id": "okcis",
+      "name": "招标采购导航网",
+      "url": "https://www.okcis.cn/",
+      "kind": "tender_aggregator",
+      "verification": {
+        "page": "verified",
+        "search": "verified",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 2 条含关键词结果，已打开并读到详情正文；“电梯”复测 1 条，详情可读"
+      ],
+      "probe": {
+        "status": "completed",
+        "observations": 1,
+        "observed_at": "2026-10-29T00:15:14.762Z",
+        "last_action_status": "captured",
+        "last_stop_reason": "stable_after_3_scrolls",
+        "last_text_chars": 4942
+      }
+    },
+    {
+      "id": "bidizhaobiao",
+      "name": "比地招标网",
+      "url": "https://www.bidizhaobiao.com/",
+      "kind": "tender_aggregator",
+      "verification": {
+        "page": "verified",
+        "search": "blocked",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "no_visible_search",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 搜索被拦截：访问被拒绝"
+      ]
+    },
+    {
+      "id": "dlzb",
+      "name": "中国电力招标网",
+      "url": "https://www.dlzb.com/",
+      "kind": "tender_aggregator",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "no_visible_search",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框；需从栏目列表页或站内检索页进入"
+      ]
+    },
+    {
+      "id": "dlnyzb",
+      "name": "电力能源招标网",
+      "url": "https://www.dlnyzb.com/",
+      "kind": "tender_aggregator",
+      "verification": {
+        "page": "verified",
+        "search": "verified",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://www.dlnyzb.com/search?kw=%E7%A9%BA%E8%B0%83",
+        "search_method": "搜索框回车",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 24 条含关键词结果，已打开并读到详情正文；“电梯”复测 24 条，详情可读"
+      ],
+      "probe": {
+        "status": "completed",
+        "observations": 1,
+        "observed_at": "2026-10-29T00:15:11.600Z",
+        "last_action_status": "captured",
+        "last_stop_reason": "stable_after_3_scrolls",
+        "last_text_chars": 3179
+      }
+    },
+    {
+      "id": "chengezhao",
+      "name": "城e招",
+      "url": "https://www.chengezhao.com/",
+      "kind": "tender_aggregator",
+      "verification": {
+        "page": "verified",
+        "search": "verified",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://www.chengezhao.com/cms/search/?q=%E7%A9%BA%E8%B0%83",
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 100 条含关键词结果，已打开并读到详情正文；“电梯”复测 86 条，详情可读"
+      ],
+      "probe": {
+        "status": "completed",
+        "observations": 1,
+        "observed_at": "2026-10-29T00:15:13.083Z",
+        "last_action_status": "captured",
+        "last_stop_reason": "stable_after_3_scrolls",
+        "last_text_chars": 899
+      }
+    },
+    {
+      "id": "coopaa",
+      "name": "采购与招标信息网",
+      "url": "https://www.coopaa.com/",
+      "kind": "tender_aggregator",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "no_visible_search",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框；需从栏目列表页或站内检索页进入"
+      ]
+    },
+    {
+      "id": "dljczb",
+      "name": "电力基建招标网",
+      "url": "https://www.dljczb.com/",
+      "kind": "tender_aggregator",
+      "verification": {
+        "page": "verified",
+        "search": "verified",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://www.dljczb.com/zhaobiao/search.php?kw=%E7%A9%BA%E8%B0%83",
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 20 条含关键词结果，已打开并读到详情正文；“电梯”复测 19 条，详情可读"
+      ]
+    },
+    {
+      "id": "china-zbcg",
+      "name": "中国招标采购网",
+      "url": "https://www.china-zbcg.com/",
+      "kind": "tender_aggregator",
+      "verification": {
+        "page": "blocked",
+        "search": "blocked",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "no_visible_search",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 搜索被拦截：访问被拒绝"
+      ]
+    },
+    {
+      "id": "gxzbcg",
+      "name": "广西招标采购网",
+      "url": "https://www.gxzbcg.cn/",
+      "kind": "tender_aggregator",
+      "verification": {
+        "page": "blocked",
+        "search": "blocked",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "no_visible_search",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 搜索被拦截：需要人工验证"
+      ]
+    },
+    {
+      "id": "zszbcg",
+      "name": "中山招标采购网",
+      "url": "https://www.zszbcg.cn/",
+      "kind": "tender_aggregator",
+      "verification": {
+        "page": "verified",
+        "search": "verified",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://www.zszbcg.cn/search/?keyword=%E7%A9%BA%E8%B0%83&city=0&datetime=0",
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 5 条含关键词结果，已打开并读到详情正文；“电梯”复测 5 条，详情可读"
+      ]
+    },
+    {
+      "id": "shbid",
+      "name": "上海招标网",
+      "url": "https://www.shbid.com/",
+      "kind": "tender_aggregator",
+      "verification": {
+        "page": "verified",
+        "search": "verified",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 10 条含关键词结果，详情未读；“电梯”复测 10 条"
+      ]
+    },
+    {
+      "id": "zbcg-cn",
+      "name": "招标采购网",
+      "url": "https://www.zbcg.cn/",
+      "kind": "tender_aggregator",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "no_visible_search",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框；需从栏目列表页或站内检索页进入"
+      ]
+    },
+    {
+      "id": "bidnews",
+      "name": "招标投标网",
+      "url": "https://www.bidnews.cn/",
+      "kind": "tender_aggregator",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "no_visible_search",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框；需从栏目列表页或站内检索页进入"
+      ]
+    },
+    {
+      "id": "ccgp-beijing",
+      "name": "北京市政府采购网",
+      "url": "http://www.ccgp-beijing.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "no_visible_search",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框；需从栏目列表页或站内检索页进入"
+      ]
+    },
+    {
+      "id": "ccgp-tianjin",
+      "name": "天津市政府采购网",
+      "url": "http://www.ccgp-tianjin.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "verified",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 15 条含关键词结果，已打开并读到详情正文；“电梯”复测 15 条，详情可读"
+      ]
+    },
+    {
+      "id": "zfcg-sh",
+      "name": "上海政府采购网",
+      "url": "https://www.zfcg.sh.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 已执行站内搜索，结果页未出现含关键词的公告；可能为结果异步加载或点中非结果控件，需按当前 DOM 复核"
+      ]
+    },
+    {
+      "id": "ccgp-chongqing",
+      "name": "重庆市政府采购网",
+      "url": "https://www.ccgp-chongqing.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "verified",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 10 条含关键词结果，详情未读；“电梯”复测 10 条，详情可读"
+      ]
+    },
+    {
+      "id": "ccgp-hebei",
+      "name": "河北省政府采购网",
+      "url": "http://www.ccgp-hebei.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "blocked",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 搜索被拦截：搜索提交结果未确认"
+      ]
+    },
+    {
+      "id": "ccgp-shanxi",
+      "name": "山西省政府采购网",
+      "url": "http://www.ccgp-shanxi.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "blocked",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 搜索被拦截：页面打开失败"
+      ]
+    },
+    {
+      "id": "ccgp-neimenggu",
+      "name": "内蒙古政府采购网",
+      "url": "http://www.ccgp-neimenggu.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 已执行站内搜索，结果页未出现含关键词的公告；可能为结果异步加载或点中非结果控件，需按当前 DOM 复核"
+      ]
+    },
+    {
+      "id": "ccgp-liaoning",
+      "name": "辽宁政府采购网",
+      "url": "http://www.ccgp-liaoning.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "no_visible_search",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框；需从栏目列表页或站内检索页进入"
+      ]
+    },
+    {
+      "id": "ccgp-jilin",
+      "name": "吉林省政府采购网",
+      "url": "http://www.ccgp-jilin.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "blocked",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 搜索被拦截：页面打开失败"
+      ]
+    },
+    {
+      "id": "hljcg",
+      "name": "黑龙江政府采购网",
+      "url": "https://hljcg.hlj.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 已执行站内搜索，结果页未出现含关键词的公告；可能为结果异步加载或点中非结果控件，需按当前 DOM 复核"
+      ]
+    },
+    {
+      "id": "ccgp-jiangsu",
+      "name": "江苏政府采购网",
+      "url": "http://www.ccgp-jiangsu.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "no_visible_search",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框；需从栏目列表页或站内检索页进入"
+      ]
+    },
+    {
+      "id": "zcy-zj",
+      "name": "浙江政府采购网",
+      "url": "https://zfcg.czt.zj.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 已执行站内搜索，结果页未出现含关键词的公告；可能为结果异步加载或点中非结果控件，需按当前 DOM 复核"
+      ]
+    },
+    {
+      "id": "ccgp-anhui",
+      "name": "安徽省政府采购网",
+      "url": "http://www.ccgp-anhui.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 已执行站内搜索，结果页未出现含关键词的公告；可能为结果异步加载或点中非结果控件，需按当前 DOM 复核"
+      ]
+    },
+    {
+      "id": "ccgp-fujian",
+      "name": "福建省政府采购网",
+      "url": "http://www.ccgp-fujian.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框（页面打开失败）；需从栏目列表页或站内检索页进入"
+      ]
+    },
+    {
+      "id": "ccgp-shandong",
+      "name": "山东省政府采购网",
+      "url": "http://www.ccgp-shandong.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "verified",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://www.ccgp-shandong.gov.cn/search?title=%E7%A9%BA%E8%B0%83&type=01&area=&cityType=",
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 3 条含关键词结果，已打开并读到详情正文；“电梯”复测 3 条，详情可读"
+      ]
+    },
+    {
+      "id": "ccgp-henan",
+      "name": "河南省政府采购网",
+      "url": "http://www.ccgp-henan.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框（页面打开失败）；需从栏目列表页或站内检索页进入"
+      ]
+    },
+    {
+      "id": "ccgp-hubei",
+      "name": "湖北省政府采购网",
+      "url": "http://www.ccgp-hubei.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "verified",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 1 条含关键词结果，已打开并读到详情正文；“电梯”复测 1 条，详情可读"
+      ]
+    },
+    {
+      "id": "ccgp-hunan",
+      "name": "湖南省政府采购网",
+      "url": "http://www.ccgp-hunan.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "no_visible_search",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框；需从栏目列表页或站内检索页进入"
+      ]
+    },
+    {
+      "id": "ccgp-guangxi",
+      "name": "广西政府采购网",
+      "url": "http://zfcg.gxzf.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 已执行站内搜索，结果页未出现含关键词的公告；可能为结果异步加载或点中非结果控件，需按当前 DOM 复核"
+      ]
+    },
+    {
+      "id": "ccgp-hainan",
+      "name": "海南省政府采购网",
+      "url": "https://www.ccgp-hainan.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 已执行站内搜索，结果页未出现含关键词的公告；可能为结果异步加载或点中非结果控件，需按当前 DOM 复核"
+      ]
+    },
+    {
+      "id": "ccgp-sichuan",
+      "name": "四川政府采购网",
+      "url": "http://www.ccgp-sichuan.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 已执行站内搜索，结果页未出现含关键词的公告；可能为结果异步加载或点中非结果控件，需按当前 DOM 复核"
+      ]
+    },
+    {
+      "id": "ccgp-guizhou",
+      "name": "贵州省政府采购网",
+      "url": "http://www.ccgp-guizhou.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框（页面打开失败）；需从栏目列表页或站内检索页进入"
+      ]
+    },
+    {
+      "id": "ccgp-yunnan",
+      "name": "云南省政府采购网",
+      "url": "http://www.ccgp-yunnan.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "no_visible_search",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框；需从栏目列表页或站内检索页进入"
+      ]
+    },
+    {
+      "id": "ccgp-xizang",
+      "name": "西藏政府采购网",
+      "url": "http://www.ccgp-xizang.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "no_visible_search",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框；需从栏目列表页或站内检索页进入"
+      ]
+    },
+    {
+      "id": "ccgp-shaanxi",
+      "name": "陕西省政府采购网",
+      "url": "http://www.ccgp-shaanxi.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://www.ccgp-shaanxi.gov.cn/cms-sx/site/shanxi/qwjsy/index.html?searchContentBT=%E7%A9%BA%E8%B0%83",
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 已执行站内搜索，结果页未出现含关键词的公告；可能为结果异步加载或点中非结果控件，需按当前 DOM 复核"
+      ]
+    },
+    {
+      "id": "ccgp-gansu",
+      "name": "甘肃政府采购网",
+      "url": "http://www.ccgp-gansu.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 已执行站内搜索，结果页未出现含关键词的公告；可能为结果异步加载或点中非结果控件，需按当前 DOM 复核"
+      ]
+    },
+    {
+      "id": "ccgp-qinghai",
+      "name": "青海政府采购网",
+      "url": "http://www.ccgp-qinghai.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框（页面打开失败）；需从栏目列表页或站内检索页进入"
+      ]
+    },
+    {
+      "id": "ccgp-ningxia",
+      "name": "宁夏政府采购网",
+      "url": "http://www.ccgp-ningxia.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://www.ccgp-ningxia.gov.cn/NXGPPSP_CMS/public/NXGPP_MAIN/dynamic/contents/QZCX/index.jsp?cid=640000_2073&sid=402848249632119e01963269c8440007&allKeyword=%E7%A9%BA%E8%B0%83",
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 已执行站内搜索，结果页未出现含关键词的公告；可能为结果异步加载或点中非结果控件，需按当前 DOM 复核"
+      ]
+    },
+    {
+      "id": "ccgp-xinjiang",
+      "name": "新疆政府采购网",
+      "url": "http://www.ccgp-xinjiang.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框（页面打开失败）；需从栏目列表页或站内检索页进入"
+      ]
+    },
+    {
+      "id": "ccgp-ningbo",
+      "name": "宁波政府采购网",
+      "url": "http://www.ccgp-ningbo.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://www.ccgp-ningbo.gov.cn/cat/cat58/index.html?SearchName=%E7%A9%BA%E8%B0%83",
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 已执行站内搜索，结果页未出现含关键词的公告；可能为结果异步加载或点中非结果控件，需按当前 DOM 复核"
+      ]
+    },
+    {
+      "id": "ccgp-xiamen",
+      "name": "厦门政府采购网",
+      "url": "http://www.ccgp-xiamen.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://www.ccgp-xiamen.gov.cn/maincms-web/qwjsy?searchKey=%E7%A9%BA%E8%B0%83",
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 已执行站内搜索，结果页未出现含关键词的公告；可能为结果异步加载或点中非结果控件，需按当前 DOM 复核"
+      ]
+    },
+    {
+      "id": "ccgp-dalian",
+      "name": "大连政府采购网",
+      "url": "http://www.ccgp-dalian.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 已执行站内搜索，结果页未出现含关键词的公告；可能为结果异步加载或点中非结果控件，需按当前 DOM 复核"
+      ]
+    },
+    {
+      "id": "ccgp-qingdao",
+      "name": "青岛政府采购网",
+      "url": "http://www.ccgp-qingdao.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "no_visible_search",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框；需从栏目列表页或站内检索页进入"
+      ]
+    },
+    {
+      "id": "ggzy-beijing",
+      "name": "北京市公共资源交易服务平台",
+      "url": "https://ggzyfw.beijing.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "verified",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://ggzyfw.beijing.gov.cn/elasticsearch/index.jsp?qt=%E7%A9%BA%E8%B0%83",
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 10 条含关键词结果，已打开并读到详情正文；“电梯”复测 10 条，详情可读"
+      ]
+    },
+    {
+      "id": "ggzy-tianjin",
+      "name": "天津市公共资源交易平台",
+      "url": "http://ggzy.zwfwb.tj.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "verified",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://ggzy.zwfwb.tj.gov.cn/search.htm?keyword=%E7%A9%BA%E8%B0%83",
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 10 条含关键词结果，已打开并读到详情正文；“电梯”复测 10 条，详情可读"
+      ]
+    },
+    {
+      "id": "ggzy-shanghai",
+      "name": "上海市公共资源交易平台",
+      "url": "https://www.shggzy.com/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "verified",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://www.shggzy.com/search.htm?q=%E7%A9%BA%E8%B0%83&channelId=&inDates=&startDate=&endDate=&cExt=&isIndex=y&scop=title",
+        "search_method": "站内搜索地址模板",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 10 条含关键词结果，已打开并读到详情正文；“电梯”复测 10 条，详情可读"
+      ]
+    },
+    {
+      "id": "ggzy-chongqing",
+      "name": "重庆市公共资源交易网",
+      "url": "https://www.cqggzy.com/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "verified",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://www.cqggzy.com/search?keyword=%E7%A9%BA%E8%B0%83",
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 10 条含关键词结果，已打开并读到详情正文；“电梯”复测 10 条，详情可读"
+      ]
+    },
+    {
+      "id": "ggzy-shanxi",
+      "name": "山西省公共资源交易平台",
+      "url": "https://prec.sxzwfw.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 已执行站内搜索，结果页未出现含关键词的公告；可能为结果异步加载或点中非结果控件，需按当前 DOM 复核"
+      ]
+    },
+    {
+      "id": "ggzy-nmg",
+      "name": "内蒙古公共资源交易平台",
+      "url": "http://ggzyjy.nmg.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "partial",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://ggzyjy.nmg.gov.cn/searchapp-all/#/Door?siteid=1500&keywords=%E7%A9%BA%E8%B0%83",
+        "search_method": "站内搜索地址模板",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 搜索后结果列表在正文中可见（含关键词 12 处），结果行由前端点击事件跳转、没有链接地址，详情需在页面中点击"
+      ]
+    },
+    {
+      "id": "ggzy-liaoning",
+      "name": "辽宁省公共资源交易平台",
+      "url": "https://ggzy.ln.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "verified",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://ggzy.ln.gov.cn/was5/web/search?myword=%E7%A9%BA%E8%B0%83&searchword=%E7%A9%BA%E8%B0%83&channelid=290487&StringEncoding=utf-8&searchscope=doctitle",
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 10 条含关键词结果，已打开并读到详情正文；“电梯”复测 10 条，详情可读"
+      ]
+    },
+    {
+      "id": "ggzy-jilin",
+      "name": "吉林省公共资源交易平台",
+      "url": "http://www.ggzyzx.jl.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "verified",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://www.ggzyzx.jl.gov.cn/kzgn/search/?q=%E7%A9%BA%E8%B0%83",
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 20 条含关键词结果，已打开并读到详情正文；“电梯”复测 20 条，详情可读"
+      ]
+    },
+    {
+      "id": "ggzy-hlj",
+      "name": "黑龙江省公共资源交易平台",
+      "url": "https://ggzyjyw.hlj.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "partial",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://ggzyjyw.hlj.gov.cn/searchResult.html?wd=%E7%A9%BA%E8%B0%83",
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 搜索后结果列表在正文中可见（含关键词 7 处），结果行由前端点击事件跳转、没有链接地址，详情需在页面中点击"
+      ]
+    },
+    {
+      "id": "ggzy-jiangsu",
+      "name": "江苏省公共资源交易平台",
+      "url": "http://jsggzy.jszwfw.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 已执行站内搜索，结果页未出现含关键词的公告；可能为结果异步加载或点中非结果控件，需按当前 DOM 复核"
+      ]
+    },
+    {
+      "id": "ggzy-zhejiang",
+      "name": "浙江省公共资源交易服务平台",
+      "url": "https://ggzy.zj.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "verified",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://ggzy.zj.gov.cn/search/fullsearch.html?wd=%E7%A9%BA%E8%B0%83",
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 9 条含关键词结果，已打开并读到详情正文；“电梯”复测 10 条，详情可读"
+      ]
+    },
+    {
+      "id": "ggzy-anhui",
+      "name": "安徽省公共资源交易监管网",
+      "url": "https://ggzy.ah.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 已执行站内搜索，结果页未出现含关键词的公告；可能为结果异步加载或点中非结果控件，需按当前 DOM 复核"
+      ]
+    },
+    {
+      "id": "ggzy-fujian",
+      "name": "福建省公共资源交易电子公共服务平台",
+      "url": "https://ggzyfw.fj.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "partial",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://ggzyfw.fj.gov.cn/search/?key=%E7%A9%BA%E8%B0%83",
+        "search_method": "站内搜索地址模板",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 搜索后结果列表在正文中可见（含关键词 9 处），结果行由前端点击事件跳转、没有链接地址，详情需在页面中点击"
+      ]
+    },
+    {
+      "id": "ggzy-jiangxi",
+      "name": "江西省公共资源交易网",
+      "url": "https://ggzy.jiangxi.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "verified",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://ggzy.jiangxi.gov.cn/jiangxisearch/fullsearch.html?wd=%E7%A9%BA%E8%B0%83&lanmu=",
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 8 条含关键词结果，已打开并读到详情正文；“电梯”复测 5 条，详情可读"
+      ]
+    },
+    {
+      "id": "ggzy-shandong",
+      "name": "山东省公共资源交易中心",
+      "url": "http://ggzyjyzx.shandong.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "partial",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://ggzyjyzx.shandong.gov.cn/jsearchfront/search.do?pagemode=result&appid=all&style=1&ck=0&pos=title%2Ccontent%2C_default_search&od=0&webid=428&tpl=1164&websiteid=370000000000110&q=%E7%A9%BA%E8%B0%83&submit=",
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 搜索后结果列表在正文中可见（含关键词 57 处），结果行由前端点击事件跳转、没有链接地址，详情需在页面中点击"
+      ]
+    },
+    {
+      "id": "ggzy-hubei",
+      "name": "湖北省公共资源交易电子服务系统",
+      "url": "https://www.hbggzyfwpt.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "no_visible_search",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框；需从栏目列表页或站内检索页进入"
+      ]
+    },
+    {
+      "id": "ggzy-hunan",
+      "name": "湖南省公共资源交易服务平台",
+      "url": "https://www.hnsggzy.com/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "verified",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://www.hnsggzy.com/#/sy/search?title=%E7%A9%BA%E8%B0%83",
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 3 条含关键词结果，已打开并读到详情正文；“电梯”复测 3 条"
+      ]
+    },
+    {
+      "id": "ggzy-guangxi",
+      "name": "广西公共资源交易平台",
+      "url": "http://ggzy.jgswj.gxzf.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框（页面打开失败）；需从栏目列表页或站内检索页进入"
+      ]
+    },
+    {
+      "id": "ggzy-hainan",
+      "name": "海南省公共资源交易服务中心",
+      "url": "https://ggzy.hainan.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "verified",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://ggzy.hainan.gov.cn/ggzyjy/search/fullsearch.html?wd=%E7%A9%BA%E8%B0%83&cnum=001",
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 1 条含关键词结果，已打开并读到详情正文；“电梯”复测 0 条"
+      ]
+    },
+    {
+      "id": "ggzy-sichuan",
+      "name": "四川省公共资源交易信息网",
+      "url": "https://ggzyjy.sc.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "verified",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://ggzyjy.sc.gov.cn/search/fullsearch.html?wd=%E7%A9%BA%E8%B0%83",
+        "search_method": "站内搜索地址模板",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 10 条含关键词结果，已打开并读到详情正文；“电梯”复测 10 条，详情可读"
+      ]
+    },
+    {
+      "id": "ggzy-guizhou",
+      "name": "贵州省公共资源交易云",
+      "url": "https://ggzy.guizhou.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "verified",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://ggzy.guizhou.gov.cn/so/search.shtml?tenantId=320&tenantIds=&configTenantId=&dataTypeId=1787&sign=a0a1114a-f200-4fa2-8a4a-00474f44cfdf&searchWord=%E7%A9%BA%E8%B0%83",
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 3 条含关键词结果，已打开并读到详情正文；“电梯”复测 0 条"
+      ]
+    },
+    {
+      "id": "ggzy-yunnan",
+      "name": "云南省公共资源交易电子服务系统",
+      "url": "https://ggzy.yn.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 已执行站内搜索，结果页未出现含关键词的公告；可能为结果异步加载或点中非结果控件，需按当前 DOM 复核"
+      ]
+    },
+    {
+      "id": "ggzy-shaanxi",
+      "name": "陕西省公共资源交易中心",
+      "url": "http://www.sxggzyjy.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "verified",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://www.sxggzyjy.cn/search/fullsearch.html?wd=%E7%A9%BA%E8%B0%83&cnum=001",
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 6 条含关键词结果，已打开并读到详情正文；“电梯”复测 2 条，详情可读"
+      ]
+    },
+    {
+      "id": "ggzy-gansu",
+      "name": "甘肃省公共资源交易网",
+      "url": "https://ggzyjy.gansu.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "no_visible_search",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框；需从栏目列表页或站内检索页进入"
+      ]
+    },
+    {
+      "id": "ggzy-qinghai",
+      "name": "青海省公共资源交易网",
+      "url": "https://www.qhggzyjy.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "verified",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://www.qhggzyjy.gov.cn/ggzy/search/fullsearch.html?wd=%E7%A9%BA%E8%B0%83",
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 2 条含关键词结果，已打开并读到详情正文；“电梯”复测 10 条，详情可读"
+      ]
+    },
+    {
+      "id": "ggzy-ningxia",
+      "name": "宁夏公共资源交易平台",
+      "url": "https://ggzyjy.fzggw.nx.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "verified",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://ggzyjy.fzggw.nx.gov.cn/search/fullsearch.html?wd=%E7%A9%BA%E8%B0%83",
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 2 条含关键词结果，已打开并读到详情正文；“电梯”复测 9 条，详情可读"
+      ]
+    },
+    {
+      "id": "ggzy-xinjiang",
+      "name": "新疆公共资源交易网",
+      "url": "https://ggzy.xinjiang.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "verified",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://ggzy.xinjiang.gov.cn/xinjiangggzy_new/search.html?wd=%E7%A9%BA%E8%B0%83",
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 2 条含关键词结果，已打开并读到详情正文；“电梯”复测 3 条，详情可读"
+      ]
+    },
+    {
+      "id": "ggzy-yantai",
+      "name": "烟台公共资源交易",
+      "url": "http://ggzyjy.yantai.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "verified",
+        "search": "verified",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://ggzyjy.yantai.gov.cn/search/fullsearch.html?wd=%E7%A9%BA%E8%B0%83",
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 2 条含关键词结果，已打开并读到详情正文；“电梯”复测 3 条，详情可读"
+      ]
+    },
+    {
+      "id": "sgcc",
+      "name": "国家电网新一代电子商务平台",
+      "url": "https://ecp.sgcc.com.cn/",
+      "kind": "state_enterprise",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 已执行站内搜索，结果页未出现含关键词的公告；可能为结果异步加载或点中非结果控件，需按当前 DOM 复核"
+      ]
+    },
+    {
+      "id": "sinopec",
+      "name": "中国石化物资采购电子商务平台",
+      "url": "https://ec.sinopec.com/",
+      "kind": "state_enterprise",
+      "verification": {
+        "page": "blocked",
+        "search": "blocked",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "no_visible_search",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 搜索被拦截：需要登录"
+      ]
+    },
+    {
+      "id": "cnpc",
+      "name": "中国石油招标投标网",
+      "url": "https://www.cnpcbidding.com/",
+      "kind": "state_enterprise",
+      "verification": {
+        "page": "blocked",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "search_toggle_without_input",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框；需从栏目列表页或站内检索页进入"
+      ]
+    },
+    {
+      "id": "cnooc",
+      "name": "中国海油采办业务管理与交易系统",
+      "url": "https://buy.cnooc.com.cn/",
+      "kind": "state_enterprise",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "no_visible_search",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框；需从栏目列表页或站内检索页进入"
+      ]
+    },
+    {
+      "id": "chng",
+      "name": "中国华能集团电子商务平台",
+      "url": "https://ec.chng.com.cn/",
+      "kind": "state_enterprise",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://ec.chng.com.cn/channel/home/#/search?value=%E7%A9%BA%E8%B0%83",
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 已执行站内搜索，结果页未出现含关键词的公告；可能为结果异步加载或点中非结果控件，需按当前 DOM 复核"
+      ]
+    },
+    {
+      "id": "cdt",
+      "name": "中国大唐集团电子商务平台",
+      "url": "https://www.cdt-ec.com/",
+      "kind": "state_enterprise",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "搜索框回车",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 已执行站内搜索，结果页未出现含关键词的公告；可能为结果异步加载或点中非结果控件，需按当前 DOM 复核"
+      ]
+    },
+    {
+      "id": "chd",
+      "name": "中国华电集团电子商务平台",
+      "url": "https://www.chdtp.com.cn/",
+      "kind": "state_enterprise",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 已执行站内搜索，结果页未出现含关键词的公告；可能为结果异步加载或点中非结果控件，需按当前 DOM 复核"
+      ]
+    },
+    {
+      "id": "spic",
+      "name": "国家电投电子商务平台",
+      "url": "https://ebid.espic.com.cn/",
+      "kind": "state_enterprise",
+      "verification": {
+        "page": "blocked",
+        "search": "blocked",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "no_visible_search",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 搜索被拦截：需要登录"
+      ]
+    },
+    {
+      "id": "chnenergy",
+      "name": "国家能源集团招标网",
+      "url": "https://www.chnenergybidding.com.cn/",
+      "kind": "state_enterprise",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://www.chnenergybidding.com.cn/bidsearch/fullsearch.html?wd=%E7%A9%BA%E8%B0%83&selectedSearchCategory=0&selectedIndexCategory=&startDateTime=19900101&endDateTime=&searchType=default&selectValue=",
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 已执行站内搜索，结果页未出现含关键词的公告；可能为结果异步加载或点中非结果控件，需按当前 DOM 复核"
+      ]
+    },
+    {
+      "id": "cnnc",
+      "name": "中国核工业集团电子采购平台",
+      "url": "https://www.cnncecp.com/",
+      "kind": "state_enterprise",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 已执行站内搜索，结果页未出现含关键词的公告；可能为结果异步加载或点中非结果控件，需按当前 DOM 复核"
+      ]
+    },
+    {
+      "id": "ctg",
+      "name": "中国三峡电子采购平台",
+      "url": "https://eps.ctg.com.cn/",
+      "kind": "state_enterprise",
+      "verification": {
+        "page": "verified",
+        "search": "verified",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://eps.ctg.com.cn/cms/search.htm?kwd=%E7%A9%BA%E8%B0%83&channelIds=204%2C210%2C211%2C212%2C213%2C214%2C216%2C217%2C218%2C219%2C220%2C221%2C222%2C223%2C224",
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 1 条含关键词结果，已打开并读到详情正文；“电梯”复测 5 条，详情可读"
+      ]
+    },
+    {
+      "id": "powerchina",
+      "name": "中国电建集中采购电子平台",
+      "url": "https://ec.powerchina.cn/",
+      "kind": "state_enterprise",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框（搜索提交结果未确认）；需从栏目列表页或站内检索页进入"
+      ]
+    },
+    {
+      "id": "ceec",
+      "name": "中国能建电子采购平台",
+      "url": "https://ec.ceec.net.cn/",
+      "kind": "state_enterprise",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "no_visible_search",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框；需从栏目列表页或站内检索页进入"
+      ]
+    },
+    {
+      "id": "cmcc",
+      "name": "中国移动采购与招标网",
+      "url": "https://b2b.10086.cn/",
+      "kind": "state_enterprise",
+      "verification": {
+        "page": "verified",
+        "search": "verified",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://b2b.10086.cn/#/searchPage?value=%E7%A9%BA%E8%B0%83&noticeType=ALL",
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 3 条含关键词结果，已打开并读到详情正文；“电梯”复测 3 条，详情可读"
+      ]
+    },
+    {
+      "id": "ctcc",
+      "name": "中国电信阳光采购网",
+      "url": "https://caigou.chinatelecom.com.cn/",
+      "kind": "state_enterprise",
+      "verification": {
+        "page": "verified",
+        "search": "partial",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://caigou.chinatelecom.com.cn/search?search=%E7%A9%BA%E8%B0%83",
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 搜索后结果列表在正文中可见（含关键词 10 处），结果行由前端点击事件跳转、没有链接地址，详情需在页面中点击"
+      ]
+    },
+    {
+      "id": "cucc",
+      "name": "中国联通采购与招标网",
+      "url": "https://www.chinaunicombidding.cn/",
+      "kind": "state_enterprise",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://www.chinaunicombidding.cn/bidInformation?wd=%E7%A9%BA%E8%B0%83",
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 已执行站内搜索，结果页未出现含关键词的公告；可能为结果异步加载或点中非结果控件，需按当前 DOM 复核"
+      ]
+    },
+    {
+      "id": "chinapost",
+      "name": "中国邮政集团采购",
+      "url": "https://www.chinapost.com.cn/",
+      "kind": "state_enterprise",
+      "verification": {
+        "page": "verified",
+        "search": "verified",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 20 条含关键词结果，已打开并读到详情正文；“电梯”复测 20 条，详情可读"
+      ]
+    },
+    {
+      "id": "sinochem",
+      "name": "中化集团电子招标平台",
+      "url": "https://e.sinochemitc.com/",
+      "kind": "state_enterprise",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "no_visible_search",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框；需从栏目列表页或站内检索页进入"
+      ]
+    },
+    {
+      "id": "minmetals",
+      "name": "中国五矿电子采购平台",
+      "url": "https://ec.minmetals.com.cn/",
+      "kind": "state_enterprise",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "no_visible_search",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框；需从栏目列表页或站内检索页进入"
+      ]
+    },
+    {
+      "id": "baowu",
+      "name": "中国宝武欧冶采购",
+      "url": "https://www.obei.com.cn/",
+      "kind": "state_enterprise",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "no_visible_search",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框；需从栏目列表页或站内检索页进入"
+      ]
+    },
+    {
+      "id": "csgc",
+      "name": "兵器工业集团采购",
+      "url": "https://www.norincogroup-ebuy.com/",
+      "kind": "state_enterprise",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "no_visible_search",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框；需从栏目列表页或站内检索页进入"
+      ]
+    },
+    {
+      "id": "chinacoal",
+      "name": "中煤招标网",
+      "url": "https://www.zmzb.com/",
+      "kind": "state_enterprise",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框（搜索提交结果未确认）；需从栏目列表页或站内检索页进入"
+      ]
+    },
+    {
+      "id": "sdic",
+      "name": "国投集团电子采购平台",
+      "url": "https://www.sdicc.com.cn/",
+      "kind": "state_enterprise",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "no_visible_search",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框；需从栏目列表页或站内检索页进入"
+      ]
+    },
+    {
+      "id": "shuidi",
+      "name": "水滴信用",
+      "url": "https://shuidi.cn/",
+      "kind": "company_registry",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "华为"
+      },
+      "notes": [
+        "2026-10-29 已执行站内搜索，结果页未出现含关键词的公告；可能为结果异步加载或点中非结果控件，需按当前 DOM 复核"
+      ]
+    },
+    {
+      "id": "hust-cgzx",
+      "name": "华中科技大学采购中心",
+      "url": "https://cgzx.hust.edu.cn/",
+      "kind": "procurement_discovered",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "no_visible_search",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框（地址无法访问）；需从栏目列表页或站内检索页进入"
+      ]
+    },
+    {
+      "id": "hust-hospital",
+      "name": "华中科技大学医院",
+      "url": "https://hospital.hust.edu.cn/",
+      "kind": "procurement_discovered",
+      "verification": {
+        "page": "verified",
+        "search": "verified",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "展开搜索入口后搜索",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 6 条含关键词结果，已打开并读到详情正文；“电梯”复测 0 条"
+      ]
+    },
+    {
+      "id": "buaa-zbcg",
+      "name": "北京航空航天大学招标采购",
+      "url": "https://zbcg.buaa.edu.cn/",
+      "kind": "procurement_discovered",
+      "verification": {
+        "page": "verified",
+        "search": "verified",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 12 条含关键词结果，已打开并读到详情正文；“电梯”复测 12 条，详情可读"
+      ]
+    },
+    {
+      "id": "jlu-nic",
+      "name": "吉林大学网络中心",
+      "url": "https://nic.jlu.edu.cn/",
+      "kind": "procurement_discovered",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "no_visible_search",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框；需从栏目列表页或站内检索页进入"
+      ]
+    },
+    {
+      "id": "whut-naoep",
+      "name": "武汉理工大学",
+      "url": "https://naoep.whut.edu.cn/",
+      "kind": "procurement_discovered",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "搜索框回车",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 已执行站内搜索，结果页未出现含关键词的公告；可能为结果异步加载或点中非结果控件，需按当前 DOM 复核"
+      ]
+    },
+    {
+      "id": "hau-zbb",
+      "name": "河南农业大学招标办",
+      "url": "https://zbb.hau.edu.cn/",
+      "kind": "procurement_discovered",
+      "verification": {
+        "page": "verified",
+        "search": "partial",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 搜索后结果列表在正文中可见（含关键词 36 处），结果行由前端点击事件跳转、没有链接地址，详情需在页面中点击"
+      ]
+    },
+    {
+      "id": "swjtu-bidding",
+      "name": "西南交通大学招标",
+      "url": "https://bidding.swjtu.edu.cn/",
+      "kind": "procurement_discovered",
+      "verification": {
+        "page": "verified",
+        "search": "verified",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 3 条含关键词结果，已打开并读到详情正文；“电梯”复测 3 条，详情可读"
+      ]
+    },
+    {
+      "id": "xzhmu-zbb",
+      "name": "徐州医科大学招标办",
+      "url": "https://zbb.xzhmu.edu.cn/",
+      "kind": "procurement_discovered",
+      "verification": {
+        "page": "verified",
+        "search": "verified",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 15 条含关键词结果，已打开并读到详情正文；“电梯”复测 15 条，详情可读"
+      ]
+    },
+    {
+      "id": "mnnu-zbzx",
+      "name": "闽南师范大学招标中心",
+      "url": "https://zbzx.mnnu.edu.cn/",
+      "kind": "procurement_discovered",
+      "verification": {
+        "page": "verified",
+        "search": "verified",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 3 条含关键词结果，已打开并读到详情正文；“电梯”复测 3 条，详情可读"
+      ]
+    },
+    {
+      "id": "bupt",
+      "name": "北京邮电大学",
+      "url": "https://www.bupt.edu.cn/",
+      "kind": "procurement_discovered",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "no_visible_search",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框；需从栏目列表页或站内检索页进入"
+      ]
+    },
+    {
+      "id": "shanghaitech",
+      "name": "上海科技大学",
+      "url": "https://www.shanghaitech.edu.cn/",
+      "kind": "procurement_discovered",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "search_toggle_without_input",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框；需从栏目列表页或站内检索页进入"
+      ]
+    },
+    {
+      "id": "ustc-nsrl",
+      "name": "中国科大国家同步辐射实验室",
+      "url": "https://www.nsrl.ustc.edu.cn/",
+      "kind": "procurement_discovered",
+      "verification": {
+        "page": "blocked",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "no_visible_search",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框；需从栏目列表页或站内检索页进入"
+      ]
+    },
+    {
+      "id": "wyu",
+      "name": "五邑大学",
+      "url": "https://www.wyu.edu.cn/",
+      "kind": "procurement_discovered",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "no_visible_search",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框；需从栏目列表页或站内检索页进入"
+      ]
+    },
+    {
+      "id": "ipp-cas",
+      "name": "中科院等离子体所",
+      "url": "https://ipp.cas.cn/",
+      "kind": "procurement_discovered",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "no_visible_search",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框；需从栏目列表页或站内检索页进入"
+      ]
+    },
+    {
+      "id": "customs-gz",
+      "name": "广州海关",
+      "url": "http://guangzhou.customs.gov.cn/",
+      "kind": "procurement_discovered",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框（页面打开失败）；需从栏目列表页或站内检索页进入"
+      ]
+    },
+    {
+      "id": "customs-nc",
+      "name": "南昌海关",
+      "url": "http://nanchang.customs.gov.cn/",
+      "kind": "procurement_discovered",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框（页面打开失败）；需从栏目列表页或站内检索页进入"
+      ]
+    },
+    {
+      "id": "wjw-sz",
+      "name": "深圳市卫健委",
+      "url": "https://wjw.sz.gov.cn/",
+      "kind": "procurement_discovered",
+      "verification": {
+        "page": "verified",
+        "search": "verified",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://wjw.sz.gov.cn/fzlm/cjhjs/?keywords=%E7%A9%BA%E8%B0%83",
+        "search_method": "站内搜索地址模板",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 1 条含关键词结果，已打开并读到详情正文；“电梯”复测 0 条"
+      ]
+    },
+    {
+      "id": "dg-gov",
+      "name": "东莞市政府",
+      "url": "https://www.dg.gov.cn/",
+      "kind": "procurement_discovered",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://search.gd.gov.cn/search/all/769001?filterId=0&filterType=allCity&keywords=%E7%A9%BA%E8%B0%83",
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 已执行站内搜索，结果页未出现含关键词的公告；可能为结果异步加载或点中非结果控件，需按当前 DOM 复核"
+      ]
+    },
+    {
+      "id": "lg-gov",
+      "name": "深圳龙岗区政府",
+      "url": "https://www.lg.gov.cn/",
+      "kind": "procurement_discovered",
+      "verification": {
+        "page": "verified",
+        "search": "partial",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://www.lg.gov.cn/lgzfzx_search/index.html?searchKey=%E7%A9%BA%E8%B0%83",
+        "search_method": "站内搜索地址模板",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 搜索后结果列表在正文中可见（含关键词 68 处），结果行由前端点击事件跳转、没有链接地址，详情需在页面中点击"
+      ]
+    },
+    {
+      "id": "cma-gd",
+      "name": "广东省气象局",
+      "url": "http://gd.cma.gov.cn/",
+      "kind": "procurement_discovered",
+      "verification": {
+        "page": "verified",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 已执行站内搜索，结果页未出现含关键词的公告；可能为结果异步加载或点中非结果控件，需按当前 DOM 复核"
+      ]
+    },
+    {
+      "id": "ygcg-gz",
+      "name": "广州国企阳光采购信息发布平台",
+      "url": "https://ygcg.gzggzy.cn/",
+      "kind": "state_enterprise",
+      "verification": {
+        "page": "untested",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://ygcg.gzggzy.cn/search.htm?q=%E7%A9%BA%E8%B0%83",
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 已执行站内搜索，结果页未出现含关键词的公告；可能为结果异步加载或点中非结果控件，需按当前 DOM 复核"
+      ]
+    },
+    {
+      "id": "szggzy-new",
+      "name": "深圳公共资源交易中心（新）",
+      "url": "https://new.szggzy.com/",
+      "kind": "government",
+      "verification": {
+        "page": "untested",
+        "search": "verified",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 10 条含关键词结果，已打开并读到详情正文；“电梯”复测 10 条，详情可读"
+      ]
+    },
+    {
+      "id": "szggzy-zxcg",
+      "name": "深圳政府采购自行采购系统",
+      "url": "https://zxcg.szggzy.com/",
+      "kind": "government",
+      "verification": {
+        "page": "untested",
+        "search": "partial",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 搜索后结果列表在正文中可见（含关键词 10 处），结果行由前端点击事件跳转、没有链接地址，详情需在页面中点击"
+      ]
+    },
+    {
+      "id": "szggzy-wy",
+      "name": "深圳物业服务招标投标交易平台",
+      "url": "https://wy.szggzy.com/",
+      "kind": "government",
+      "verification": {
+        "page": "untested",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "no_visible_search",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框；需从栏目列表页或站内检索页进入"
+      ]
+    },
+    {
+      "id": "crrc2",
+      "name": "中国中车供应链管理",
+      "url": "https://www.crrcgc.cc/eportal/ui?pageId=7122725",
+      "kind": "state_enterprise",
+      "verification": {
+        "page": "untested",
+        "search": "verified",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://www.crrcgc.cc/search/pcRender?sr=score+desc&pageId=a2145400c4f14ac19f1ed231596a1b8f&appName=%E6%96%B0%E9%97%BB%E4%B8%AD%E5%BF%83&pNo=1&q=%E7%A9%BA%E8%B0%83",
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 10 条含关键词结果，已打开并读到详情正文；“电梯”复测 0 条"
+      ]
+    },
+    {
+      "id": "avic2",
+      "name": "航空工业电子招投标专区",
+      "url": "https://ebid.eavic.com/cms/index.htm",
+      "kind": "state_enterprise",
+      "verification": {
+        "page": "untested",
+        "search": "verified",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://ebid.eavic.com/cms/search.htm?kwd=%E7%A9%BA%E8%B0%83&channelIds=245%2C257%2C258%2C299%2C300%2C301%2C302%2C303%2C304%2C305%2C306%2C307%2C308%2C309%2C313%2C314%2C315",
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 10 条含关键词结果，已打开并读到详情正文；“电梯”复测 10 条，详情可读"
+      ]
+    },
+    {
+      "id": "casic2",
+      "name": "航天科工电子招投标专区",
+      "url": "https://bid.e-casic.com/cms/index.htm",
+      "kind": "state_enterprise",
+      "verification": {
+        "page": "untested",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://bid.e-casic.com/cms/search.htm?kwd=%E7%A9%BA%E8%B0%83&channelIds=245%2C257%2C258%2C299%2C300%2C301%2C302%2C303%2C304%2C305%2C306%2C307%2C308%2C309%2C313%2C314%2C315",
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 已执行站内搜索，结果页未出现含关键词的公告；可能为结果异步加载或点中非结果控件，需按当前 DOM 复核"
+      ]
+    },
+    {
+      "id": "ispacechina",
+      "name": "航天电子采购平台",
+      "url": "https://www.ispacechina.com/",
+      "kind": "state_enterprise",
+      "verification": {
+        "page": "untested",
+        "search": "blocked",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 搜索被拦截：需要登录"
+      ]
+    },
+    {
+      "id": "cec",
+      "name": "中国电子 CEC 电子采购平台",
+      "url": "https://www.cec-ec.com.cn/cms/index.htm",
+      "kind": "state_enterprise",
+      "verification": {
+        "page": "untested",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "no_visible_search",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框；需从栏目列表页或站内检索页进入"
+      ]
+    },
+    {
+      "id": "zfcg-edu",
+      "name": "教育部政府采购网",
+      "url": "https://www.zfcg.edu.cn/",
+      "kind": "national_procurement",
+      "verification": {
+        "page": "untested",
+        "search": "verified",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 6 条含关键词结果，已打开并读到详情正文；“电梯”复测 1 条，详情可读"
+      ]
+    },
+    {
+      "id": "weain",
+      "name": "武警采购",
+      "url": "https://www.weain.mil.cn/",
+      "kind": "national_procurement",
+      "verification": {
+        "page": "untested",
+        "search": "blocked",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 搜索被拦截：stable_after_3_scrolls"
+      ]
+    },
+    {
+      "id": "zhaobiao-zb",
+      "name": "招标网 zhaobiao.cn",
+      "url": "https://zb.zhaobiao.cn/",
+      "kind": "tender_aggregator",
+      "verification": {
+        "page": "untested",
+        "search": "verified",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://s.zhaobiao.cn/s?searchtype=zb&field=&queryword=%E7%A9%BA%E8%B0%83",
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 50 条含关键词结果，详情未读；“电梯”复测 51 条"
+      ]
+    },
+    {
+      "id": "zhaobiao-xm",
+      "name": "拟在建项目信息网",
+      "url": "https://xm.zhaobiao.cn/",
+      "kind": "tender_aggregator",
+      "verification": {
+        "page": "untested",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框（搜索提交结果未确认）；需从栏目列表页或站内检索页进入"
+      ]
+    },
+    {
+      "id": "bidgg",
+      "name": "中国交通招标网 bidgg",
+      "url": "https://www.bidgg.com/",
+      "kind": "tender_aggregator",
+      "verification": {
+        "page": "untested",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "no_visible_search",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框；需从栏目列表页或站内检索页进入"
+      ]
+    },
+    {
+      "id": "cazbtb",
+      "name": "中国招投标信息网",
+      "url": "http://www.cazbtb.cn/index.php",
+      "kind": "tender_aggregator",
+      "verification": {
+        "page": "untested",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "no_visible_search",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框；需从栏目列表页或站内检索页进入"
+      ]
+    },
+    {
+      "id": "gc-zb",
+      "name": "工程招标网 gc-zb",
+      "url": "https://www.gc-zb.com/",
+      "kind": "tender_aggregator",
+      "verification": {
+        "page": "untested",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 已执行站内搜索，结果页未出现含关键词的公告；可能为结果异步加载或点中非结果控件，需按当前 DOM 复核"
+      ]
+    },
+    {
+      "id": "zbwmy",
+      "name": "建设工程招标网",
+      "url": "https://www.zbwmy.com/",
+      "kind": "tender_aggregator",
+      "verification": {
+        "page": "untested",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "no_visible_search",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框；需从栏目列表页或站内检索页进入"
+      ]
+    },
+    {
+      "id": "zhongbiaowu",
+      "name": "中国工程建设招标网",
+      "url": "https://www.zhongbiaowu.com/",
+      "kind": "tender_aggregator",
+      "verification": {
+        "page": "untested",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "no_visible_search",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框；需从栏目列表页或站内检索页进入"
+      ]
+    },
+    {
+      "id": "zhaotoubiaowang",
+      "name": "招投标网 zhaotoubiaowang",
+      "url": "https://www.zhaotoubiaowang.com/",
+      "kind": "tender_aggregator",
+      "verification": {
+        "page": "untested",
+        "search": "verified",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://www.zhaotoubiaowang.com/company/list?name=%E7%A9%BA%E8%B0%83",
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 20 条含关键词结果，已打开并读到详情正文；“电梯”复测 20 条，详情可读"
+      ]
+    },
+    {
+      "id": "wuyezhaobiao",
+      "name": "物业招标网",
+      "url": "https://www.wuyezhaobiao.cn/",
+      "kind": "tender_aggregator",
+      "verification": {
+        "page": "untested",
+        "search": "verified",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 1 条含关键词结果，已打开并读到详情正文；“电梯”复测 4 条，详情可读"
+      ]
+    },
+    {
+      "id": "ceiea",
+      "name": "教育装备网",
+      "url": "https://www.ceiea.com/",
+      "kind": "tender_aggregator",
+      "verification": {
+        "page": "untested",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "no_visible_search",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框；需从栏目列表页或站内检索页进入"
+      ]
+    },
+    {
+      "id": "caigou-edu",
+      "name": "教育装备采购网",
+      "url": "https://www.caigou.com.cn/",
+      "kind": "tender_aggregator",
+      "verification": {
+        "page": "untested",
+        "search": "partial",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "observed_search_url": "https://www.caigou.com.cn/product_t1_4_q%E7%A9%BA%E8%B0%83.shtml",
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 搜索后结果列表在正文中可见（含关键词 88 处），结果行由前端点击事件跳转、没有链接地址，详情需在页面中点击"
+      ]
+    },
+    {
+      "id": "hqjyzb",
+      "name": "教育装备招标",
+      "url": "https://www.hqjyzb.cn/",
+      "kind": "tender_aggregator",
+      "verification": {
+        "page": "untested",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "no_visible_search",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框；需从栏目列表页或站内检索页进入"
+      ]
+    },
+    {
+      "id": "ixbang",
+      "name": "招标采购信息查询平台 ixbang",
+      "url": "https://www.ixbang.com/",
+      "kind": "tender_aggregator",
+      "verification": {
+        "page": "untested",
+        "search": "verified",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 1 条含关键词结果，已打开并读到详情正文；“电梯”复测 0 条"
+      ]
+    },
+    {
+      "id": "hjxxgs",
+      "name": "环境招标采购网",
+      "url": "https://www.hjxxgs.com/",
+      "kind": "tender_aggregator",
+      "verification": {
+        "page": "untested",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "no_visible_search",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框；需从栏目列表页或站内检索页进入"
+      ]
+    },
+    {
+      "id": "toobiao",
+      "name": "环保招标 toobiao",
+      "url": "https://huanbao.toobiao.com/",
+      "kind": "tender_aggregator",
+      "verification": {
+        "page": "untested",
+        "search": "blocked",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "no_visible_search",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 搜索被拦截：需要登录"
+      ]
+    },
+    {
+      "id": "china0001",
+      "name": "全国拟建项目信息",
+      "url": "https://www.china0001.com.cn/",
+      "kind": "tender_aggregator",
+      "verification": {
+        "page": "untested",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 已执行站内搜索，结果页未出现含关键词的公告；可能为结果异步加载或点中非结果控件，需按当前 DOM 复核"
+      ]
+    },
+    {
+      "id": "szu-bidding",
+      "name": "深圳大学招标",
+      "url": "https://bidding.szu.edu.cn/",
+      "kind": "procurement_discovered",
+      "verification": {
+        "page": "untested",
+        "search": "verified",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "提交站内搜索表单",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 1 条含关键词结果，已打开并读到详情正文；“电梯”复测 0 条"
+      ]
+    },
+    {
+      "id": "szpu-zhaobiao",
+      "name": "深圳职业技术大学采购中心",
+      "url": "https://zhaobiao.szpu.edu.cn/",
+      "kind": "procurement_discovered",
+      "verification": {
+        "page": "untested",
+        "search": "verified",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "填写搜索框并点击搜索按钮",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 站内搜索“空调”返回 6 条含关键词结果，已打开并读到详情正文；“电梯”复测 5 条，详情可读"
+      ]
+    },
+    {
+      "id": "xiaocaizhao",
+      "name": "校采招（高校采购汇总）",
+      "url": "https://xiaocaizhao.waitchenx.cn/",
+      "kind": "tender_aggregator",
+      "verification": {
+        "page": "untested",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "search_method": "no_visible_search",
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页未识别到可用搜索框（地址无法访问）；需从栏目列表页或站内检索页进入"
+      ]
+    },
+    {
+      "id": "gdmzzb",
+      "name": "广东名志招标",
+      "url": "https://www.gdmzzb.com/",
+      "kind": "tender_aggregator",
+      "verification": {
+        "page": "failed",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页无法打开（unreachable），地址可能已迁移"
+      ]
+    },
+    {
+      "id": "china-bid",
+      "name": "中国招投标网",
+      "url": "https://www.china-bid.com/",
+      "kind": "tender_aggregator",
+      "verification": {
+        "page": "failed",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页无法打开（unreachable），地址可能已迁移"
+      ]
+    },
+    {
+      "id": "ccgp-jiangxi",
+      "name": "江西省政府采购网",
+      "url": "http://www.ccgp-jiangxi.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "failed",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页无法打开（unreachable），地址可能已迁移"
+      ]
+    },
+    {
+      "id": "zfcg-sz",
+      "name": "深圳政府采购",
+      "url": "http://zfcg.szggzy.com/",
+      "kind": "government",
+      "verification": {
+        "page": "failed",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页无法打开（unreachable），地址可能已迁移"
+      ]
+    },
+    {
+      "id": "ggzy-hebei",
+      "name": "河北省公共资源交易服务平台",
+      "url": "http://ggzy.hebei.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "failed",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页无法打开（unreachable），地址可能已迁移"
+      ]
+    },
+    {
+      "id": "ggzy-henan",
+      "name": "河南省公共资源交易中心",
+      "url": "http://hnggzy.henan.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "failed",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页无法打开（unreachable），地址可能已迁移"
+      ]
+    },
+    {
+      "id": "ggzy-guangzhou",
+      "name": "广州公共资源交易中心",
+      "url": "https://ggzy.gz.gov.cn/",
+      "kind": "government",
+      "verification": {
+        "page": "failed",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页无法打开（unreachable），地址可能已迁移"
+      ]
+    },
+    {
+      "id": "crrc",
+      "name": "中国中车电子采购平台",
+      "url": "https://cg.crrcgc.cc/",
+      "kind": "state_enterprise",
+      "verification": {
+        "page": "failed",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页无法打开（unreachable），地址可能已迁移"
+      ]
+    },
+    {
+      "id": "cofco",
+      "name": "中粮集团采购平台",
+      "url": "https://ecp.cofco.com/",
+      "kind": "state_enterprise",
+      "verification": {
+        "page": "failed",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页无法打开（unreachable），地址可能已迁移"
+      ]
+    },
+    {
+      "id": "avic",
+      "name": "中国航空工业集团采购",
+      "url": "https://www.aviccps.com/",
+      "kind": "state_enterprise",
+      "verification": {
+        "page": "failed",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页无法打开（unreachable），地址可能已迁移"
+      ]
+    },
+    {
+      "id": "casic",
+      "name": "航天云网",
+      "url": "https://www.casicloud.com/",
+      "kind": "state_enterprise",
+      "verification": {
+        "page": "failed",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页无法打开（unreachable），地址可能已迁移"
+      ]
+    },
+    {
+      "id": "cetc",
+      "name": "中国电科电子采购平台",
+      "url": "https://www.cetcbuy.com/",
+      "kind": "state_enterprise",
+      "verification": {
+        "page": "failed",
+        "search": "failed",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "verified_at": "2026-10-29",
+      "route": {
+        "query_sample": "空调"
+      },
+      "notes": [
+        "2026-10-29 首页无法打开（unreachable），地址可能已迁移"
       ]
     }
   ]
