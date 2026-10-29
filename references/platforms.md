@@ -1,6 +1,6 @@
 # 网站入口与历史验证
 
-以下为 2026-10-24 的 29 个历史正文样本，不是当前可用性承诺，也不是网站白名单。更多入口及逐项验证状态见 [可扩展网站库](site-library.json)；执行前读 [网站调研流程](site-research.md)，结合本轮目的补充新站。每次仍须核验真实页面、搜索、详情与权限。
+以下为 2026-10-24 的 29 个历史正文样本，不是当前可用性承诺，也不是网站白名单。这份名单同时是 `collect --platform all` 与 collect 默认选站使用的运行列表（`opencli/experience/seeds.json` 的 `verified_content_platforms`），两处要一起改；全部平台 ID 用 `node scripts/luz-crawl.mjs sites` 查看。更多入口及逐项验证状态见 [可扩展网站库](site-library.json)；执行前读 [网站调研流程](site-research.md)，结合本轮目的补充新站。每次仍须核验真实页面、搜索、详情与权限。
 
 | 网站 | 命令 ID | 已验证范围 |
 | :--- | :--- | :--- |
@@ -43,9 +43,9 @@
 - 最快路线：直接用当前已连接的浏览器配置，一条命令完成：`capture "短链" --download --profile <已连接 context_id> --out TASK_FOLDER`。短链会自动跳到 `/video/ID`。实测约 18 秒，视频保存为 `raw/media/video-*.mp4`，同时含音轨和视频轨，无需 FFmpeg 合并。
 - 不要运行 `headless-login` / `continue`，也不要换配置重试：即使旧任务停在 `login_required`，也应直接对原链接重新 capture，不必让用户登录。
 - 用户只要视频文件时，任务目录放到临时目录，只把 `raw/media/video-*.mp4` 用视频标题重命名后复制到目标位置；不要把 `--out` 指向桌面这类交付位置，否则会在那里生成 raw 和 HTML。
-- `doctor` 里同时连接多个浏览器配置时，必须加 `--profile`，否则前台重试会报 `Multiple Browser Bridge profiles are connected`。
 
-其他站点须重新验证。搜索候选、后台外壳和产品介绍页不算目标正文；浏览器动作见 [README](browser-api.md)。
+### 需要账号的后台
 
+蒲公英使用 `pgy`（别名 `pugongying`、`蒲公英`），入口 `https://pgy.xiaohongshu.com/`。这是需要账号权限的后台，介绍页和登录页不能视为数据采集完成；保留人工续接任务。分类与关键词计划见[分类工作流](workflows.md)。
 
-蒲公英使用 `pgy`（别名 `pugongying`、`蒲公英`），入口 `https://pgy.xiaohongshu.com/`。这是需要账号权限的后台，介绍页和登录页不能视为数据采集完成；保留人工续接任务。分类与关键词计划见 [分类工作流](workflows.md)。
+其他站点须重新验证。搜索候选、后台外壳和产品介绍页不算目标正文；浏览器动作见[浏览器接口](browser-api.md)。

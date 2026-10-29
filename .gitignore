@@ -13,3 +13,6 @@ __pycache__/
 *.zip
 *.log
 .DS_Store
+
+# Default output folder when no output preference is saved; deliverables belong outside the skill directory
+/outputs/

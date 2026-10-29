@@ -1,6 +1,6 @@
 # 浏览器操作 API · 1.0.0
 
-LuzCrawl 2.7.0。供 Agent、脚本和其他模型使用；每次调用返回 JSON。所有动作先校验，再在后台打开本任务页面。默认先静默读取；单页正文不完整时在已连接的可见 Edge 前台重试一次（没有已连接的浏览器就自动打开 Edge）；前台结果仍不完整时保留页面和续接任务，状态为 awaiting_user，请用户登录或处理后 continue；限流、冷却、预算耗尽和取消不会触发回退。batch 使用后台停放模式，不自动转前台。
+LuzCrawl 2.7.0。供 Agent、脚本和其他模型使用；每次调用返回 JSON。所有动作先校验，再在后台打开本任务页面。读取顺序（静默 → 已连接 Edge 的最小化窗口补读一次 → awaiting_user 请用户登录后 continue）以 [SKILL.md“读取顺序”](../SKILL.md#读取顺序先静默再可见最后请你登录)为准；限流、冷却、预算耗尽和取消不会触发补读。batch 执行中使用后台停放模式，不把窗口调到前台。
 
 ```powershell
 node scripts/luz-crawl.mjs schema
@@ -52,7 +52,7 @@ actions.json：
 
 ## 多站并发
 
-从同一个任务目录执行，Skill 与原生插件接口一致：
+从同一个任务目录执行。Skill 命令行与原生插件的参数一致；只有 Skill 命令行入口在整批结束后做二次补采（`second_pass`）：
 
 ```powershell
 node scripts/luz-crawl.mjs batch --file jobs.json --out TASK_FOLDER
@@ -76,7 +76,7 @@ jobs.json 可为 URL 数组、带步骤的任务数组，或搜索任务（`plat
 
 批量 status=completed 表示每项为 captured/completed，其他情况 partial；这不等于所有查询、详情和统计均已验收。单页动作值在 `.results[].results[].value`，提取为 action=extract 的value；动作 completed 只代表派发与显式expect完成。应另验结果区域、实际相关卡片、详情正文、统计口径与字段。首页、页脚、样例、0条结果均按实际内容记录。
 
-登录/验证会保存task_id、关闭并park页面；限流保留冷却；只跳过对应队列的后续项（skipped / site_blocked），其他站继续。若任务标签关闭未确认，也暂停该队列。批量过程中不前台显示；整批结束后，命令行入口会对没拿到正文的网址和没有候选的搜索逐条补采一次，这一步沿用单页的读取顺序（必要时转可见浏览器），结果记在 `second_pass`。用pending查看，再continue TASK_ID重新打开供人工操作；续接不会自动重跑本批跳过的项，应观察当前状态后另作计划。
+登录/验证会保存task_id、关闭并park页面；限流保留冷却；只跳过对应队列的后续项（skipped / site_blocked），其他站继续。若任务标签关闭未确认，也暂停该队列。批量过程中不把窗口调到前台；整批结束后，命令行入口会对没拿到正文的网址和没有候选的搜索逐条补采一次，这一步沿用单页的读取顺序（必要时在最小化的可见窗口补读），结果记在 `second_pass`。用pending查看，再continue TASK_ID重新打开供人工操作；续接不会自动重跑本批跳过的项，应观察当前状态后另作计划。
 
 ## 返回与续接
 

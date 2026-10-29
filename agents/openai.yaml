@@ -4,6 +4,6 @@ interface:
   icon_small: "./assets/icon-400.png"
   icon_large: "./assets/logo.png"
   brand_color: "#8FB396"
-  default_prompt: "使用 $luz-crawl 时先按 SKILL.md 调用协议：doctor 自检，begin 建一个任务目录，experience --query 读用户偏好、教训与路线提示后再检索；先静默读取，读不到用可见浏览器补读，仍需登录时保留页面请用户登录后续接；结束前用 note 记录新经验。"
+  default_prompt: "使用 $luz-crawl 时先按 SKILL.md 调用协议：doctor 自检，begin --out 输出根 --new 建一个任务目录（输出根在技能目录之外，之后每条命令带 --out 该目录），experience --query 读用户偏好、教训与路线提示后再检索；先静默读取，读不到在最小化的可见浏览器补读一次，仍需登录时才把页面调到前台请用户登录后续接；结束前用 note 记录新经验。"
 policy:
   allow_implicit_invocation: true

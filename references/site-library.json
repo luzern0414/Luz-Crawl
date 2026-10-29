@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-29T09:41:05.204Z",
+  "updated_at": "2026-10-29T10:54:17.161Z",
   "description": "可扩展公开网站入口库。probe 仅记录历史派发状态；completed 不代表数据已验收。verification 分别表示单次样本的页面、搜索、详情、统计和媒体验收，默认 untested。入口可失效，执行前仍须观察原站并补充新站。",
   "verification_states": [
     "verified",
@@ -17,8 +17,8 @@
       "kind": "national_procurement",
       "probe": {
         "status": "completed",
-        "observations": 22,
-        "observed_at": "2026-10-29T09:40:56.091Z",
+        "observations": 24,
+        "observed_at": "2026-10-29T10:47:47.467Z",
         "last_action_status": "partial",
         "last_stop_reason": "scroll_budget",
         "last_text_chars": 5073
@@ -44,14 +44,14 @@
       "id": "ggzy",
       "name": "全国公共资源交易平台",
       "url": "https://www.ggzy.gov.cn/",
-      "kind": "national交易",
+      "kind": "government",
       "probe": {
         "status": "completed",
-        "observations": 47,
-        "observed_at": "2026-10-29T09:40:46.815Z",
+        "observations": 50,
+        "observed_at": "2026-10-29T10:54:17.161Z",
         "last_action_status": "captured",
-        "last_stop_reason": "stable_after_3_scrolls",
-        "last_text_chars": 2524
+        "last_stop_reason": "stable_after_2_scrolls",
+        "last_text_chars": 1369
       },
       "verification": {
         "page": "verified",
@@ -75,7 +75,7 @@
       "id": "gdggzy",
       "name": "广东省公共资源交易中心",
       "url": "https://ygp.gdzwfw.gov.cn/ggzy-portal/#/440000/index",
-      "kind": "provincial交易",
+      "kind": "government",
       "probe": {
         "status": "completed",
         "observations": 5,
@@ -120,7 +120,7 @@
       "id": "fszc",
       "name": "佛山阳光采购平台",
       "url": "https://fszc.zcjb.com.cn/cms/fszc/webfile/zdfszc=qcgc/index.html",
-      "kind": "local采购",
+      "kind": "government",
       "probe": {
         "status": "completed",
         "observations": 6,
@@ -141,7 +141,7 @@
       "id": "chinabidding",
       "name": "中国国际招标网",
       "url": "https://www.chinabidding.com/",
-      "kind": "national招标",
+      "kind": "tender_aggregator",
       "probe": {
         "status": "completed",
         "observations": 2,
@@ -170,7 +170,7 @@
       "id": "qianlima",
       "name": "千里马招标网",
       "url": "https://www.qianlima.com/",
-      "kind": "招标目录",
+      "kind": "tender_aggregator",
       "probe": {
         "status": "completed",
         "observations": 4,
@@ -200,14 +200,14 @@
       "id": "bidcenter",
       "name": "采招网",
       "url": "https://www.bidcenter.com.cn/",
-      "kind": "招标目录",
+      "kind": "tender_aggregator",
       "probe": {
-        "status": "planned",
-        "observations": 1,
-        "observed_at": "2026-10-25T11:05:38.774Z",
-        "last_action_status": "partial",
-        "last_stop_reason": "scroll_budget",
-        "last_text_chars": 6903
+        "status": "completed",
+        "observations": 3,
+        "observed_at": "2026-10-29T09:52:16.662Z",
+        "last_action_status": "captured",
+        "last_stop_reason": "stable_after_2_scrolls",
+        "last_text_chars": 2411
       },
       "verification": {
         "page": "verified",
@@ -230,7 +230,7 @@
       "id": "gd-bidcenter",
       "name": "广东采招网",
       "url": "https://gd.bidcenter.com.cn/440600/",
-      "kind": "广东招标目录",
+      "kind": "tender_aggregator",
       "probe": {
         "status": "completed",
         "observations": 6,
@@ -251,7 +251,7 @@
       "id": "1688",
       "name": "1688",
       "url": "https://s.1688.com/selloffer/offer_search.htm",
-      "kind": "供应商/采购",
+      "kind": "b2b",
       "probe": {
         "status": "visited",
         "observations": 1,
@@ -272,7 +272,7 @@
       "id": "qcc",
       "name": "企查查",
       "url": "https://www.qcc.com/",
-      "kind": "企业名录",
+      "kind": "company_registry",
       "probe": {
         "status": "visited",
         "observations": 1,
@@ -301,7 +301,7 @@
       "id": "tianyancha",
       "name": "天眼查",
       "url": "https://www.tianyancha.com/",
-      "kind": "企业名录",
+      "kind": "company_registry",
       "probe": {
         "status": "planned",
         "observations": 1,
@@ -330,7 +330,7 @@
       "id": "made-in-china",
       "name": "中国制造网",
       "url": "https://cn.made-in-china.com/",
-      "kind": "供应商/外贸",
+      "kind": "foreign_trade",
       "probe": {
         "status": "planned",
         "observations": 1,
@@ -351,7 +351,7 @@
       "id": "yfb",
       "name": "乙方宝",
       "url": "https://www.yfbzb.com/",
-      "kind": "招标聚合/供应商",
+      "kind": "tender_aggregator",
       "probe": {
         "status": "completed",
         "observations": 4,
@@ -382,7 +382,7 @@
       "id": "zhaobiao",
       "name": "中国招标网",
       "url": "https://www.bidchance.com/",
-      "kind": "招标聚合",
+      "kind": "tender_aggregator",
       "probe": {
         "status": "awaiting_user",
         "observations": 1,
@@ -403,7 +403,7 @@
       "id": "chinabidding2",
       "name": "中国采购与招标网",
       "url": "https://www.chinabidding.cn/",
-      "kind": "采购招标聚合",
+      "kind": "tender_aggregator",
       "probe": {
         "status": "completed",
         "observations": 1,
@@ -432,7 +432,7 @@
       "id": "jczh",
       "name": "建设工程招标网",
       "url": "https://www.jszhaobiao.com/",
-      "kind": "工程招标聚合",
+      "kind": "tender_aggregator",
       "probe": {
         "status": "completed",
         "observations": 1,
@@ -453,7 +453,7 @@
       "id": "zhaobiao360",
       "name": "招标网",
       "url": "https://www.bid360.com.cn/",
-      "kind": "招标聚合",
+      "kind": "tender_aggregator",
       "probe": {
         "status": "completed",
         "observations": 1,
@@ -474,7 +474,7 @@
       "id": "gongcheng",
       "name": "工程建设招标信息网",
       "url": "https://www.gczb.com/",
-      "kind": "工程招标聚合",
+      "kind": "tender_aggregator",
       "probe": {
         "status": "failed",
         "observations": 1,
@@ -495,7 +495,7 @@
       "id": "caigou1688",
       "name": "采购与供应链平台",
       "url": "https://www.cg1688.com/",
-      "kind": "采购供应商",
+      "kind": "b2b",
       "probe": {
         "status": "failed",
         "observations": 1,
@@ -516,7 +516,7 @@
       "id": "alibaba",
       "name": "阿里巴巴国际站",
       "url": "https://www.alibaba.com/",
-      "kind": "外贸采购",
+      "kind": "foreign_trade",
       "probe": {
         "status": "completed",
         "observations": 1,
@@ -537,7 +537,7 @@
       "id": "hc360",
       "name": "慧聪网",
       "url": "https://www.hc360.com/",
-      "kind": "B2B采购",
+      "kind": "b2b",
       "probe": {
         "status": "failed",
         "observations": 1,
@@ -558,7 +558,7 @@
       "id": "globalsources",
       "name": "环球资源",
       "url": "https://www.globalsources.com/",
-      "kind": "外贸采购",
+      "kind": "foreign_trade",
       "probe": {
         "status": "failed",
         "observations": 1,
@@ -579,7 +579,7 @@
       "id": "gongyingshang",
       "name": "中国供应商",
       "url": "https://cn.china.cn/",
-      "kind": "B2B供应商",
+      "kind": "b2b",
       "probe": {
         "status": "completed",
         "observations": 1,
@@ -600,7 +600,7 @@
       "id": "zjtcn",
       "name": "中国建材网",
       "url": "https://www.bmlink.com/",
-      "kind": "建材行业",
+      "kind": "building_materials",
       "probe": {
         "status": "failed",
         "observations": 1,
@@ -621,7 +621,7 @@
       "id": "jc315",
       "name": "建材网",
       "url": "https://www.jc315.com/",
-      "kind": "建材行业",
+      "kind": "building_materials",
       "probe": {
         "status": "completed",
         "observations": 1,
@@ -642,7 +642,7 @@
       "id": "doors",
       "name": "门窗幕墙网",
       "url": "https://www.mc361.com/",
-      "kind": "门窗行业",
+      "kind": "doors_windows",
       "probe": {
         "status": "failed",
         "observations": 1,
@@ -663,7 +663,7 @@
       "id": "jctools",
       "name": "中国门窗网",
       "url": "https://www.chinamenwang.com/",
-      "kind": "门窗行业",
+      "kind": "doors_windows",
       "probe": {
         "status": "completed",
         "observations": 1,
@@ -1133,11 +1133,11 @@
       "kind": "tender_aggregator",
       "probe": {
         "status": "completed",
-        "observations": 18,
-        "observed_at": "2026-10-29T09:40:17.888Z",
+        "observations": 19,
+        "observed_at": "2026-10-29T10:47:30.792Z",
         "last_action_status": "captured",
         "last_stop_reason": "stable_after_3_scrolls",
-        "last_text_chars": 1834
+        "last_text_chars": 1788
       },
       "verification": {
         "page": "verified",
@@ -1213,8 +1213,8 @@
       "kind": "tender_aggregator",
       "probe": {
         "status": "completed",
-        "observations": 14,
-        "observed_at": "2026-10-29T09:40:17.977Z",
+        "observations": 15,
+        "observed_at": "2026-10-29T10:47:35.797Z",
         "last_action_status": "partial",
         "last_stop_reason": "stable_after_3_scrolls",
         "last_text_chars": 49
@@ -1243,11 +1243,11 @@
       "kind": "tender_aggregator",
       "probe": {
         "status": "completed",
-        "observations": 28,
-        "observed_at": "2026-10-29T09:41:05.204Z",
+        "observations": 30,
+        "observed_at": "2026-10-29T10:47:51.997Z",
         "last_action_status": "captured",
         "last_stop_reason": "stable_after_3_scrolls",
-        "last_text_chars": 4690
+        "last_text_chars": 4731
       },
       "verification": {
         "page": "verified",
@@ -1678,11 +1678,11 @@
       "kind": "state_enterprise",
       "probe": {
         "status": "completed",
-        "observations": 26,
-        "observed_at": "2026-10-29T09:40:03.333Z",
+        "observations": 33,
+        "observed_at": "2026-10-29T10:48:51.919Z",
         "last_action_status": "captured",
         "last_stop_reason": "stable_after_3_scrolls",
-        "last_text_chars": 1731
+        "last_text_chars": 1713
       },
       "verification": {
         "page": "verified",
@@ -4302,15 +4302,18 @@
         "last_text_chars": 1174
       },
       "verification": {
-        "page": "blocked",
-        "search": "untested",
+        "page": "partial",
+        "search": "partial",
         "detail": "verified",
         "statistics": "untested",
         "media": "untested"
       },
       "notes": [
-        "当前样本显示访问验证；停止自动访问，人工完成后再续接。"
-      ]
+        "首页曾出现访问验证（单次样本）；搜索页与作品详情页可匿名打开。",
+        "站内搜索结果卡片是按钮、没有作品链接，部分关键词匿名返回“没有找到”，search 记 partial。作品链接用 search web --site zcool.com.cn 从必应取得 /work/ID.html。",
+        "作品详情页 /work/ID.html 可匿名读取，batch 加 --download 可下载正文图（w_1280 参数图，部分作品是 4800 宽 gif）。"
+      ],
+      "verified_at": "2026-10-29"
     },
     {
       "id": "gtn9",
@@ -5972,11 +5975,11 @@
       ],
       "probe": {
         "status": "completed",
-        "observations": 26,
-        "observed_at": "2026-10-29T09:40:58.350Z",
+        "observations": 28,
+        "observed_at": "2026-10-29T10:48:51.902Z",
         "last_action_status": "captured",
         "last_stop_reason": "stable_after_3_scrolls",
-        "last_text_chars": 3533
+        "last_text_chars": 3541
       }
     },
     {
@@ -6053,8 +6056,8 @@
       ],
       "probe": {
         "status": "completed",
-        "observations": 18,
-        "observed_at": "2026-10-29T09:40:03.338Z",
+        "observations": 19,
+        "observed_at": "2026-10-29T10:47:19.867Z",
         "last_action_status": "captured",
         "last_stop_reason": "stable_after_3_scrolls",
         "last_text_chars": 3073
@@ -7858,7 +7861,7 @@
       "verification": {
         "page": "verified",
         "search": "verified",
-        "detail": "verified",
+        "detail": "blocked",
         "statistics": "untested",
         "media": "untested"
       },
@@ -7872,11 +7875,11 @@
       ],
       "probe": {
         "status": "completed",
-        "observations": 3,
-        "observed_at": "2026-10-29T00:35:46.486Z",
-        "last_action_status": "partial",
-        "last_stop_reason": "stable_after_3_scrolls",
-        "last_text_chars": 1547
+        "observations": 4,
+        "observed_at": "2026-10-29T09:48:09.426Z",
+        "last_action_status": "awaiting_user",
+        "last_stop_reason": "stable_after_2_scrolls",
+        "last_text_chars": 0
       }
     },
     {
@@ -8068,11 +8071,11 @@
       ],
       "probe": {
         "status": "completed",
-        "observations": 1,
-        "observed_at": "2026-10-29T00:16:44.865Z",
-        "last_action_status": "partial",
-        "last_stop_reason": "stable_after_3_scrolls",
-        "last_text_chars": 314
+        "observations": 3,
+        "observed_at": "2026-10-29T09:50:08.004Z",
+        "last_action_status": "captured",
+        "last_stop_reason": "stable_after_2_scrolls",
+        "last_text_chars": 1240
       }
     },
     {
@@ -8094,7 +8097,15 @@
       },
       "notes": [
         "2026-10-29 站内搜索“空调”返回 12 条含关键词结果，已打开并读到详情正文；“电梯”复测 12 条，详情可读"
-      ]
+      ],
+      "probe": {
+        "status": "completed",
+        "observations": 1,
+        "observed_at": "2026-10-29T09:49:00.301Z",
+        "last_action_status": "captured",
+        "last_stop_reason": "stable_after_2_scrolls",
+        "last_text_chars": 221
+      }
     },
     {
       "id": "jlu-nic",
@@ -8104,7 +8115,7 @@
       "verification": {
         "page": "verified",
         "search": "failed",
-        "detail": "untested",
+        "detail": "verified",
         "statistics": "untested",
         "media": "untested"
       },
@@ -8115,7 +8126,15 @@
       },
       "notes": [
         "2026-10-29 首页未识别到可用搜索框；需从栏目列表页或站内检索页进入"
-      ]
+      ],
+      "probe": {
+        "status": "completed",
+        "observations": 1,
+        "observed_at": "2026-10-29T09:50:11.741Z",
+        "last_action_status": "captured",
+        "last_stop_reason": "stable_after_2_scrolls",
+        "last_text_chars": 1392
+      }
     },
     {
       "id": "whut-naoep",
