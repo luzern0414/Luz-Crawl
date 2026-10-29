@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-29T00:15:14.762Z",
+  "updated_at": "2026-10-29T01:01:00.910Z",
   "description": "可扩展公开网站入口库。probe 仅记录历史派发状态；completed 不代表数据已验收。verification 分别表示单次样本的页面、搜索、详情、统计和媒体验收，默认 untested。入口可失效，执行前仍须观察原站并补充新站。",
   "verification_states": [
     "verified",
@@ -17,11 +17,11 @@
       "kind": "national_procurement",
       "probe": {
         "status": "completed",
-        "observations": 7,
-        "observed_at": "2026-10-29T00:14:10.636Z",
+        "observations": 14,
+        "observed_at": "2026-10-29T01:00:37.423Z",
         "last_action_status": "partial",
         "last_stop_reason": "scroll_budget",
-        "last_text_chars": 5155
+        "last_text_chars": 5081
       },
       "verification": {
         "page": "verified",
@@ -47,11 +47,11 @@
       "kind": "national交易",
       "probe": {
         "status": "completed",
-        "observations": 18,
-        "observed_at": "2026-10-29T00:14:07.058Z",
+        "observations": 26,
+        "observed_at": "2026-10-29T01:00:42.438Z",
         "last_action_status": "captured",
         "last_stop_reason": "stable_after_3_scrolls",
-        "last_text_chars": 2458
+        "last_text_chars": 2524
       },
       "verification": {
         "page": "verified",
@@ -77,12 +77,12 @@
       "url": "https://ygp.gdzwfw.gov.cn/ggzy-portal/#/440000/index",
       "kind": "provincial交易",
       "probe": {
-        "status": "planned",
-        "observations": 1,
-        "observed_at": "2026-10-25T11:05:43.713Z",
+        "status": "completed",
+        "observations": 2,
+        "observed_at": "2026-10-29T00:17:33.087Z",
         "last_action_status": "partial",
-        "last_stop_reason": "scroll_budget",
-        "last_text_chars": 1901
+        "last_stop_reason": "stable_after_3_scrolls",
+        "last_text_chars": 2192
       },
       "verification": {
         "page": "verified",
@@ -122,16 +122,16 @@
       "url": "https://fszc.zcjb.com.cn/cms/fszc/webfile/zdfszc=qcgc/index.html",
       "kind": "local采购",
       "probe": {
-        "status": "planned",
-        "observations": 1,
-        "observed_at": "2026-10-25T11:05:27.233Z",
-        "last_action_status": "partial",
-        "last_stop_reason": "scroll_budget",
-        "last_text_chars": 869
+        "status": "completed",
+        "observations": 4,
+        "observed_at": "2026-10-29T00:36:18.749Z",
+        "last_action_status": "captured",
+        "last_stop_reason": "stable_after_3_scrolls",
+        "last_text_chars": 119
       },
       "verification": {
         "page": "untested",
-        "search": "untested",
+        "search": "verified",
         "detail": "untested",
         "statistics": "untested",
         "media": "untested"
@@ -173,11 +173,11 @@
       "kind": "招标目录",
       "probe": {
         "status": "completed",
-        "observations": 3,
-        "observed_at": "2026-10-29T00:14:52.796Z",
+        "observations": 4,
+        "observed_at": "2026-10-29T00:22:01.758Z",
         "last_action_status": "captured",
         "last_stop_reason": "stable_after_3_scrolls",
-        "last_text_chars": 2397
+        "last_text_chars": 2415
       },
       "verification": {
         "page": "verified",
@@ -232,16 +232,16 @@
       "url": "https://gd.bidcenter.com.cn/440600/",
       "kind": "广东招标目录",
       "probe": {
-        "status": "planned",
-        "observations": 1,
-        "observed_at": "2026-10-25T11:05:27.080Z",
+        "status": "completed",
+        "observations": 4,
+        "observed_at": "2026-10-29T00:36:55.695Z",
         "last_action_status": "partial",
         "last_stop_reason": "scroll_budget",
-        "last_text_chars": 3479
+        "last_text_chars": 6407
       },
       "verification": {
         "page": "untested",
-        "search": "untested",
+        "search": "verified",
         "detail": "untested",
         "statistics": "untested",
         "media": "untested"
@@ -754,11 +754,11 @@
       "kind": "government",
       "probe": {
         "status": "completed",
-        "observations": 1,
-        "observed_at": "2026-10-25T11:50:24.194Z",
-        "last_action_status": "completed",
-        "last_stop_reason": "browser_actions_complete",
-        "last_text_chars": 1912
+        "observations": 4,
+        "observed_at": "2026-10-29T00:36:41.873Z",
+        "last_action_status": "partial",
+        "last_stop_reason": "stable_after_3_scrolls",
+        "last_text_chars": 4318
       },
       "verification": {
         "page": "untested",
@@ -784,11 +784,11 @@
       "kind": "government",
       "probe": {
         "status": "completed",
-        "observations": 1,
-        "observed_at": "2026-10-25T11:50:29.211Z",
-        "last_action_status": "completed",
-        "last_stop_reason": "browser_actions_complete",
-        "last_text_chars": 1982
+        "observations": 2,
+        "observed_at": "2026-10-29T00:18:04.772Z",
+        "last_action_status": "captured",
+        "last_stop_reason": "stable_after_3_scrolls",
+        "last_text_chars": 3858
       },
       "verification": {
         "page": "verified",
@@ -1019,8 +1019,8 @@
       "kind": "government",
       "probe": {
         "status": "completed",
-        "observations": 2,
-        "observed_at": "2026-10-29T00:14:40.789Z",
+        "observations": 6,
+        "observed_at": "2026-10-29T00:51:25.620Z",
         "last_action_status": "captured",
         "last_stop_reason": "stable_after_3_scrolls",
         "last_text_chars": 317
@@ -1133,11 +1133,11 @@
       "kind": "tender_aggregator",
       "probe": {
         "status": "completed",
-        "observations": 2,
-        "observed_at": "2026-10-29T00:15:02.464Z",
+        "observations": 11,
+        "observed_at": "2026-10-29T01:00:52.256Z",
         "last_action_status": "captured",
         "last_stop_reason": "stable_after_3_scrolls",
-        "last_text_chars": 1938
+        "last_text_chars": 1813
       },
       "verification": {
         "page": "verified",
@@ -1213,11 +1213,11 @@
       "kind": "tender_aggregator",
       "probe": {
         "status": "completed",
-        "observations": 1,
-        "observed_at": "2026-10-25T11:53:23.340Z",
-        "last_action_status": "completed",
-        "last_stop_reason": "browser_actions_complete",
-        "last_text_chars": 7993
+        "observations": 7,
+        "observed_at": "2026-10-29T01:00:11.544Z",
+        "last_action_status": "partial",
+        "last_stop_reason": "stable_after_3_scrolls",
+        "last_text_chars": 49
       },
       "verification": {
         "page": "verified",
@@ -1243,16 +1243,16 @@
       "kind": "tender_aggregator",
       "probe": {
         "status": "completed",
-        "observations": 1,
-        "observed_at": "2026-10-25T11:53:35.349Z",
-        "last_action_status": "completed",
-        "last_stop_reason": "browser_actions_complete",
-        "last_text_chars": 15600
+        "observations": 7,
+        "observed_at": "2026-10-29T01:00:15.250Z",
+        "last_action_status": "captured",
+        "last_stop_reason": "stable_after_3_scrolls",
+        "last_text_chars": 4653
       },
       "verification": {
         "page": "verified",
         "search": "verified",
-        "detail": "untested",
+        "detail": "partial",
         "statistics": "untested",
         "media": "untested"
       },
@@ -1323,11 +1323,11 @@
       "kind": "contractor_directory",
       "probe": {
         "status": "completed",
-        "observations": 1,
-        "observed_at": "2026-10-25T11:54:17.549Z",
-        "last_action_status": "completed",
-        "last_stop_reason": "browser_actions_complete",
-        "last_text_chars": 5081
+        "observations": 2,
+        "observed_at": "2026-10-29T00:16:33.709Z",
+        "last_action_status": "partial",
+        "last_stop_reason": "stable_after_3_scrolls",
+        "last_text_chars": 3763
       },
       "verification": {
         "page": "untested",
@@ -1678,11 +1678,11 @@
       "kind": "state_enterprise",
       "probe": {
         "status": "completed",
-        "observations": 1,
-        "observed_at": "2026-10-25T11:56:12.264Z",
-        "last_action_status": "completed",
-        "last_stop_reason": "browser_actions_complete",
-        "last_text_chars": 2375
+        "observations": 11,
+        "observed_at": "2026-10-29T01:00:07.326Z",
+        "last_action_status": "captured",
+        "last_stop_reason": "stable_after_3_scrolls",
+        "last_text_chars": 1731
       },
       "verification": {
         "page": "verified",
@@ -5421,12 +5421,12 @@
         "佛山"
       ],
       "probe": {
-        "status": "failed",
-        "observations": 1,
-        "observed_at": "2026-10-25T11:46:20.973Z",
-        "last_action_status": "failed",
-        "last_stop_reason": "operation_failed",
-        "last_text_chars": 0
+        "status": "completed",
+        "observations": 4,
+        "observed_at": "2026-10-29T00:36:09.537Z",
+        "last_action_status": "partial",
+        "last_stop_reason": "stable_after_3_scrolls",
+        "last_text_chars": 1507
       },
       "verification": {
         "page": "untested",
@@ -5458,11 +5458,11 @@
       ],
       "probe": {
         "status": "completed",
-        "observations": 3,
-        "observed_at": "2026-10-28T07:38:27.357Z",
+        "observations": 6,
+        "observed_at": "2026-10-29T00:50:15.285Z",
         "last_action_status": "captured",
         "last_stop_reason": "stable_after_2_scrolls",
-        "last_text_chars": 5483
+        "last_text_chars": 2947
       },
       "verification": {
         "page": "verified",
@@ -5625,11 +5625,11 @@
       ],
       "probe": {
         "status": "completed",
-        "observations": 1,
-        "observed_at": "2026-10-28T07:00:00.000Z",
+        "observations": 3,
+        "observed_at": "2026-10-29T00:50:15.285Z",
         "last_action_status": "captured",
         "last_stop_reason": "stable_after_2_scrolls",
-        "last_text_chars": 15021
+        "last_text_chars": 15679
       },
       "verification": {
         "page": "verified",
@@ -5708,11 +5708,11 @@
       ],
       "probe": {
         "status": "completed",
-        "observations": 2,
-        "observed_at": "2026-10-28T07:38:27.357Z",
+        "observations": 3,
+        "observed_at": "2026-10-29T00:59:04.909Z",
         "last_action_status": "captured",
         "last_stop_reason": "stable_after_2_scrolls",
-        "last_text_chars": 5584
+        "last_text_chars": 9524
       },
       "verification": {
         "page": "verified",
@@ -5853,7 +5853,15 @@
       },
       "notes": [
         "2026-10-29 站内搜索“空调”返回 3 条含关键词结果，已打开并读到详情正文；“电梯”复测 0 条"
-      ]
+      ],
+      "probe": {
+        "status": "completed",
+        "observations": 3,
+        "observed_at": "2026-10-29T00:36:32.049Z",
+        "last_action_status": "captured",
+        "last_stop_reason": "stable_after_3_scrolls",
+        "last_text_chars": 5793
+      }
     },
     {
       "id": "okcis",
@@ -5877,11 +5885,11 @@
       ],
       "probe": {
         "status": "completed",
-        "observations": 1,
-        "observed_at": "2026-10-29T00:15:14.762Z",
-        "last_action_status": "captured",
+        "observations": 2,
+        "observed_at": "2026-10-29T00:22:29.310Z",
+        "last_action_status": "partial",
         "last_stop_reason": "stable_after_3_scrolls",
-        "last_text_chars": 4942
+        "last_text_chars": 5761
       }
     },
     {
@@ -5949,11 +5957,11 @@
       ],
       "probe": {
         "status": "completed",
-        "observations": 1,
-        "observed_at": "2026-10-29T00:15:11.600Z",
+        "observations": 15,
+        "observed_at": "2026-10-29T01:00:47.464Z",
         "last_action_status": "captured",
         "last_stop_reason": "stable_after_3_scrolls",
-        "last_text_chars": 3179
+        "last_text_chars": 3453
       }
     },
     {
@@ -5979,11 +5987,11 @@
       ],
       "probe": {
         "status": "completed",
-        "observations": 1,
-        "observed_at": "2026-10-29T00:15:13.083Z",
+        "observations": 4,
+        "observed_at": "2026-10-29T00:40:33.169Z",
         "last_action_status": "captured",
-        "last_stop_reason": "stable_after_3_scrolls",
-        "last_text_chars": 899
+        "last_stop_reason": "stable_after_2_scrolls",
+        "last_text_chars": 4225
       }
     },
     {
@@ -6027,7 +6035,15 @@
       },
       "notes": [
         "2026-10-29 站内搜索“空调”返回 20 条含关键词结果，已打开并读到详情正文；“电梯”复测 19 条，详情可读"
-      ]
+      ],
+      "probe": {
+        "status": "completed",
+        "observations": 10,
+        "observed_at": "2026-10-29T01:01:00.910Z",
+        "last_action_status": "captured",
+        "last_stop_reason": "stable_after_3_scrolls",
+        "last_text_chars": 3146
+      }
     },
     {
       "id": "china-zbcg",
@@ -6091,7 +6107,15 @@
       },
       "notes": [
         "2026-10-29 站内搜索“空调”返回 5 条含关键词结果，已打开并读到详情正文；“电梯”复测 5 条，详情可读"
-      ]
+      ],
+      "probe": {
+        "status": "completed",
+        "observations": 3,
+        "observed_at": "2026-10-29T00:36:50.604Z",
+        "last_action_status": "partial",
+        "last_stop_reason": "stable_after_3_scrolls",
+        "last_text_chars": 334
+      }
     },
     {
       "id": "shbid",
@@ -7686,7 +7710,15 @@
       },
       "notes": [
         "2026-10-29 站内搜索“空调”返回 1 条含关键词结果，已打开并读到详情正文；“电梯”复测 5 条，详情可读"
-      ]
+      ],
+      "probe": {
+        "status": "completed",
+        "observations": 1,
+        "observed_at": "2026-10-29T00:15:42.023Z",
+        "last_action_status": "partial",
+        "last_stop_reason": "stable_after_3_scrolls",
+        "last_text_chars": 490
+      }
     },
     {
       "id": "powerchina",
@@ -7749,7 +7781,15 @@
       },
       "notes": [
         "2026-10-29 站内搜索“空调”返回 3 条含关键词结果，已打开并读到详情正文；“电梯”复测 3 条，详情可读"
-      ]
+      ],
+      "probe": {
+        "status": "completed",
+        "observations": 3,
+        "observed_at": "2026-10-29T00:35:48.785Z",
+        "last_action_status": "partial",
+        "last_stop_reason": "stable_after_3_scrolls",
+        "last_text_chars": 614
+      }
     },
     {
       "id": "ctcc",
@@ -7814,7 +7854,15 @@
       },
       "notes": [
         "2026-10-29 站内搜索“空调”返回 20 条含关键词结果，已打开并读到详情正文；“电梯”复测 20 条，详情可读"
-      ]
+      ],
+      "probe": {
+        "status": "completed",
+        "observations": 3,
+        "observed_at": "2026-10-29T00:35:46.486Z",
+        "last_action_status": "partial",
+        "last_stop_reason": "stable_after_3_scrolls",
+        "last_text_chars": 1547
+      }
     },
     {
       "id": "sinochem",
@@ -8002,7 +8050,15 @@
       },
       "notes": [
         "2026-10-29 站内搜索“空调”返回 6 条含关键词结果，已打开并读到详情正文；“电梯”复测 0 条"
-      ]
+      ],
+      "probe": {
+        "status": "completed",
+        "observations": 1,
+        "observed_at": "2026-10-29T00:16:44.865Z",
+        "last_action_status": "partial",
+        "last_stop_reason": "stable_after_3_scrolls",
+        "last_text_chars": 314
+      }
     },
     {
       "id": "buaa-zbcg",
@@ -8107,7 +8163,15 @@
       },
       "notes": [
         "2026-10-29 站内搜索“空调”返回 3 条含关键词结果，已打开并读到详情正文；“电梯”复测 3 条，详情可读"
-      ]
+      ],
+      "probe": {
+        "status": "completed",
+        "observations": 3,
+        "observed_at": "2026-10-29T00:36:04.137Z",
+        "last_action_status": "captured",
+        "last_stop_reason": "stable_after_3_scrolls",
+        "last_text_chars": 582
+      }
     },
     {
       "id": "xzhmu-zbb",
@@ -8128,7 +8192,15 @@
       },
       "notes": [
         "2026-10-29 站内搜索“空调”返回 15 条含关键词结果，已打开并读到详情正文；“电梯”复测 15 条，详情可读"
-      ]
+      ],
+      "probe": {
+        "status": "completed",
+        "observations": 3,
+        "observed_at": "2026-10-29T00:35:37.577Z",
+        "last_action_status": "partial",
+        "last_stop_reason": "stable_after_3_scrolls",
+        "last_text_chars": 177
+      }
     },
     {
       "id": "mnnu-zbzx",
@@ -8149,7 +8221,15 @@
       },
       "notes": [
         "2026-10-29 站内搜索“空调”返回 3 条含关键词结果，已打开并读到详情正文；“电梯”复测 3 条，详情可读"
-      ]
+      ],
+      "probe": {
+        "status": "completed",
+        "observations": 1,
+        "observed_at": "2026-10-29T00:17:17.547Z",
+        "last_action_status": "partial",
+        "last_stop_reason": "stable_after_3_scrolls",
+        "last_text_chars": 372
+      }
     },
     {
       "id": "bupt",
@@ -8316,7 +8396,15 @@
       },
       "notes": [
         "2026-10-29 站内搜索“空调”返回 1 条含关键词结果，已打开并读到详情正文；“电梯”复测 0 条"
-      ]
+      ],
+      "probe": {
+        "status": "completed",
+        "observations": 1,
+        "observed_at": "2026-10-29T00:17:53.406Z",
+        "last_action_status": "partial",
+        "last_stop_reason": "stable_after_3_scrolls",
+        "last_text_chars": 348
+      }
     },
     {
       "id": "dg-gov",
@@ -8424,7 +8512,15 @@
       },
       "notes": [
         "2026-10-29 站内搜索“空调”返回 10 条含关键词结果，已打开并读到详情正文；“电梯”复测 10 条，详情可读"
-      ]
+      ],
+      "probe": {
+        "status": "completed",
+        "observations": 3,
+        "observed_at": "2026-10-29T00:36:52.135Z",
+        "last_action_status": "captured",
+        "last_stop_reason": "stable_after_3_scrolls",
+        "last_text_chars": 3276
+      }
     },
     {
       "id": "szggzy-zxcg",
@@ -8488,7 +8584,15 @@
       },
       "notes": [
         "2026-10-29 站内搜索“空调”返回 10 条含关键词结果，已打开并读到详情正文；“电梯”复测 0 条"
-      ]
+      ],
+      "probe": {
+        "status": "completed",
+        "observations": 1,
+        "observed_at": "2026-10-29T00:16:11.294Z",
+        "last_action_status": "partial",
+        "last_stop_reason": "scroll_budget",
+        "last_text_chars": 5929
+      }
     },
     {
       "id": "avic2",
@@ -8510,7 +8614,15 @@
       },
       "notes": [
         "2026-10-29 站内搜索“空调”返回 10 条含关键词结果，已打开并读到详情正文；“电梯”复测 10 条，详情可读"
-      ]
+      ],
+      "probe": {
+        "status": "completed",
+        "observations": 5,
+        "observed_at": "2026-10-29T00:51:30.662Z",
+        "last_action_status": "captured",
+        "last_stop_reason": "stable_after_3_scrolls",
+        "last_text_chars": 340
+      }
     },
     {
       "id": "casic2",
@@ -8595,7 +8707,15 @@
       },
       "notes": [
         "2026-10-29 站内搜索“空调”返回 6 条含关键词结果，已打开并读到详情正文；“电梯”复测 1 条，详情可读"
-      ]
+      ],
+      "probe": {
+        "status": "completed",
+        "observations": 1,
+        "observed_at": "2026-10-29T00:16:11.085Z",
+        "last_action_status": "partial",
+        "last_stop_reason": "stable_after_3_scrolls",
+        "last_text_chars": 154
+      }
     },
     {
       "id": "weain",
@@ -8638,7 +8758,15 @@
       },
       "notes": [
         "2026-10-29 站内搜索“空调”返回 50 条含关键词结果，详情未读；“电梯”复测 51 条"
-      ]
+      ],
+      "probe": {
+        "status": "completed",
+        "observations": 3,
+        "observed_at": "2026-10-29T00:35:42.237Z",
+        "last_action_status": "captured",
+        "last_stop_reason": "stable_after_3_scrolls",
+        "last_text_chars": 893
+      }
     },
     {
       "id": "zhaobiao-xm",
@@ -8785,7 +8913,15 @@
       },
       "notes": [
         "2026-10-29 站内搜索“空调”返回 20 条含关键词结果，已打开并读到详情正文；“电梯”复测 20 条，详情可读"
-      ]
+      ],
+      "probe": {
+        "status": "completed",
+        "observations": 1,
+        "observed_at": "2026-10-29T00:16:13.378Z",
+        "last_action_status": "partial",
+        "last_stop_reason": "stable_after_3_scrolls",
+        "last_text_chars": 502
+      }
     },
     {
       "id": "wuyezhaobiao",
@@ -8806,7 +8942,15 @@
       },
       "notes": [
         "2026-10-29 站内搜索“空调”返回 1 条含关键词结果，已打开并读到详情正文；“电梯”复测 4 条，详情可读"
-      ]
+      ],
+      "probe": {
+        "status": "completed",
+        "observations": 1,
+        "observed_at": "2026-10-29T00:16:21.942Z",
+        "last_action_status": "partial",
+        "last_stop_reason": "stable_after_3_scrolls",
+        "last_text_chars": 5750
+      }
     },
     {
       "id": "ceiea",
@@ -8891,7 +9035,15 @@
       },
       "notes": [
         "2026-10-29 站内搜索“空调”返回 1 条含关键词结果，已打开并读到详情正文；“电梯”复测 0 条"
-      ]
+      ],
+      "probe": {
+        "status": "completed",
+        "observations": 1,
+        "observed_at": "2026-10-29T00:16:49.567Z",
+        "last_action_status": "partial",
+        "last_stop_reason": "stable_after_3_scrolls",
+        "last_text_chars": 5144
+      }
     },
     {
       "id": "hjxxgs",
@@ -8975,7 +9127,15 @@
       },
       "notes": [
         "2026-10-29 站内搜索“空调”返回 1 条含关键词结果，已打开并读到详情正文；“电梯”复测 0 条"
-      ]
+      ],
+      "probe": {
+        "status": "completed",
+        "observations": 2,
+        "observed_at": "2026-10-29T00:24:10.722Z",
+        "last_action_status": "partial",
+        "last_stop_reason": "stable_after_3_scrolls",
+        "last_text_chars": 4663
+      }
     },
     {
       "id": "szpu-zhaobiao",
@@ -8996,7 +9156,15 @@
       },
       "notes": [
         "2026-10-29 站内搜索“空调”返回 6 条含关键词结果，已打开并读到详情正文；“电梯”复测 5 条，详情可读"
-      ]
+      ],
+      "probe": {
+        "status": "completed",
+        "observations": 1,
+        "observed_at": "2026-10-29T00:19:41.484Z",
+        "last_action_status": "partial",
+        "last_stop_reason": "stable_after_3_scrolls",
+        "last_text_chars": 198
+      }
     },
     {
       "id": "xiaocaizhao",
