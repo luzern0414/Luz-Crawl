@@ -32,6 +32,8 @@ node scripts/luz-crawl.mjs collect "主题或 URL" --read 1
 node scripts/luz-crawl.mjs search xhs "关键词" --read 1 --comments --download
 ```
 
+命令的标准输出是一份 UTF-8 JSON（提示与进度走 stderr），同样的结果也存在任务目录里（批量为 `batch-*.json`，单页为各自的 `content.json`）。程序解析优先读这些文件；要接管道时，Windows 上用 `py -X utf8`、PowerShell 的 `ConvertFrom-Json` 或 Node。不加 `-X utf8` 的 Python 按 GBK 读管道，中文会吞掉引号，报 JSON 解析错误，这不是采集失败。
+
 `doctor.ready` 证明连接；`extension_install.bundled_loaded` 核对本目录 LuzCrawl 扩展。登录和正文需要实际页面验收，断连按 [安装文档](references/install.md) 排查具体缺项。
 
 ## 任务目录与多会话

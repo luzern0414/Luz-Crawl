@@ -84,6 +84,13 @@
       "when": "a long documentation page keeps reporting scroll_budget although its text no longer changes",
       "action": "长文档内容首屏已完整时，连续两次内容不变就直接跳到页尾；普通页面两次无变化即稳定，搜索、评论、列表页要三次。",
       "updated": "2026-10-28"
+    },
+    {
+      "key": "pipe-json-utf8",
+      "platform": "web",
+      "when": "会员列表组件库调研评测：batch 采集全部成功，但 py -c 解析管道报错；复现确认输出本身是合法 UTF-8 JSON",
+      "action": "解析命令输出时读任务目录里的 batch-*.json 或 content.json；要接管道就用 py -X utf8、ConvertFrom-Json 或 Node，Windows 上不加 -X utf8 的 Python 按 GBK 读，中文吞掉引号会报 JSON 解析错误",
+      "updated": "2026-10-29"
     }
   ]
 }
