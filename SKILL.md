@@ -1,11 +1,23 @@
 ---
 name: luz-crawl
-description: Search and capture real browser pages with the bundled LuzCrawl extension. Save HTML, source accounts, observed media, interaction counts and loaded comments; download accessible media and reuse local search memory. Reads silently in a headless browser first, retries once in a visible browser, and only then asks the user to log in and resumes; safe for concurrent sessions. Use for social content, technical sites, procurement and analytics dashboards.
+description: Search and capture real browser pages with the bundled LuzCrawl extension. Save HTML, source accounts, observed media, interaction counts and loaded comments; download accessible media and reuse local search memory. Reads silently in a headless browser first, retries once in a visible browser, and only then asks the user to log in and resumes; safe for concurrent sessions. Use for social content, technical sites, procurement and analytics dashboards. Start every call with doctor, begin and experience --query — they return the task folder, the user's preferences, lessons and route hints; follow SKILL.md 调用协议.
 ---
 
 # LuzCrawl
 
 本 Skill → 本目录 opencli/ 采集插件 → browser-extension/ → 真实 Edge / Chrome 页面 → HTML 与 raw 证据 → opencli/memory/。保留完整目录；核心链路不转交其他私人 Skill，不用 HTTP 摘要代替浏览器阅读。
+
+## 调用协议（每次调用都按顺序做，不可跳过）
+
+命令行和模板只是工具；怎么检索、读不到怎么办、哪些结果算数，由本文件的规则、用户偏好和以往经验决定。只看命令示例就开搜，最容易漏掉登录兜底、任务目录和经验沉淀。
+
+1. **路由**：只做网页检索、采集和下载。把结果写成文章交给 Luz-Writing，排版交给 Luz-Design，系统设计交给 Luz-System。
+2. **自检**：`node scripts/luz-crawl.mjs doctor`，`ready` 为 true 再继续。
+3. **一个需求一个任务目录**：主线程运行一次 `begin "主题" --new`，保存返回的绝对 `folder`；之后每条命令都带 `--out <folder>`。子 Agent 用发起方给的 folder，不运行 begin。
+4. **先读经验（本技能的规则卡）**：`node scripts/luz-crawl.mjs experience --query "关键词" [--platform ID]`。读完返回的四部分再动手：`notes`（用户偏好与教训，必须遵守）、`route_hints`（各平台已验证的路线与坑）、近期同类采集结果、好用的关键词。多站调研还要先读 [网站调研流程](references/site-research.md) 并从 [网站库](references/site-library.json) 选站。
+5. **按本文件的规则执行**：读取顺序（先静默、再可见、最后请用户登录）、网址纠错、限流即停、批量与二次补采，见下文各节；不用 HTTP 摘要冒充浏览器阅读。
+6. **如实验收**：逐条报告 captured / partial / awaiting_user / blocked / failed，确认 `爬取总结.html` 已更新；需要登录时告诉用户具体网站和操作，用 `continue` 续接，不直接报失败。
+7. **沉淀（必做）**：采集结果、站点库实测结论和本主题的爬取范围会自动记下；用户新说的偏好、规则纠正、实测有效或失败的路线和关键词，结束前用 `note --kind preference|lesson|fact --key 主题 --text "一句话"` 记下；对所有人有用的经验加 `--public`（见“每次调用后沉淀”）。
 
 ## 开始
 
@@ -95,6 +107,7 @@ node scripts/luz-crawl.mjs cancel TASK_ID
 | 偏好与经验 | `opencli/memory/notes.json`（本机） | `note --kind preference\|lesson\|fact --key 主题 --text "一句话" [--why 原因] [--platform ID]`；同一主题再记就替换原文、只留上一版；偏好 60、经验 120、事实 120 条上限，超出先删用得少、最久未确认的；`list`、`prune`、`check` 查看和整理 |
 | 公开路线提示 | `opencli/experience/seeds.json`（随仓库发布） | 对所有用户都有用的经验加 `--public [--when "适用场景"]`，按主题键写入、同主题替换、最多 60 条；偏好不能公开 |
 | 站点库 | `references/site-library.json`（随仓库发布） | 采集、搜索、批量结束后自动更新已收录站点的实测结论（打开、搜索、详情）与观测时间；不自动收录新站点 |
+| 爬取范围（自动） | `opencli/memory/notes.json` 里的 `scope:<任务主题>`（本机） | 每次采集、搜索、批量结束后按任务主题合并：有效来源及取到的条数、有结果的检索、无效站点与原因；同一主题只留一条，新结果合并进去。下次同类主题用 `experience --query` 先看它再定范围 |
 
 `notes.json` 的格式与其他技能一致：`{"schema_version":"1.0","caps":{...},"notes":[{key, kind, text, why, uses, first_seen, last_confirmed, previous}]}`。只记一般规律，不记一次性任务细节；写入时拒绝手机号、邮箱、微信号、个人路径和带值的密码、令牌，客户名称自行避免。旧命令 `remember --note` 仍可用。
 
