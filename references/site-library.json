@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-29T10:54:17.161Z",
+  "updated_at": "2026-10-30T09:05:20.443Z",
   "description": "可扩展公开网站入口库。probe 仅记录历史派发状态；completed 不代表数据已验收。verification 分别表示单次样本的页面、搜索、详情、统计和媒体验收，默认 untested。入口可失效，执行前仍须观察原站并补充新站。",
   "verification_states": [
     "verified",
@@ -17,16 +17,16 @@
       "kind": "national_procurement",
       "probe": {
         "status": "completed",
-        "observations": 24,
-        "observed_at": "2026-10-29T10:47:47.467Z",
-        "last_action_status": "partial",
-        "last_stop_reason": "scroll_budget",
-        "last_text_chars": 5073
+        "observations": 36,
+        "observed_at": "2026-10-30T08:56:03.871Z",
+        "last_action_status": "captured",
+        "last_stop_reason": "stable_after_2_scrolls",
+        "last_text_chars": 466
       },
       "verification": {
         "page": "verified",
         "search": "verified",
-        "detail": "partial",
+        "detail": "verified",
         "statistics": "untested",
         "media": "untested"
       },
@@ -47,11 +47,11 @@
       "kind": "government",
       "probe": {
         "status": "completed",
-        "observations": 50,
-        "observed_at": "2026-10-29T10:54:17.161Z",
-        "last_action_status": "captured",
-        "last_stop_reason": "stable_after_2_scrolls",
-        "last_text_chars": 1369
+        "observations": 59,
+        "observed_at": "2026-10-30T08:55:59.680Z",
+        "last_action_status": "partial",
+        "last_stop_reason": "stable_after_3_scrolls",
+        "last_text_chars": 561
       },
       "verification": {
         "page": "verified",
@@ -203,11 +203,11 @@
       "kind": "tender_aggregator",
       "probe": {
         "status": "completed",
-        "observations": 3,
-        "observed_at": "2026-10-29T09:52:16.662Z",
+        "observations": 4,
+        "observed_at": "2026-10-30T08:54:43.466Z",
         "last_action_status": "captured",
         "last_stop_reason": "stable_after_2_scrolls",
-        "last_text_chars": 2411
+        "last_text_chars": 43
       },
       "verification": {
         "page": "verified",
@@ -1133,11 +1133,11 @@
       "kind": "tender_aggregator",
       "probe": {
         "status": "completed",
-        "observations": 19,
-        "observed_at": "2026-10-29T10:47:30.792Z",
+        "observations": 23,
+        "observed_at": "2026-10-30T05:37:44.500Z",
         "last_action_status": "captured",
-        "last_stop_reason": "stable_after_3_scrolls",
-        "last_text_chars": 1788
+        "last_stop_reason": "stable_after_2_scrolls",
+        "last_text_chars": 884
       },
       "verification": {
         "page": "verified",
@@ -1213,11 +1213,11 @@
       "kind": "tender_aggregator",
       "probe": {
         "status": "completed",
-        "observations": 15,
-        "observed_at": "2026-10-29T10:47:35.797Z",
-        "last_action_status": "partial",
-        "last_stop_reason": "stable_after_3_scrolls",
-        "last_text_chars": 49
+        "observations": 21,
+        "observed_at": "2026-10-30T05:54:33.113Z",
+        "last_action_status": "captured",
+        "last_stop_reason": "stable_after_2_scrolls",
+        "last_text_chars": 42
       },
       "verification": {
         "page": "verified",
@@ -1243,11 +1243,11 @@
       "kind": "tender_aggregator",
       "probe": {
         "status": "completed",
-        "observations": 30,
-        "observed_at": "2026-10-29T10:47:51.997Z",
-        "last_action_status": "captured",
-        "last_stop_reason": "stable_after_3_scrolls",
-        "last_text_chars": 4731
+        "observations": 37,
+        "observed_at": "2026-10-30T05:37:00.697Z",
+        "last_action_status": "partial",
+        "last_stop_reason": "scroll_budget",
+        "last_text_chars": 2496
       },
       "verification": {
         "page": "verified",
@@ -1678,11 +1678,11 @@
       "kind": "state_enterprise",
       "probe": {
         "status": "completed",
-        "observations": 33,
-        "observed_at": "2026-10-29T10:48:51.919Z",
+        "observations": 36,
+        "observed_at": "2026-10-30T05:28:06.392Z",
         "last_action_status": "captured",
         "last_stop_reason": "stable_after_3_scrolls",
-        "last_text_chars": 1713
+        "last_text_chars": 861
       },
       "verification": {
         "page": "verified",
@@ -5425,11 +5425,11 @@
       ],
       "probe": {
         "status": "completed",
-        "observations": 4,
-        "observed_at": "2026-10-29T00:36:09.537Z",
-        "last_action_status": "partial",
-        "last_stop_reason": "stable_after_3_scrolls",
-        "last_text_chars": 1507
+        "observations": 5,
+        "observed_at": "2026-10-30T05:55:00.814Z",
+        "last_action_status": "captured",
+        "last_stop_reason": "stable_after_2_scrolls",
+        "last_text_chars": 1355
       },
       "verification": {
         "page": "untested",
@@ -5461,16 +5461,16 @@
       ],
       "probe": {
         "status": "completed",
-        "observations": 19,
-        "observed_at": "2026-10-29T02:55:59.158Z",
-        "last_action_status": "captured",
-        "last_stop_reason": "stable_after_2_scrolls",
-        "last_text_chars": 22417
+        "observations": 20,
+        "observed_at": "2026-10-30T09:02:35.748Z",
+        "last_action_status": "blocked",
+        "last_stop_reason": "target_body_not_found",
+        "last_text_chars": 0
       },
       "verification": {
         "page": "verified",
         "search": "untested",
-        "detail": "verified",
+        "detail": "blocked",
         "statistics": "untested",
         "media": "untested"
       },
@@ -5517,16 +5517,16 @@
       ],
       "probe": {
         "status": "completed",
-        "observations": 28,
-        "observed_at": "2026-10-29T08:20:15.126Z",
-        "last_action_status": "captured",
-        "last_stop_reason": "stable_after_2_scrolls",
-        "last_text_chars": 321
+        "observations": 29,
+        "observed_at": "2026-10-30T09:05:20.443Z",
+        "last_action_status": "blocked",
+        "last_stop_reason": "target_body_not_found",
+        "last_text_chars": 0
       },
       "verification": {
         "page": "verified",
         "search": "untested",
-        "detail": "verified",
+        "detail": "blocked",
         "statistics": "untested",
         "media": "untested"
       },
@@ -5600,11 +5600,11 @@
       ],
       "probe": {
         "status": "completed",
-        "observations": 5,
-        "observed_at": "2026-10-29T02:55:59.158Z",
+        "observations": 9,
+        "observed_at": "2026-10-30T07:35:10.099Z",
         "last_action_status": "captured",
         "last_stop_reason": "stable_after_2_scrolls",
-        "last_text_chars": 3027
+        "last_text_chars": 1108
       },
       "verification": {
         "page": "verified",
@@ -5975,11 +5975,11 @@
       ],
       "probe": {
         "status": "completed",
-        "observations": 28,
-        "observed_at": "2026-10-29T10:48:51.902Z",
+        "observations": 43,
+        "observed_at": "2026-10-30T05:38:19.387Z",
         "last_action_status": "captured",
-        "last_stop_reason": "stable_after_3_scrolls",
-        "last_text_chars": 3541
+        "last_stop_reason": "stable_after_2_scrolls",
+        "last_text_chars": 626
       }
     },
     {
@@ -6041,7 +6041,7 @@
       "verification": {
         "page": "verified",
         "search": "verified",
-        "detail": "verified",
+        "detail": "blocked",
         "statistics": "untested",
         "media": "untested"
       },
@@ -6056,11 +6056,11 @@
       ],
       "probe": {
         "status": "completed",
-        "observations": 19,
-        "observed_at": "2026-10-29T10:47:19.867Z",
-        "last_action_status": "captured",
-        "last_stop_reason": "stable_after_3_scrolls",
-        "last_text_chars": 3073
+        "observations": 25,
+        "observed_at": "2026-10-30T05:37:39.606Z",
+        "last_action_status": "awaiting_user",
+        "last_stop_reason": "login_required",
+        "last_text_chars": 1665
       }
     },
     {
@@ -6984,7 +6984,7 @@
       "verification": {
         "page": "verified",
         "search": "failed",
-        "detail": "untested",
+        "detail": "verified",
         "statistics": "untested",
         "media": "untested"
       },
@@ -6995,7 +6995,15 @@
       },
       "notes": [
         "2026-10-29 已执行站内搜索，结果页未出现含关键词的公告；可能为结果异步加载或点中非结果控件，需按当前 DOM 复核"
-      ]
+      ],
+      "probe": {
+        "status": "completed",
+        "observations": 1,
+        "observed_at": "2026-10-30T05:36:37.188Z",
+        "last_action_status": "captured",
+        "last_stop_reason": "stable_after_2_scrolls",
+        "last_text_chars": 2722
+      }
     },
     {
       "id": "ggzy-nmg",
@@ -7201,7 +7209,7 @@
       "verification": {
         "page": "verified",
         "search": "partial",
-        "detail": "untested",
+        "detail": "partial",
         "statistics": "untested",
         "media": "untested"
       },
@@ -7213,7 +7221,15 @@
       },
       "notes": [
         "2026-10-29 搜索后结果列表在正文中可见（含关键词 57 处），结果行由前端点击事件跳转、没有链接地址，详情需在页面中点击"
-      ]
+      ],
+      "probe": {
+        "status": "completed",
+        "observations": 1,
+        "observed_at": "2026-10-30T05:35:11.839Z",
+        "last_action_status": "partial",
+        "last_stop_reason": "scroll_budget",
+        "last_text_chars": 2228
+      }
     },
     {
       "id": "ggzy-hubei",
@@ -7320,7 +7336,15 @@
       },
       "notes": [
         "2026-10-29 站内搜索“空调”返回 10 条含关键词结果，已打开并读到详情正文；“电梯”复测 10 条，详情可读"
-      ]
+      ],
+      "probe": {
+        "status": "completed",
+        "observations": 1,
+        "observed_at": "2026-10-30T05:16:38.865Z",
+        "last_action_status": "captured",
+        "last_stop_reason": "stable_after_2_scrolls",
+        "last_text_chars": 1262
+      }
     },
     {
       "id": "ggzy-guizhou",
@@ -8036,7 +8060,7 @@
       "verification": {
         "page": "verified",
         "search": "failed",
-        "detail": "untested",
+        "detail": "verified",
         "statistics": "untested",
         "media": "untested"
       },
@@ -8047,7 +8071,15 @@
       },
       "notes": [
         "2026-10-29 首页未识别到可用搜索框（地址无法访问）；需从栏目列表页或站内检索页进入"
-      ]
+      ],
+      "probe": {
+        "status": "completed",
+        "observations": 2,
+        "observed_at": "2026-10-30T05:37:53.071Z",
+        "last_action_status": "captured",
+        "last_stop_reason": "stable_after_2_scrolls",
+        "last_text_chars": 1165
+      }
     },
     {
       "id": "hust-hospital",
@@ -8100,11 +8132,11 @@
       ],
       "probe": {
         "status": "completed",
-        "observations": 1,
-        "observed_at": "2026-10-29T09:49:00.301Z",
+        "observations": 3,
+        "observed_at": "2026-10-30T05:37:45.709Z",
         "last_action_status": "captured",
         "last_stop_reason": "stable_after_2_scrolls",
-        "last_text_chars": 221
+        "last_text_chars": 892
       }
     },
     {
@@ -9164,11 +9196,11 @@
       ],
       "probe": {
         "status": "completed",
-        "observations": 2,
-        "observed_at": "2026-10-29T00:24:10.722Z",
-        "last_action_status": "partial",
-        "last_stop_reason": "stable_after_3_scrolls",
-        "last_text_chars": 4663
+        "observations": 3,
+        "observed_at": "2026-10-30T05:38:30.894Z",
+        "last_action_status": "captured",
+        "last_stop_reason": "stable_after_2_scrolls",
+        "last_text_chars": 1873
       }
     },
     {

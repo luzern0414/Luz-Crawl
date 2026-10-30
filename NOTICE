@@ -2,5 +2,5 @@ Required Notice: Copyright 2026 LuzernRR (https://github.com/LuzernRR/luz-crawl)
 
 LuzCrawl original code, skill instructions and project documentation are offered
 under PolyForm Noncommercial 1.0.0. See LICENSE.
-The bundled browser-extension distribution retains Apache-2.0; see browser-extension/LICENSE
-and NOTICE. Third-party rights and source-content rights remain separate.
+The bundled browser-extension and the bridge code in lib/bridge/ (adapted from OpenCLI 1.8.8) retain
+Apache-2.0; see browser-extension/LICENSE and NOTICE. Third-party rights and source-content rights remain separate.

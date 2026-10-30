@@ -1,6 +1,6 @@
 # 浏览器操作 API · 1.0.0
 
-LuzCrawl 2.7.0。供 Agent、脚本和其他模型使用；每次调用返回 JSON。所有动作先校验，再在后台打开本任务页面。读取顺序（静默 → 已连接 Edge 的最小化窗口补读一次 → awaiting_user 请用户登录后 continue）以 [SKILL.md“读取顺序”](../SKILL.md#读取顺序先静默再可见最后请你登录)为准；限流、冷却、预算耗尽和取消不会触发补读。batch 执行中使用后台停放模式，不把窗口调到前台。
+LuzCrawl 3.0.0。供 Agent、脚本和其他模型使用；每次调用返回 JSON。所有动作先校验，再在后台打开本任务页面。读取顺序（静默 → 已连接 Edge 的最小化窗口补读一次 → awaiting_user 请用户登录后 continue）以 [SKILL.md“读取顺序”](../SKILL.md#读取顺序先静默再可见最后请你登录)为准；限流、冷却、预算耗尽和取消不会触发补读。batch 执行中使用后台停放模式，不把窗口调到前台。
 
 ```powershell
 node scripts/luz-crawl.mjs schema
@@ -52,11 +52,11 @@ actions.json：
 
 ## 多站并发
 
-从同一个任务目录执行。Skill 命令行与原生插件的参数一致；只有 Skill 命令行入口在整批结束后做二次补采（`second_pass`）：
+从同一个任务目录执行。命令行入口在整批结束后做二次补采（`second_pass`）：
 
 ```powershell
 node scripts/luz-crawl.mjs batch --file jobs.json --out TASK_FOLDER
-opencli luz-crawl batch --file jobs.json --concurrency 4 --out TASK_FOLDER
+node scripts/luz-crawl.mjs batch --file jobs.json --concurrency 6 --out TASK_FOLDER
 ```
 
 jobs.json 可为 URL 数组、带步骤的任务数组，或搜索任务（`platform` 用平台 ID，`read` 为要打开的详情数，0–20）：
@@ -102,7 +102,7 @@ node scripts/luz-crawl.mjs policy
 node scripts/luz-crawl.mjs policy --file policy.json
 ```
 
-保存的配置是对 [默认策略](../opencli/access-policy.json) 的局部覆盖：
+保存的配置是对 [默认策略](../data/access-policy.json) 的局部覆盖：
 
 ```json
 {
@@ -119,10 +119,10 @@ node scripts/luz-crawl.mjs policy --file policy.json
 - 收缩：429 / 平台限流时两种额度都减半并冷却（至少 10 分钟）；网络故障时对应额度降 20%，连续故障触发短期暂停。
 - 资源额度用完只让剩余图片 / 字体保留原地址，不阻塞页面打开。
 
-当前额度记录在 `opencli/memory/execution/` 的 `adaptive_limit` / `asset_adaptive_limit` 字段中。
+当前额度记录在 `data/memory/execution/` 的 `adaptive_limit` / `asset_adaptive_limit` 字段中。
 
-冷却按平台与浏览器配置写入 opencli/memory/execution/，跨 CLI 调用共享，不随发布包分发。站内公开备用入口只用于定位同一内容，不能用于规避冷却。节流不能保证平台不限制账号；页面内部请求数及单次浏览器命令耗时不等于本接口操作数。
+冷却按平台与浏览器配置写入 data/memory/execution/，跨 CLI 调用共享，不随发布包分发。站内公开备用入口只用于定位同一内容，不能用于规避冷却。节流不能保证平台不限制账号；页面内部请求数及单次浏览器命令耗时不等于本接口操作数。
 
 ## 运行文件
 
-浏览器操作通过 `node scripts/luz-crawl.mjs browser` 调用；`schema` 查看动作定义。分发目录中的 `scripts/luz-crawl.mjs` 与 `opencli/commands.js` 是编译后的运行文件，未包含开发模块或源码映射。
+浏览器操作通过 `node scripts/luz-crawl.mjs browser` 调用；`schema` 查看动作定义。`scripts/luz-crawl.mjs` 是入口，每条浏览器命令在独立子进程 `lib/host.mjs` 中执行，经本机连接服务（`lib/bridge/`，127.0.0.1:19835）与扩展通信；源码即运行文件。

@@ -1,6 +1,35 @@
 # 更新记录
 
-## 未发布（2026-10-29，运行文件已更新，版本号仍为 2.7.0）
+## 3.0.0 — 2026-10-30（一体化：不再依赖外部插件或工具）
+
+3.0.0 包含本节的一体化改造，以及下面三节 2.7.0 之后陆续加入、一直没有单独发版的修复。不兼容变化：连接端口 19825 → 19835、`opencli/` 改为 `data/`、`doctor` 输出 `schema_version` 3、不再支持 `LUZ_HEADLESS_BROWSER=chromium` 与带认证的代理。
+
+- **源码并入本仓库，直接运行**：不再发布压缩编译包。入口 `scripts/luz-crawl.mjs`，采集代码 `lib/`，测试 `tests/`（`node --test tests/`）。此前源码在另一个仓库（LuzernRR/luz-crawl，停在 10-28），本仓库之后的修复都是直接改压缩包，两边不同步；`scripts/luz-crawl.mjs` 与 `opencli/commands.js` 还是两套重复逻辑。现在合成一套可读源码，行为以此前线上实际运行的版本为准（10-28 以来所有修复都已移植，上游源码里从未上线的改动不带入）。
+- **不再需要 OpenCLI**：此前采集、搜索、批量、下载、续接都是另起一个 `opencli luz-crawl …` 子进程执行，靠 `~/.opencli/plugins/luz-crawl` 注册成插件，扩展连的守护进程也属于 OpenCLI（端口 19825）。现在：
+  - `lib/bridge/` 是技能自己的本机连接服务（守护进程 + 客户端 + 最小 WebSocket 实现），端口 **19835**，与 OpenCLI 互不干扰；按需自动启动，版本不符时自动替换。
+  - 每条浏览器命令在技能自带的子进程 `lib/host.mjs` 中执行，参数与输出不变。
+  - 页面打开后的反检测脚本与等待 DOM 稳定沿用 OpenCLI 的实现（`lib/bridge/stealth.mjs`，Apache-2.0，原样保留）。
+  - `install` 不再安装插件，改为检查环境并说明如何加载扩展；`doctor` 改报 Node、Edge、连接服务与扩展状态（`schema_version` 3）。
+- **不再需要 Playwright**：静默浏览器由 `lib/edge.mjs` 直接启动 msedge.exe（`--headless=new`、加载本目录扩展、桌面版 User-Agent），通过 Edge 自带的调试管道识别扩展、刷新扩展脚本并正常关闭。此前实际用的是 Codex 运行时缓存里的 Playwright，Codex 更新或卸载就会失效。`LUZ_HEADLESS_BROWSER=chromium`（Playwright 自带 Chromium）不再支持；带用户名密码的代理不再支持。
+- **不再需要 FFmpeg**：哔哩哔哩、YouTube 等音视频分轨用 `lib/media-mux.mjs` 合成一个 MP4（纯 JavaScript，只拷贝轨道、不转码，支持普通 MP4 与 DASH 分片，`source` 为 `observed_streams_muxed`）。本机此前没有装 FFmpeg，这类视频一直只能留两个分轨文件。WebM 等非 MP4 分轨保留原文件并说明。
+- **目录改名**：`opencli/catalog.json`、`access-policy.json`、`experience/seeds.json` 移到 `data/`；本机记忆 `opencli/memory/` 第一次运行时自动搬到 `data/memory/`（静默浏览器正在使用时下次再搬）。
+- 静默浏览器通过调试协议 `Extensions.loadUnpacked` 安装扩展（与新版 Playwright 相同），扩展 ID 与旧配置一致，原有静默配置里的配置 ID 与停放任务继续可用；`--load-extension` 装入的扩展会在下次启动时被 Edge 停用，因此不用它。扩展后台未运行时打开扩展弹窗页唤醒。
+- 并发会话：启动前检查配置目录的 `lockfile`，被占用就换下一个槽位（`-2`…`-4`）。此前另一个 Edge 占用同一配置时，新进程把命令交给已有实例后静默退出，无法识别为占用。
+- 可见补读找不到可见浏览器时跳过补读并如实标记（`visible_fallback.visible_status: skipped`），不再把命令发给“唯一在线”的浏览器——那可能是另一个会话的静默浏览器，会让两个会话互相干扰。
+- 浏览器动作（读取、定位、滚动、输入、填表、点击、提交、等待、截图）保留不变，写操作仍需 `--allow-write`。实测：输入框、下拉框、复选框、提交表单、按名称点击按钮、读取结果全部通过。
+- 测试：`node --test tests/` 共 137 项，136 通过、1 项真实 Edge 集成测试默认跳过（设 `LUZ_HEADLESS_INTEGRATION=1` 运行，已通过）；页面提取的 DOM 测试改为直接驱动无头 Edge，不再需要 Playwright。真实网页回归：本地测试页（正文、图片、视频、防盗链图片，SHA-256 一致）、剑鱼标讯（22/22 经扩展取回、0 个 403）、GitHub 搜索并打开详情、三个会话并发。哔哩哔哩静默模式只取到封面、视频为 `blob:`，与旧版本行为相同。
+- 清理：去掉 OpenCLI 中 LuzCrawl 的插件登记（`~/.opencli/plugins/luz-crawl` 与 `plugins.lock.json` 条目；OpenCLI 本体与其他插件保留）、Playwright 的 User-Agent 缓存 `headless-runtime.json`、旧下载方式留在系统“下载”文件夹里的 `luz-crawl/`；未使用的上游开发文件 `scripts/platform-smoke.mjs`、`tests/dom.html`、`tests/browser-actions.html` 不再随仓库发布。
+- **更新后需在扩展管理页重新加载 LuzCrawl**（扩展改连 19835）。
+
+## 3.0.0 包含：静默下载与 Referer（2026-10-30）
+
+- 媒体下载不再弹出 Edge 下载面板：图片、字体和视频改由扩展后台 `fetch` 取回，经新指令 `fetch-media`（open / read / cancel，每块最多 4 MiB）分块传回命令行写盘，不经过浏览器下载管理器，也不往系统“下载”文件夹写临时文件。此前每张内嵌图片都走一次 `chrome.downloads`，可见浏览器补读时面板反复弹出。结果里的 `browser_download.via` 为 `extension_fetch`。扩展、命令行与插件同改（编译包直接修补，上游源码待同步）。
+- 扩展取数的请求不带页面的 SameSite 登录 Cookie（实测 `sec-fetch-site: none`、无 Cookie，原来的浏览器下载会带 Cookie）。因此遇到 401/403 或取回的是网页时，改用原来的浏览器下载再取一次。这次下载前用 `chrome.downloads.setUiOptions` 临时隐藏下载面板，结束后恢复（扩展重启时也会恢复），完成后从下载记录中删除。扩展未重新加载时也会自动走原来的下载方式。新增权限 `downloads.ui`。
+- 修复下载大量 403（Edge 下载列表里显示“无法下载 - 没有权限”）：剑鱼标讯 `cdn-ali.jianyu360.cn`、采购网 `oss.caigou2003.com` 等 CDN 有防盗链，不带来源页 Referer 一律返回 403；原来的浏览器下载和扩展取数都不带 Referer。现在扩展取媒体时用 `declarativeNetRequest` 会话规则给这条请求补上来源页 Referer，规则只作用于扩展自己发出的非标签页请求，取到响应头就撤掉，同源发完整网址，跨域只发域名，和浏览器默认一致。退回浏览器下载的条目无论成败都从下载列表删除。实测两页此前分别有 26 个、7 个 403，现在 22/22、13/13 全部下载成功。新增权限 `declarativeNetRequestWithHostAccess`。
+- 扩展取数不经过下载安全扫描（原路径要求 `danger` 为 safe），媒体仍按 MIME、大小、MP4 文件头与 SHA-256 校验。404、429 等状态直接按 HTTP 失败报告，429 照常进入冷却。
+- 本地测试页实测（静默浏览器）：2.8 MB 图片与 9 MB 视频经扩展取回，SHA-256 与原文件一致；需要 Cookie 的图片先得 403，再由浏览器下载取到。**更新后需在扩展管理页重新加载 LuzCrawl。**
+
+## 3.0.0 包含：窗口最小化、站内搜索与获客数据源（2026-10-29）
 
 - 浏览器窗口：补读、清理用的窗口以最小化方式打开，只有需要登录或验证时才恢复并调到前台（扩展、命令行与插件同改）。**更新后需在扩展管理页重新加载 LuzCrawl。**
 - 命令行：`--no-reuse-profile` 等否定参数可用（此前帮助里写了但解析报错）；`--help` 按“先静默、再最小化补读、最后请登录”、任务目录按会话绑定、输出根放技能目录外改写，batch 默认并发写为 4。
@@ -16,7 +45,7 @@
 - 获客数据源扩充：网站库新增 163 个招采与企业信息入口（共 390 个），198 个候选逐站实测站内搜索四轮；`catalog.json` 采购类由 10 个增至 65 个，其中 41 个登记为实测得到的搜索地址模板、24 个走站内表单。以“空调”“电梯”两个关键词验证，60 个入口中 51 个两次均返回含关键词结果。
 - 修正中央政府采购网详情链接规则（`/information/detail`、`/info/年份/`），此前 10 条相关结果被全部过滤。
 
-## 未发布（2026-10-28，运行文件已更新，版本号仍为 2.7.0）
+## 3.0.0 包含：静默优先、网址纠错、并发与经验格式（2026-10-28）
 
 - 调用协议放在 SKILL.md 第一节（自检 → 任务目录 → 读经验 → 执行 → 验收 → 沉淀）；每次采集、搜索、批量结束后按任务主题自动记录爬取范围（`scope:<主题>`：有效来源与条数、有结果的检索、无效站点与原因）。
 - 经验格式与其他 Luz 技能统一：`note / list / prune / check` 命令，`notes.json` 采用共同结构（旧记录自动迁移）；`note --public` 把经验写进随仓库发布的 `seeds.json`（按主题替换，最多 60 条，偏好不能公开）；采集、搜索、批量结束后自动更新站点库中已收录站点的实测结论。

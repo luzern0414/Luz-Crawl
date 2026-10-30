@@ -1,4 +1,5 @@
 # Local runtime data: crawl memory, search history, browser profiles and downloads never enter the repository
+/data/memory/
 /opencli/memory/
 
 # Dependencies and caches

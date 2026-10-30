@@ -93,19 +93,21 @@
 - **爬取范围**：每次采集后按任务主题自动汇总哪些来源有效、各取到几条、哪些检索有结果、哪些站点无效，同一主题只留一条，下次先看它再定范围。
 - **使用时**：每次开始前先查这些记录来安排路线，但仍会重新访问真实页面，不拿旧结果当这次的结果。
 
-本机记录在 `opencli/memory/`，不进入仓库；公开部分是 `opencli/experience/seeds.json` 和 `references/site-library.json`。
+本机记录在 `data/memory/`，不进入仓库；公开部分是 `data/experience/seeds.json` 和 `references/site-library.json`。
 
 ## 目录结构
 
 ```text
 SKILL.md               技能入口：读取顺序、判定规则、经验沉淀与边界
 scripts/luz-crawl.mjs  命令行入口（自检、建任务、搜索、采集、批量、下载、续接、记忆）
-opencli/               采集运行文件、站点目录、访问策略与路线提示
+lib/                   采集、搜索、归档、下载与 MP4 合并代码；lib/bridge/ 是本机连接服务（扩展 ↔ 命令行）
+data/                  站点目录、访问策略与路线提示；data/memory/ 为本机记忆（不进仓库）
+tests/                 自动测试（node --test tests/）
 browser-extension/     浏览器扩展（Edge / Chrome）
 references/            安装、平台、证据、校验、网站调研说明与网站库
 ```
 
-本仓库是可直接安装运行的发行版，运行文件已经编译好。上游源码在 [LuzernRR/luz-crawl](https://github.com/LuzernRR/luz-crawl)，本仓库在其后的修复见 [CHANGELOG.md](CHANGELOG.md)；问题反馈见 [CONTRIBUTING.md](CONTRIBUTING.md) 与 [SECURITY.md](SECURITY.md)。
+本仓库就是源码，直接运行、无需构建，除 Node.js 24.5+ 与 Microsoft Edge 外没有外部依赖（不需要 OpenCLI、Playwright、FFmpeg 或 npm 包）。修改记录见 [CHANGELOG.md](CHANGELOG.md)；问题反馈见 [CONTRIBUTING.md](CONTRIBUTING.md) 与 [SECURITY.md](SECURITY.md)。
 
 ## 五个技能的分工
 

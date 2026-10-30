@@ -5,7 +5,7 @@ description: Search and capture real browser pages with the bundled LuzCrawl ext
 
 # LuzCrawl
 
-本 Skill → 本目录 opencli/ 采集插件 → browser-extension/ → 真实 Edge / Chrome 页面 → 任务目录里的 HTML 与 raw 证据；本机经验在 opencli/memory/。保留完整目录；采集必须经过真实浏览器，不用 HTTP 摘要代替浏览器阅读。
+本 Skill（scripts/ 命令入口、lib/ 采集代码、lib/bridge/ 本机连接服务）→ browser-extension/ → 真实 Edge 页面 → 任务目录里的 HTML 与 raw 证据；站点目录、访问策略与路线提示在 data/，本机经验在 data/memory/。除 Node.js 24.5+ 和 Microsoft Edge 外不依赖任何外部插件或工具（不需要 OpenCLI、Playwright、FFmpeg）。保留完整目录；采集必须经过真实浏览器，不用 HTTP 摘要代替浏览器阅读。
 
 ## 调用协议（每次调用都按顺序做，不可跳过）
 
@@ -34,7 +34,7 @@ node scripts/luz-crawl.mjs collect "主题或 URL" --read 1 --out $f
 
 命令的标准输出是一份 UTF-8 JSON（提示与进度走 stderr），同样的结果也存在任务目录里（批量为 `batch-*.json`，单页为各自的 `content.json`）。程序解析优先读这些文件；要接管道时，Windows 上用 `py -X utf8`、PowerShell 的 `ConvertFrom-Json` 或 Node。不加 `-X utf8` 的 Python 按 GBK 读管道，中文会吞掉引号，报 JSON 解析错误，这不是采集失败。
 
-`doctor.ready` 证明连接；`extension_install.bundled_loaded` 核对本目录 LuzCrawl 扩展。登录和正文需要实际页面验收，断连按[安装文档](references/install.md)排查具体缺项。全部命令见 `node scripts/luz-crawl.mjs --help`；本文未展开的有：`sites [--category procurement]` 列出运行目录里的平台 ID，`install` 安装或更新原生插件，`--scrolls N` 调整单页滚动预算（默认 20，0–500），`remember --browser edge --profile ID [--no-reuse-profile]` 保存或停用补读用的可见浏览器配置。
+`doctor.ready` 证明连接；`extension_install.bundled_loaded` 核对本目录 LuzCrawl 扩展。登录和正文需要实际页面验收，断连按[安装文档](references/install.md)排查具体缺项。全部命令见 `node scripts/luz-crawl.mjs --help`；本文未展开的有：`sites [--category procurement]` 列出运行目录里的平台 ID，`install` 检查运行环境并说明如何加载扩展，`--scrolls N` 调整单页滚动预算（默认 20，0–500），`remember --browser edge --profile ID [--no-reuse-profile]` 保存或停用补读用的可见浏览器配置。
 
 ## 任务目录与多会话
 
@@ -64,7 +64,7 @@ node scripts/luz-crawl.mjs search wechat "关键词二" --out $taskFolder
 
 ## 读取顺序：先静默、再可见、最后请你登录
 
-1. **静默读取**：默认用独立的无头 Edge 配置（`opencli/memory/browser-profile-edge/`，不含你日常浏览器的登录），不弹窗口。已保存的 browser_profile 只作为第 2 步的可见浏览器，不再抢先使用；只有显式 `--profile ID` 才直接用可见浏览器。
+1. **静默读取**：默认用独立的无头 Edge 配置（`data/memory/browser-profile-edge/`，不含你日常浏览器的登录），不弹窗口。已保存的 browser_profile 只作为第 2 步的可见浏览器，不再抢先使用；只有显式 `--profile ID` 才直接用可见浏览器。
 2. **可见浏览器补读一次**：静默结果没有确认正文（登录墙、验证、空白、partial）或静默浏览器启动失败时，自动在已连接的 Edge 里重试一次，沿用你在该浏览器里的登录；任务窗口以最小化方式打开，不弹到前面、不抢焦点。没有已连接的浏览器就自动打开 Edge 再试（`LUZ_NO_BROWSER_LAUNCH=1` 可禁止）；这时 Edge 自身的启动窗口会正常显示，任务页仍在最小化窗口里。补读结果比静默差时保留静默结果。
 3. **请你登录**：可见浏览器仍读不到正文、需要你登录或完成验证时，才把这个窗口恢复并调到前台，结果为 `awaiting_user` 并给出 `continue TASK_ID`。告诉用户具体网站和要做的操作，完成后续接核验正文；不报失败、不重复换入口。静默配置里的任务用 `headless-login TASK_ID` 打开同一配置登录。
 
@@ -72,7 +72,7 @@ node scripts/luz-crawl.mjs search wechat "关键词二" --out $taskFolder
 
 不进入这条补读链的情况：来源页明确显示冷却或限流（保存原址与提示文字、展示给用户后停止该站）、只有 HTTP 限流信号（立即停下并如实说明）、操作预算耗尽、用户取消。浏览器路径、类型、资料 ID 分开记录，不能凭 exe 路径认定已登录；匿名正文与登录后检索分别验收，不能用 HTTP 200 或搜索外壳代替正文。正常成功不新增可见窗口，任务结束只关闭本任务的标签页。
 
-只有显式设置 `LUZ_HEADLESS_BROWSER=chromium` 才使用已安装的 Playwright Chromium 和 `opencli/memory/browser-profile/`。两类配置均不迁移 Cookie、不打包，登录、续接与采集须使用同一浏览器。具体命令见[静默浏览器安装说明](references/install.md#静默浏览器)。
+静默浏览器由技能直接启动 msedge.exe（无头模式，加载本目录扩展，桌面版 User-Agent），不经过 Playwright。静默配置与日常浏览器之间不迁移 Cookie、不打包，登录、续接与采集须使用同一浏览器。具体命令见[静默浏览器安装说明](references/install.md#静默浏览器)。
 
 ## 搜索与采集
 
@@ -128,11 +128,11 @@ node scripts/luz-crawl.mjs cancel TASK_ID
 
 | 层 | 位置 | 内容与写法 |
 |---|---|---|
-| 采集结果（自动） | `opencli/memory/events/`（本机） | 同一平台、网址和关键词只留一条，新结果替换旧结果，旧状态记在 `previous_outcome`；超过 900 条自动合并到最新 800 条，`experience --compact` 可手动整理 |
-| 偏好与经验 | `opencli/memory/notes.json`（本机） | `note --kind preference\|lesson\|fact --key 主题 --text "一句话" [--why 原因] [--platform ID]`；同一主题再记就替换原文、只留上一版；偏好 60、经验 120、事实 120 条上限，超出先删用得少、最久未确认的；`list`、`prune`、`check` 查看和整理 |
-| 公开路线提示 | `opencli/experience/seeds.json`（随仓库发布） | 对所有用户都有用的经验加 `--public --when "适用场景"`，按主题键写入、同主题替换、最多 60 条；`--when` 写适用场景，不写任务经过；偏好不能公开 |
+| 采集结果（自动） | `data/memory/events/`（本机） | 同一平台、网址和关键词只留一条，新结果替换旧结果，旧状态记在 `previous_outcome`；超过 900 条自动合并到最新 800 条，`experience --compact` 可手动整理 |
+| 偏好与经验 | `data/memory/notes.json`（本机） | `note --kind preference\|lesson\|fact --key 主题 --text "一句话" [--why 原因] [--platform ID]`；同一主题再记就替换原文、只留上一版；偏好 60、经验 120、事实 120 条上限，超出先删用得少、最久未确认的；`list`、`prune`、`check` 查看和整理 |
+| 公开路线提示 | `data/experience/seeds.json`（随仓库发布） | 对所有用户都有用的经验加 `--public --when "适用场景"`，按主题键写入、同主题替换、最多 60 条；`--when` 写适用场景，不写任务经过；偏好不能公开 |
 | 站点库 | `references/site-library.json`（随仓库发布） | 采集、搜索、批量结束后自动更新已收录站点的实测结论（打开、搜索、详情）与观测时间；不自动收录新站点，新站按网站调研流程手动补充 |
-| 爬取范围（自动） | `opencli/memory/notes.json` 里的 `scope:<任务主题>`（本机） | 每次采集、搜索、批量结束后按任务主题合并：有效来源及取到的条数、有结果的检索、无效站点与原因；同一主题只留一条，新结果合并进去。下次同类主题用 `experience --query` 先看它再定范围 |
+| 爬取范围（自动） | `data/memory/notes.json` 里的 `scope:<任务主题>`（本机） | 每次采集、搜索、批量结束后按任务主题合并：有效来源及取到的条数、有结果的检索、无效站点与原因；同一主题只留一条，新结果合并进去。下次同类主题用 `experience --query` 先看它再定范围 |
 
 `notes.json` 的格式与其他技能一致：`{"schema_version":"1.0","caps":{...},"notes":[{key, kind, text, why, uses, first_seen, last_confirmed, previous}]}`。只记一般规律，不记一次性任务细节；写入时拒绝手机号、邮箱、微信号、个人路径和带值的密码、令牌，客户名称自行避免。旧命令 `remember --note` 仍可用。
 
@@ -142,7 +142,7 @@ node scripts/luz-crawl.mjs cancel TASK_ID
 
 输出根与任务目录见上文“任务目录与多会话”；分类、关键词扩展、逐条原文核验与各类交付验收见[分类工作流](references/workflows.md)。用户可在扩展弹窗保存绝对目录，或用 `remember --out` 指定；本次 `--out` 优先，单次 `--out` 不改变默认。成品 HTML 不复制进来源证据目录；`manifest.delivery` 保存文件名、大小和 SHA-256。目录偏好未同步时重载 LuzCrawl 扩展。用户要求精简已整理 raw 时，核验来源 URL 和交付 HTML 哈希后再生成、审查清理计划；可移除可复采的页面快照，移除文件前保留来源、交付和候选文件的哈希记录。不得把唯一设计图片当作重复快照删除。
 
-post 保存当前目标账号、正文、图片/视频与互动；comments 保存本次加载的条目。隐藏数据为 null，缩写数保留 raw 与 approximate。不要把视频简介称为完整视频、把可见评论称为全量评论。图片、字体和视频通过浏览器扩展下载（单图 25 MiB、单视频 250 MiB 以内），下载完成后关闭来源页；不重放平台 API、不用 HTTP 或外部视频下载器替代浏览器。仅对已经下载的音视频分轨使用本地 FFmpeg 合并。失败另报，不导出 Cookie。字段、接口和目录见[使用说明](references/install.md#使用与下载)与[证据规范](references/evidence.md)。
+post 保存当前目标账号、正文、图片/视频与互动；comments 保存本次加载的条目。隐藏数据为 null，缩写数保留 raw 与 approximate。不要把视频简介称为完整视频、把可见评论称为全量评论。图片、字体和视频由 LuzCrawl 扩展在浏览器内取回（单图 25 MiB、单视频 250 MiB 以内）：扩展后台用浏览器自己的网络读取，分块传回本地写盘，不经过浏览器下载管理器，因此不弹下载面板、不留下载记录。这条请求不带页面的 SameSite 登录 Cookie，所以遇到 401/403 或取回的是网页时，改用浏览器下载再取一次；这期间临时隐藏下载面板，完成后删除下载记录。下载完成后关闭来源页；不重放平台 API、不用 HTTP 或外部视频下载器替代浏览器。已经下载的音视频分轨（哔哩哔哩、YouTube 等 DASH）由内置的 MP4 合并模块合成一个文件，只拷贝轨道、不转码；WebM 等非 MP4 分轨保留原文件并在结果中说明。失败另报，不导出 Cookie。字段、接口和目录见[使用说明](references/install.md#使用与下载)与[证据规范](references/evidence.md)。
 
 ```powershell
 node scripts/luz-crawl.mjs download DIRECTORY
@@ -153,7 +153,7 @@ node scripts/luz-crawl.mjs remember --platform "xhs,wechat" --keywords "采购,�
 node scripts/luz-crawl.mjs remember --site "https://example.com" --name example --template "https://example.com/search?q={query}"
 ```
 
-DIRECTORY 用采集返回的 folder。只有用户明确“记住”才更新长期偏好。新域名可直接搜索；重复使用才登记已验证站内模板，模板必须属于登记域名。记忆保存在 opencli/memory/，不写其他 Agent 的全局记忆，不保存密码、Cookie 或浏览器资料。仓库不包含 opencli/memory/：个人事件、待办、偏好、浏览器配置与归档都只在本机。
+DIRECTORY 用采集返回的 folder。只有用户明确“记住”才更新长期偏好。新域名可直接搜索；重复使用才登记已验证站内模板，模板必须属于登记域名。记忆保存在 data/memory/，不写其他 Agent 的全局记忆，不保存密码、Cookie 或浏览器资料。仓库不包含 data/memory/：个人事件、待办、偏好、浏览器配置与归档都只在本机。
 
 浏览器未连接、登录等待等状态也在任务目录内留存结果。分配锁与目录登记保存在 raw 根之外，raw 根始终只含文件夹。
 
@@ -161,7 +161,7 @@ DIRECTORY 用采集返回的 folder。只有用户明确“记住”才更新长
 
 [浏览器接口与策略](references/browser-api.md) 使用 JSON 的 read / locate / scroll / type / form / click / submit / wait_for / wait / extract / screenshot，最多 20 步；schema 输出机器可读定义。先 read / locate 取得真实控件，再使用唯一可见 selector 或 role/name。写操作要有用户对目标和内容的授权并显式 --allow-write，用 expect 核验结果；outcome_unknown 只读核验，不重新派发。真实点赞、发送尚无已验收的平台适配器。任意 JavaScript、Cookie 和 shell 不属于该接口。
 
-浏览器、正文资源与下载按站点自适应节流（页面打开与资源分开计数，无失败时额度增长，限流时减半，见[浏览器接口](references/browser-api.md#平台节流)）；读取只对短暂故障作有界退避，写动作一次派发，wait_for 自适应轮询。policy 可查看或保存每站等待与预算。429 / 频繁访问立即保存冷却并停止后续访问，不能换入口规避；登录和安全验证保存人工任务。冷却状态位于 opencli/memory/execution/，不进入仓库。节流降低访问频率，不能保证账号不受限制。
+浏览器、正文资源与下载按站点自适应节流（页面打开与资源分开计数，无失败时额度增长，限流时减半，见[浏览器接口](references/browser-api.md#平台节流)）；读取只对短暂故障作有界退避，写动作一次派发，wait_for 自适应轮询。policy 可查看或保存每站等待与预算。429 / 频繁访问立即保存冷却并停止后续访问，不能换入口规避；登录和安全验证保存人工任务。冷却状态位于 data/memory/execution/，不进入仓库。节流降低访问频率，不能保证账号不受限制。
 
 X 长文与状态 ID 对齐、没有展开/加载控件、配图解析完、连续两次正文与资源一致时可走 article_dom_complete，不必滚到回复区；请求评论时继续加载。只从浏览器实际收到的目标响应补齐媒体，不重放私人 API。回复输入框不是长文。
 

@@ -180,6 +180,13 @@
       "when": "文档网址跳转、404、没有正文，或用 # 路由的文档站一直 partial",
       "action": "# 路由的文档站（如 apolloconfig.com/#/zh/...）常判 partial，同一文档在 GitHub 有 md 原文时改读 GitHub 页。已迁址：Gunicorn 信号文档在 gunicorn.org/signals/（docs.gunicorn.org 旧址 404），Elastic ECS 在 elastic.co/docs/reference/ecs（字段要逐个读子页），OWASP Top 10 在 top10.owasp.org。GitHub 上的 PDF 页面没有正文，换 md 原文或转载；部分 CSDN 博客会 blocked。",
       "updated": "2026-10-29"
+    },
+    {
+      "key": "cn-search-engine-batch",
+      "platform": "web",
+      "when": "批量做中文行业资料、痛点、案例检索时选搜索入口",
+      "action": "中文多主题调研批量检索用公众号（wechat）、搜狗（sogou）、必应（bing）三个队列；360 搜索静默批量拿不到已验证候选，百度静默批量很快触发图形验证码并停掉整条队列，都不要放进批量",
+      "updated": "2026-10-30"
     }
   ]
 }
