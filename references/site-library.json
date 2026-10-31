@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-30T17:08:48.497Z",
+  "updated_at": "2026-10-31T02:48:45.169Z",
   "description": "可扩展公开网站入口库。probe 仅记录历史派发状态；completed 不代表数据已验收。verification 分别表示单次样本的页面、搜索、详情、统计和媒体验收，默认 untested。入口可失效，执行前仍须观察原站并补充新站。",
   "verification_states": [
     "verified",
@@ -9504,7 +9504,7 @@
       "verification": {
         "page": "partial",
         "search": "partial",
-        "detail": "failed",
+        "detail": "verified",
         "statistics": "untested",
         "media": "untested"
       },
@@ -9516,7 +9516,15 @@
         "本轮指定浏览器与静默浏览器的仓库读取停在 about:blank；未见明确 403/429 或封禁提示。HTTP HEAD 首页、搜索、API、Status 均为 200，浏览器 API 根页可读，Status 显示 All Systems Operational。连通性不代表搜索或 README 已验收，不据此断言封 IP。"
       ],
       "verified_at": "2026-10-30T17:08:48.497Z",
-      "discovered_from": "开源项目检索补充入口"
+      "discovered_from": "开源项目检索补充入口",
+      "probe": {
+        "status": "completed",
+        "observations": 1,
+        "observed_at": "2026-10-31T02:48:45.169Z",
+        "last_action_status": "captured",
+        "last_stop_reason": "stable_after_2_scrolls",
+        "last_text_chars": 1921
+      }
     },
     {
       "id": "gitcn",
