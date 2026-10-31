@@ -1,6 +1,6 @@
 {
   "name": "luz-crawl",
-  "version": "3.2.2",
+  "version": "3.3.0",
   "private": true,
   "type": "module",
   "description": "Real-browser search, capture, media download and HTML evidence archives.",

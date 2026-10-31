@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "LuzCrawl",
-  "version": "3.2.2",
+  "version": "3.3.0",
   "description": "用真实浏览器搜索、采集网页并保存 HTML 与媒体证据。",
   "permissions": [
     "debugger",
@@ -40,5 +40,5 @@
     "extension_pages": "script-src 'self'; object-src 'self'"
   },
   "short_name": "LuzCrawl",
-  "version_name": "LuzCrawl 3.2.2 (real-browser search)"
+  "version_name": "LuzCrawl 3.3.0 (real-browser search)"
 }
