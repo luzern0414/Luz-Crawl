@@ -1,6 +1,7 @@
 // Modified by LuzernRR for LuzCrawl: branding, visible labels and help entry.
 // Based on OpenCLI Browser Bridge 1.0.24; Apache-2.0. See LICENSE and NOTICE.
 import { getOutputPreferences, setOutputPreferences } from './preferences.js';
+import { formatTaskStatus } from './popup-status.js';
 
 const directoryInput = document.getElementById('outputDir');
 const settingsStatus = document.getElementById('settingsStatus');
@@ -22,58 +23,66 @@ document.getElementById('directoryForm').addEventListener('submit', async (event
     settingsStatus.classList.add('error');
   } finally { button.disabled = false; }
 });
-// Query connection status from background service worker
-chrome.runtime.sendMessage({ type: 'getStatus' }, (resp) => {
-  const card = document.getElementById('card');
-  const dot = document.getElementById('dot');
-  const status = document.getElementById('status');
-  const daemonVersion = document.getElementById('daemonVersion');
-  const profileRow = document.getElementById('profileRow');
-  const contextId = document.getElementById('contextId');
-  const copyBtn = document.getElementById('copyBtn');
-  const hint = document.getElementById('hint');
-  const extVersion = document.getElementById('extVersion');
+const card = document.getElementById('card');
+const dot = document.getElementById('dot');
+const status = document.getElementById('status');
+const daemonVersion = document.getElementById('daemonVersion');
+const profileRow = document.getElementById('profileRow');
+const contextId = document.getElementById('contextId');
+const copyBtn = document.getElementById('copyBtn');
+const hint = document.getElementById('hint');
+const extVersion = document.getElementById('extVersion');
+const taskStatus = document.getElementById('taskStatus');
 
-  if (resp && typeof resp.extensionVersion === 'string') {
-    extVersion.textContent = chrome.runtime.getManifest().version_name || `v${resp.extensionVersion}`;
-  }
+function renderTask(task) {
+  taskStatus.textContent = formatTaskStatus(task || {});
+  taskStatus.title = task?.query_current || task?.stop_reason || '';
+}
 
-  if (chrome.runtime.lastError || !resp) {
-    setState(card, dot, 'disconnected');
-    status.textContent = '等待 LuzCrawl 连接';
-    daemonVersion.textContent = '';
-    profileRow.style.display = 'none';
-    hint.style.display = 'block';
-    return;
-  }
-
-  if (typeof resp.contextId === 'string' && resp.contextId.length > 0) {
-    contextId.textContent = resp.contextId;
-    profileRow.style.display = 'flex';
-    copyBtn.addEventListener('click', () => copyToClipboard(resp.contextId, copyBtn));
-  } else {
-    profileRow.style.display = 'none';
-  }
-
-  if (resp.connected) {
-    setState(card, dot, 'connected');
-    status.textContent = 'LuzCrawl 已连接';
-    if (typeof resp.daemonVersion === 'string') {
-      daemonVersion.textContent = `服务 v${resp.daemonVersion}`;
+function refreshStatus() {
+  chrome.runtime.sendMessage({ type: 'getStatus' }, (resp) => {
+    if (chrome.runtime.lastError || !resp) {
+      setState(card, dot, 'disconnected');
+      status.textContent = '等待 LuzCrawl 连接';
+      daemonVersion.textContent = '';
+      profileRow.style.display = 'none';
+      hint.style.display = 'block';
+      renderTask(null);
+      return;
     }
-    hint.style.display = 'none';
-  } else if (resp.reconnecting) {
-    setState(card, dot, 'connecting');
-    status.textContent = '正在重新连接…';
-    daemonVersion.textContent = '';
-    hint.style.display = 'none';
-  } else {
-    setState(card, dot, 'disconnected');
-    status.textContent = '等待 LuzCrawl 连接';
-    daemonVersion.textContent = '';
-    hint.style.display = 'block';
-  }
-});
+
+    if (typeof resp.extensionVersion === 'string') {
+      extVersion.textContent = chrome.runtime.getManifest().version_name || `v${resp.extensionVersion}`;
+    }
+    if (typeof resp.contextId === 'string' && resp.contextId.length > 0) {
+      contextId.textContent = resp.contextId;
+      profileRow.style.display = 'flex';
+      copyBtn.onclick = () => copyToClipboard(resp.contextId, copyBtn);
+    } else profileRow.style.display = 'none';
+
+    if (resp.connected) {
+      setState(card, dot, 'connected');
+      status.textContent = 'LuzCrawl 已连接';
+      daemonVersion.textContent = typeof resp.daemonVersion === 'string' ? `服务 v${resp.daemonVersion}` : '';
+      hint.style.display = 'none';
+    } else if (resp.reconnecting) {
+      setState(card, dot, 'connecting');
+      status.textContent = '正在重新连接…';
+      daemonVersion.textContent = '';
+      hint.style.display = 'none';
+    } else {
+      setState(card, dot, 'disconnected');
+      status.textContent = '等待 LuzCrawl 连接';
+      daemonVersion.textContent = '';
+      hint.style.display = 'block';
+    }
+    renderTask(resp.task);
+  });
+}
+
+refreshStatus();
+const statusTimer = setInterval(refreshStatus, 1000);
+window.addEventListener('unload', () => clearInterval(statusTimer), { once: true });
 
 function setState(card, dot, state) {
   card.classList.remove('connected', 'disconnected', 'connecting');

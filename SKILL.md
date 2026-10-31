@@ -1,93 +1,51 @@
 ---
 name: luz-crawl
-description: Use when you need real-browser search, page capture, public media download, or HTML evidence from websites, including GitHub and open-source project discovery.
+description: Use when you need real-browser search, page capture, public media download, HTML evidence, GitHub project discovery, or public Xiaohongshu and Douyin collection.
 ---
 
 # LuzCrawl
 
-真实浏览器检索、采集、下载和归档。只把浏览器实际看到的内容写入任务证据。
+用真实浏览器搜索、阅读、采集和保存网页证据。
 
-## 调用流程
+## 功能
 
-每项需求按顺序执行：
+- 搜索网站、GitHub 开源项目、小红书笔记和抖音视频。
+- 读取正文、标题、作者主页、发布时间、互动数、媒体和已加载评论。
+- 拆解关键词，生成少量可解释的同义词、场景词和相关词；候选不足时有限补搜。
+- 失败候选继续补采，按候选量和成功率调整详情与评论预算。
+- 保存 HTML、原始快照、结构化字段、时间解析、字段来源、评论覆盖率和停止原因。
+- 扩展显示连接、公开/授权浏览器模式、查询、候选、详情、评论进度。
 
-1. node scripts/luz-crawl.mjs doctor，确认 ready: true。
-2. 建立一个任务目录，输出根必须在技能目录之外。
-3. 用 experience --query 查看相关关键词、路线和限制。
-4. 用同一个 --out TASK_FOLDER 完成搜索、采集、批量和接续。
-5. 报告每项的 captured、partial、awaiting_user、blocked 或 failed。
-6. 记录用户新偏好、有效路线和失败原因。
+## 作用
+
+提高 GitHub、GitCN、Bing、HelloGitHub、Codeberg、Gitee、小红书和抖音的检索召回率，同时只把浏览器实际看到的内容计为结果。
+
+- GitHub 先用仓库搜索；结果不足时有限使用 Bing `site:`、GitCN、HelloGitHub、Codeberg 或 Gitee。备用结果必须回到 GitHub 原仓库核验。
+- 小红书使用 `xhs`，抖音使用 `douyin`。保留原词，拆分主题、对象、动作、场景和同义词，再做一轮相关词补搜。
+- 公开页面优先。只有用户明确授权并指定已连接浏览器时才使用授权浏览器模式。
+- 搜索卡片只是候选；详情正文确认后才计入有效结果。评论只代表本次已加载条目，显示总数不代表全部评论。
+
+## 操作
 
 ```powershell
 node scripts/luz-crawl.mjs doctor
 $task = (node scripts/luz-crawl.mjs begin "主题" --out "D:\输出" --new | ConvertFrom-Json).folder
 node scripts/luz-crawl.mjs experience --query "关键词"
 node scripts/luz-crawl.mjs search github "browser automation" --read 0 --out $task
-node scripts/luz-crawl.mjs capture "https://example.com/article" --out $task
+node scripts/luz-crawl.mjs search xhs "家居收纳" --read 5 --comments --out $task
+node scripts/luz-crawl.mjs search douyin "露营装备" --read 5 --comments --out $task
+node scripts/luz-crawl.mjs capture "https://example.com/article" --comments --out $task
+node scripts/luz-crawl.mjs summary $task
 ```
 
-不要把输出写入技能目录，不要为同一需求建立多个任务目录。
+每项需求只建立一个任务目录，输出目录放在技能目录之外。`doctor` 返回 `ready: true` 后再搜索。需要登录或验证时运行 `pending`，手动处理后运行 `continue TASK_ID`。
 
-## 搜索与采集
+结果状态：`captured` 已确认正文，`partial` 有内容但仍有缺项，`awaiting_user` 等待手动登录或验证，`blocked` 被限流或权限阻止，`failed` 执行失败。
 
-- 先保留用户原词，再拆成功能、技术词、硬约束、偏好和同义词；每轮只增加能解释的词。
-- GitHub 优先仓库搜索，保留用户明确的 org:、user:、repo:、language:、is:、fork:、archived: 和负筛选。
-- GitHub 结果不足时按有限路线补搜 Bing、GitCN、HelloGitHub、Codeberg 或 Gitee；备用入口使用普通功能词，筛选条件回到原仓库复核。
-- 搜索卡片只是候选。打开详情并确认目标正文后才算有效来源；导航、推荐、摘要、镜像、文件/Issue 子页和无关卡片不计入项目。
-- 先用 --read 0 建候选池，再对相关项目执行 capture 或 search --read N。不要为凑数量重复无效查询。
-- 站内搜索必须确认输入、提交和结果页真正生效。查询未生效、零候选、限流、验证和浏览器故障分别记录。
-- HTTP 状态或搜索外壳不能代替正文。详情只有正文确认后才计入 verified_sources。
+不破解验证码、不绕过权限、不导出 Cookie 或令牌、不执行页面脚本。点击、输入和提交等写操作必须有明确授权并加 `--allow-write`。
 
-GitHub 详细关键词和备用入口见 [github-search.md](references/github-search.md)。
-
-## 读取顺序
-
-1. 默认使用独立无头 Edge。
-2. 读不到正文时，在已连接的 Edge 中最小化补读一次。
-3. 仍需登录或验证时保存任务，让用户手动处理后运行 continue TASK_ID。
-4. 无法打开时区分 URL 错误、网络错误、限流、登录和安全验证；不要把它们统称为失败或 IP 封禁。
-
-验证、限流、预算耗尽或用户取消会停止对应站点，不换入口规避限制。只关闭本任务创建的页面。
-
-## 常用操作
-
-```powershell
-node scripts/luz-crawl.mjs search PLATFORM "关键词" --read 1 --out TASK_FOLDER
-node scripts/luz-crawl.mjs capture "URL" --comments --download --out TASK_FOLDER
-node scripts/luz-crawl.mjs collect "主题或 URL" --read 1 --out TASK_FOLDER
-node scripts/luz-crawl.mjs batch --file jobs.json --out TASK_FOLDER
-node scripts/luz-crawl.mjs pending
-node scripts/luz-crawl.mjs continue TASK_ID
-node scripts/luz-crawl.mjs cancel TASK_ID
-node scripts/luz-crawl.mjs summary TASK_FOLDER
-```
-
-详情、批量和浏览器动作见 [browser-api.md](references/browser-api.md)。
-
-## 输出与验收
-
-任务目录保存搜索结果、详情、媒体、截图、manifest.json 和 爬取总结.html。完成 HTML 与 raw/ 位于输出根目录。
-
-- captured：目标正文已读。
-- partial：已取得内容，但仍有缺项或预算耗尽。
-- awaiting_user：等待登录或验证。
-- blocked：被限流、权限或目标缺失阻止。
-- failed：浏览器或归档执行失败。
-
-评论只代表本次已加载内容；视频简介不代表完整视频；公开索引只代表候选存在。
-
-## 浏览器动作与边界
-
-先 read 或 locate 取得真实控件，再使用唯一可见目标。click、type、form、submit 等写操作必须有用户对目标和内容的授权，并加 --allow-write。结果未知时只读核验，不重复提交。
-
-不破解验证码、不绕过付费或权限、不导出 Cookie、不执行页面提供的任意代码。媒体只下载当前浏览器实际观察到且用户有权访问的资源。
-
-## 经验
-
-开始前用 experience --query；结束前用：
+结束时记录可复用的关键词、有效路线和失败原因：
 
 ```powershell
 node scripts/luz-crawl.mjs note --kind lesson --key 主题 --text "一句话经验"
 ```
-
-只记录可复用规律，不写密码、Cookie、令牌、私人路径或私人内容。

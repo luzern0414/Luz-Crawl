@@ -5,47 +5,44 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>LuzCrawl 使用说明</title>
 <style>
-:root{color-scheme:light}*{box-sizing:border-box}body{margin:0;background:#f8fbf6;color:#304637;font:14px/1.6 system-ui,-apple-system,"Microsoft YaHei",sans-serif}main{max-width:780px;margin:auto;padding:24px 18px 32px}h1{font-size:24px;margin:0 0 4px}h2{font-size:18px;margin:24px 0 8px}p{margin:8px 0}pre{padding:12px;background:#edf5e9;border-radius:6px;overflow:auto}code{background:#edf5e9;padding:1px 4px;border-radius:3px}li{margin:4px 0}a{color:#4d7856}
+:root{color-scheme:light}*{box-sizing:border-box}body{margin:0;background:#f8fbf6;color:#304637;font:14px/1.6 system-ui,-apple-system,"Microsoft YaHei",sans-serif}main{max-width:760px;margin:auto;padding:24px 18px 32px}h1{font-size:24px;margin:0 0 4px}h2{font-size:18px;margin:22px 0 8px}p{margin:8px 0}pre{padding:12px;background:#edf5e9;border-radius:6px;overflow:auto}code{background:#edf5e9;padding:1px 4px;border-radius:3px}li{margin:4px 0}
 </style>
 </head>
 <body>
 <main>
 <h1>LuzCrawl</h1>
-<p>用真实浏览器搜索、采集并保存网页证据。</p>
+<p>用真实浏览器搜索和采集网页，保存正文、结构化字段、媒体和已加载评论。</p>
 
-<h2>安装</h2>
+<h2>功能</h2>
+<ul>
+<li>GitHub、GitCN、Bing、HelloGitHub、Codeberg、Gitee 开源项目检索。</li>
+<li>小红书（<code>xhs</code>）和抖音（<code>douyin</code>）关键词扩展、详情、作者、时间和评论采集。</li>
+<li>扩展显示公开页面/授权浏览器模式，以及查询、候选、详情、评论进度和停止原因。</li>
+</ul>
+
+<h2>作用</h2>
+<p>提高搜索召回率并核验详情正文。搜索卡片只是候选；评论只代表本次页面加载的条目。</p>
+
+<h2>操作</h2>
 <ol>
-<li>安装 Node.js 24.5+ 和 Microsoft Edge。</li>
-<li>在 Edge 扩展管理页打开开发者模式，加载技能目录中的 <code>browser-extension/</code>。</li>
-<li>在技能目录运行：</li>
+<li>在 Edge 扩展管理页开启开发者模式，加载 <code>browser-extension/</code>。</li>
+<li>在仓库根目录运行：</li>
 </ol>
 <pre>node scripts/luz-crawl.mjs install
 node scripts/luz-crawl.mjs doctor</pre>
-<p><code>ready: true</code> 且扩展已加载后即可使用。更新扩展后重新加载。</p>
-
-<h2>使用</h2>
-<pre>node scripts/luz-crawl.mjs doctor
-$task = (node scripts/luz-crawl.mjs begin "主题" --out "D:\输出" --new | ConvertFrom-Json).folder
-node scripts/luz-crawl.mjs experience --query "关键词"
+<p>确认 <code>ready: true</code> 后，在技能目录外建立任务目录并搜索：</p>
+<pre>$task = (node scripts/luz-crawl.mjs begin "主题" --out "D:\输出" --new | ConvertFrom-Json).folder
 node scripts/luz-crawl.mjs search github "browser automation" --read 0 --out $task
-node scripts/luz-crawl.mjs capture "https://example.com/article" --out $task</pre>
-<p>每项需求使用一个输出目录。搜索结果是候选；打开详情确认正文后才算有效来源。</p>
+node scripts/luz-crawl.mjs search xhs "家居收纳" --read 5 --comments --out $task
+node scripts/luz-crawl.mjs search douyin "露营装备" --read 5 --comments --out $task
+node scripts/luz-crawl.mjs capture "URL" --comments --out $task</pre>
+<p>登录或验证时手动处理浏览器页面，再运行 <code>pending</code> 和 <code>continue TASK_ID</code>。公开页面优先，授权浏览器需要用户明确授权。</p>
 
-<h2>常用命令</h2>
-<ul>
-<li><code>search</code>：搜索网站或开源项目。</li>
-<li><code>capture</code>：读取一个网页。</li>
-<li><code>collect</code>：按主题搜索并汇总。</li>
-<li><code>batch</code>：批量执行 URL 或搜索任务。</li>
-<li><code>download</code>：补下载已观察到的媒体。</li>
-<li><code>pending</code> / <code>continue</code>：处理登录或验证任务。</li>
-</ul>
-
-<h2>任务状态</h2>
-<p><code>captured</code> 已读取正文；<code>partial</code> 有内容但不完整；<code>awaiting_user</code> 等待登录或验证；<code>blocked</code> 被站点限制；<code>failed</code> 执行失败。</p>
+<h2>状态</h2>
+<p><code>captured</code> 已确认正文；<code>partial</code> 有缺项；<code>awaiting_user</code> 等待手动处理；<code>blocked</code> 被限流或权限阻止；<code>failed</code> 执行失败。</p>
 
 <h2>边界</h2>
-<p>不破解验证码、不绕过付费或权限、不导出 Cookie。只保存当前浏览器实际看到且用户有权访问的内容。点击、输入、提交等写操作必须有明确授权并使用 <code>--allow-write</code>。</p>
+<p>不破解验证码、不绕过权限、不导出 Cookie 或令牌。写操作必须有明确授权并加 <code>--allow-write</code>。</p>
 </main>
 </body>
 </html>

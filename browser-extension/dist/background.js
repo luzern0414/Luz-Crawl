@@ -1668,29 +1668,31 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       const contextId = await getCurrentContextId();
       const connected = ws?.readyState === WebSocket.OPEN;
       const extensionVersion = chrome.runtime.getManifest().version;
-      const daemonVersion = connected ? await fetchDaemonVersion() : null;
+      const daemon = connected ? await fetchDaemonStatus(contextId) : null;
       sendResponse({
         connected,
         reconnecting: reconnectTimer !== null,
         contextId,
         extensionVersion,
-        daemonVersion
+        daemonVersion: typeof daemon?.daemonVersion === "string" ? daemon.daemonVersion : null,
+        task: daemon?.task || null,
+        pending: Number.isSafeInteger(daemon?.pending) ? daemon.pending : 0,
       });
     })();
     return true;
   }
   return false;
 });
-async function fetchDaemonVersion() {
+async function fetchDaemonStatus(contextId) {
   try {
-    const res = await fetch(`http://${DAEMON_HOST}:${DAEMON_PORT}/status`, {
+    const query = contextId ? `?contextId=${encodeURIComponent(contextId)}` : "";
+    const res = await fetch(`http://${DAEMON_HOST}:${DAEMON_PORT}/status${query}`, {
       method: "GET",
-      headers: { "X-OpenCLI": "1" },
+      headers: { "X-LuzCrawl": "1" },
       signal: AbortSignal.timeout(1500)
     });
     if (!res.ok) return null;
-    const body = await res.json();
-    return typeof body.daemonVersion === "string" ? body.daemonVersion : null;
+    return await res.json();
   } catch {
     return null;
   }
