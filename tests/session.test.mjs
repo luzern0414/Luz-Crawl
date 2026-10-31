@@ -190,6 +190,12 @@ test('search candidates decode engine redirects and reject lookalike domains and
   const redirect = 'https://www.bing.com/ck/a?u=a1' + Buffer.from(target).toString('base64url');
   const result = sourceCandidates({ requested_url: 'https://bing.com/search?q=test', links: [{ url: redirect }, { url: target }, { url: 'https://qcc.com.evil.test/firm/a' }, { url: 'https://qcc.com/login' }] }, { domains: ['qcc.com'], detail: '/firm/' });
   assert.deepEqual(result.map((item) => item.url), [target]);
+  const baidu = sourceCandidates({ requested_url: 'https://www.baidu.com/s?wd=test', links: [
+    { url: 'https://www.baidu.com/s?wd=another-result', text: '小学英语词汇总表' },
+    { url: 'https://www.baidu.com/link?url=opaque', text: '小学英语音频' },
+    { url: 'https://example.com/real-result', text: '小学英语音频 数字教材' }
+  ] }, { domains: ['baidu.com'] }, true, '小学英语 数字教材 音频');
+  assert.deepEqual(baidu.map((item) => item.url), ['https://example.com/real-result']);
   assert.equal(sourceURL('https://dy.huitun.com/#/rank/douyin'), 'https://dy.huitun.com/#/rank/douyin');
   assert.ok(searchURL('灰豚', 'query').startsWith('https://dy.huitun.com'));
   assert.equal(sourceURL('https://example.com/#/rank?access_token=secret&tab=public'), 'https://example.com/#/rank?tab=public');
@@ -203,6 +209,35 @@ test('search candidates decode engine redirects and reject lookalike domains and
 test('GitHub repository discovery rejects stars, forks, files and site navigation', () => {
   const base = 'https://github.com/polyformproject/polyform-licenses';
   const urls = [base, base + '/stargazers', base + '/forks', base + '/blob/main/LICENSE', 'https://github.com/topics/crawler'];
-  const found = sourceCandidates({ requested_url: 'https://github.com/search?q=license', links: urls.map((url) => ({ url })) }, CATALOG.find((site) => site.id === 'github'));
+  const found = sourceCandidates({ requested_url: 'https://github.com/search?q=license', links: urls.map((url) => ({ url, text:'polyformproject/polyform-licenses', context:'PolyForm licenses for public source repositories' })) }, CATALOG.find((site) => site.id === 'github'));
   assert.deepEqual(found.map((item) => item.url), [base]);
+});
+
+test('GitHub search rejects structurally valid popular projects without query evidence', () => {
+  const site = CATALOG.find((item) => item.id === 'github');
+  const content = {
+    requested_url: 'https://github.com/search?q=wechat+admin',
+    links: [
+      { url: 'https://github.com/example/relevant', text: 'example/relevant', context: 'example/relevant\nWeChat admin dashboard for self-hosted teams\nTypeScript\n·\n1.2k\n·\nUpdated yesterday\nStar' },
+      { url: 'https://github.com/example/popular', text: 'example/popular', context: 'example/popular\nA generic AI toolkit README\nPython\n·\n100k\n·\nUpdated today\nStar' },
+      { url: 'https://github.com/topics/admin', text: 'admin', context: 'Topics' }
+    ]
+  };
+  const found = sourceCandidates(content, site, false, 'wechat admin is:public archived:false fork:false in:name,description,readme');
+  assert.deepEqual(found.map((item) => item.url), ['https://github.com/example/relevant']);
+  assert(found[0].search_evidence.exact_terms.length >= 2);
+});
+
+test('GitHub evidence does not count qualifier fragments or archived repositories', () => {
+  const site = CATALOG.find((item) => item.id === 'github');
+  const content = {
+    requested_url: 'https://github.com/search?q=wechat+admin',
+    links: [
+      { url: 'https://github.com/example/readme-only', text: 'example/readme-only', context: 'A generic README for a toolkit\nPython\n·\n80k\n·\nUpdated today\nStar' },
+      { url: 'https://github.com/example/archived', text: 'example/archived', context: 'WeChat admin archived repository\nArchived\n·\n10k\n·\nUpdated years ago\nStar' },
+      { url: 'https://github.com/example/good', text: '在github.com上查看更多信息', context: 'Github\nhttps://github.com › example › good\n翻译此结果\nWeChat admin dashboard' }
+    ]
+  };
+  const found = sourceCandidates(content, site, false, 'wechat admin is:public archived:false fork:false in:name,description,readme');
+  assert.deepEqual(found.map((item) => ({ url: item.url, text: item.text })), [{ url: 'https://github.com/example/good', text: 'example/good' }]);
 });

@@ -11,6 +11,7 @@ import { ExecutionPolicy, validatePolicy } from '../lib/execution.mjs';
 import { OperationError, classifyFailure, retryAfter } from '../lib/failure.mjs';
 import { executeActions, validateActions, readActions, ACTION_SCHEMA } from '../lib/browser-actions.mjs';
 import { testPolicy, actionArgument } from './helpers.mjs';
+import { BrowserOperations } from '../lib/browser-operations.mjs';
 
 const tmp = await fs.mkdtemp(path.join(os.tmpdir(), 'luzcrawl-policy-'));
 process.env.LUZ_CRAWL_STATE = path.join(tmp, 'memory');
@@ -18,6 +19,14 @@ test.after(() => fs.rm(tmp, { recursive: true, force: true }));
 const url = 'https://example.com/fixture';
 const settings = values => ({ ...defaults, defaults: { ...defaults.defaults, ...values } });
 const pageWith = read => ({ goto: async () => {}, evaluate: async code => read(actionArgument(code)) });
+
+test('extension screenshot bytes are saved as a real evidence file', async () => {
+  const bytes = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a3ioAAAAASUVORK5CYII=', 'base64');
+  const file = path.join(tmp, 'screenshot', 'raw', 'page.png');
+  const operations = new BrowserOperations({ screenshot: async () => bytes.toString('base64') }, testPolicy(tmp), url);
+  await operations.screenshot(file);
+  assert.deepEqual(await fs.readFile(file), bytes);
+});
 
 test('failure classification preserves Retry-After and separates validation, login and transient errors', () => {
   assert.equal(retryAfter('1.5'), 1500);

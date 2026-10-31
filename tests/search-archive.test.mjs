@@ -151,3 +151,45 @@ test('an interrupted detail read keeps discovered candidates and the concrete st
     else process.env.LUZ_CRAWL_STATE = previous;
   }
 });
+
+test('a readable search with no candidates is recorded as partial instead of a successful route', async () => {
+  const previous = process.env.LUZ_CRAWL_STATE;
+  process.env.LUZ_CRAWL_STATE = path.join(temp, 'no-candidate-state');
+  try {
+    const result = await search({}, { platform: 'xhs', query: 'no matching result', read: 0, out: path.join(temp, 'no-candidate') }, { summary: () => ({}) }, async (_page, options) => {
+      const folder = path.join(options.out, 'raw', 'discovery');
+      await fs.mkdir(path.join(folder, 'raw'), { recursive: true });
+      await fs.writeFile(path.join(folder, 'raw/content.json'), JSON.stringify({ requested_url: options.url, text: 'A readable search page with no matching result.', links: [] }));
+      return { folder, status: 'captured', stop_reason: 'stable_after_3_scrolls', resolved_url: options.url, url_check: { valid_content: true }, search_action: { submitted: true }, limitations: [] };
+    });
+    assert.equal(result.status, 'partial');
+    assert.equal(result.search_status, 'no_verified_candidates');
+    const events = await fs.readdir(path.join(process.env.LUZ_CRAWL_STATE, 'events'));
+    const event = JSON.parse(await fs.readFile(path.join(process.env.LUZ_CRAWL_STATE, 'events', events[0]), 'utf8'));
+    assert.equal(event.status, 'partial');
+    assert.equal(event.candidates, 0);
+  } finally {
+    if (previous === undefined) delete process.env.LUZ_CRAWL_STATE;
+    else process.env.LUZ_CRAWL_STATE = previous;
+  }
+});
+
+test('candidate discovery remains successful when the search page ends at its scroll budget', async () => {
+  const previous = process.env.LUZ_CRAWL_STATE;
+  process.env.LUZ_CRAWL_STATE = path.join(temp, 'budget-candidate-state');
+  try {
+    const result = await search({}, { platform: 'xhs', query: 'useful result', read: 0, out: path.join(temp, 'budget-candidate') }, { summary: () => ({}) }, async (_page, options) => {
+      const folder = path.join(options.out, 'raw', 'discovery');
+      await fs.mkdir(path.join(folder, 'raw'), { recursive: true });
+      await fs.writeFile(path.join(folder, 'raw/content.json'), JSON.stringify({ requested_url: options.url, text: 'A readable search page with a useful result.', links: [{ url: 'https://www.xiaohongshu.com/explore/abc123', text: 'useful result' }] }));
+      return { folder, status: 'partial', stop_reason: 'scroll_budget', resolved_url: options.url, url_check: { valid_content: true }, search_action: { submitted: true }, limitations: ['scroll budget'] };
+    });
+    assert.equal(result.discovered_candidates, 1);
+    assert.equal(result.status, 'captured');
+    assert.equal(result.discovery_status, 'partial');
+    assert.equal(result.search_status, 'candidates_found');
+  } finally {
+    if (previous === undefined) delete process.env.LUZ_CRAWL_STATE;
+    else process.env.LUZ_CRAWL_STATE = previous;
+  }
+});

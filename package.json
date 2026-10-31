@@ -1,14 +1,14 @@
 {
   "name": "luz-crawl",
-  "version": "3.0.0",
+  "version": "3.2.2",
   "private": true,
   "type": "module",
-  "description": "Browser-first search, capture and evidence archives through the bundled LuzCrawl extension.",
+  "description": "Real-browser search, capture, media download and HTML evidence archives.",
   "license": "PolyForm-Noncommercial-1.0.0",
   "engines": {
     "node": ">=24.5.0"
   },
   "scripts": {
-    "test": "node --test tests/"
+    "test": "node --test \"tests/*.test.mjs\""
   }
 }

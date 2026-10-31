@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "LuzCrawl",
-  "version": "3.0.0",
-  "description": "LuzCrawl 浏览器采集插件，由 LuzernRR 在 Browser Bridge 1.0.24 基础上定制：打开真实页面、搜索并保存 HTML，本地记忆保存在本 skill。",
+  "version": "3.2.2",
+  "description": "用真实浏览器搜索、采集网页并保存 HTML 与媒体证据。",
   "permissions": [
     "debugger",
     "tabs",
@@ -40,6 +40,5 @@
     "extension_pages": "script-src 'self'; object-src 'self'"
   },
   "short_name": "LuzCrawl",
-  "version_name": "LuzCrawl 3.0.0 (based on Browser Bridge 1.0.24)",
-  "author": "LuzernRR"
+  "version_name": "LuzCrawl 3.2.2 (real-browser search)"
 }

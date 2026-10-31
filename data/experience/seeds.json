@@ -187,6 +187,118 @@
       "when": "批量做中文行业资料、痛点、案例检索时选搜索入口",
       "action": "中文多主题调研批量检索用公众号（wechat）、搜狗（sogou）、必应（bing）三个队列；360 搜索静默批量拿不到已验证候选，百度静默批量很快触发图形验证码并停掉整条队列，都不要放进批量",
       "updated": "2026-10-30"
+    },
+    {
+      "key": "github-query-decomposition",
+      "platform": "github",
+      "when": "用户用自然语言寻找 GitHub 开源项目或原生仓库搜索无结果时",
+      "action": "GitHub 开源项目需求先拆成功能目标、技术栈、语言和部署约束；保留原词并补语义、语言和 stars 质量变体，候选不足时用 Bing site:github.com 发现入口，索引候选必须打开原仓库核验。",
+      "updated": "2026-10-30"
+    },
+    {
+      "key": "github-card-context",
+      "platform": "github",
+      "when": "GitHub 搜索结果卡片或搜索引擎 site:github.com 候选",
+      "action": "GitHub 结果卡片必须连同上下文和仓库路径一起判断；只有裸链接或泛导航文本不能成为候选。",
+      "updated": "2026-10-30"
+    },
+    {
+      "key": "github-query-evidence",
+      "platform": "github",
+      "when": "用户用自然语言寻找开源项目",
+      "action": "长查询至少要求两个独立证据词命中；将功能、技术栈和约束拆成有限查询变体，避免把所有同义词拼成 AND 条件。",
+      "updated": "2026-10-30"
+    },
+    {
+      "key": "search-engine-internal-links",
+      "platform": "web",
+      "when": "任意 Bing、搜狗、百度或其他搜索引擎结果提取",
+      "action": "搜索引擎内部跳转、导航、热门推荐和赞助入口不能作为搜索候选；site 限定只允许目标域名。",
+      "updated": "2026-10-30"
+    },
+    {
+      "key": "github-archive-fork-filter",
+      "platform": "github",
+      "when": "GitHub 仓库候选合并与排序",
+      "action": "GitHub 归档仓库和 fork 即使星数很高也要过滤；保留 stars/forks 作为排序信号而不是唯一门槛。",
+      "updated": "2026-10-30"
+    },
+    {
+      "key": "verification-slider",
+      "platform": "web",
+      "when": "百度或其他搜索引擎出现安全验证",
+      "action": "百度页面出现拖动滑块或图形验证时必须记录 verification_required 并进入人工验证流程，不把验证页当成无结果。",
+      "updated": "2026-10-30"
+    },
+    {
+      "key": "github-real-regression-2026-10-30",
+      "platform": "web",
+      "when": "GitHub",
+      "action": "真实 GitHub 英文检索 self-hosted customer support platform TypeScript 通过 native 不可用后的 Bing fallback 找到 2 个候选，并成功核验 1 个 README。",
+      "updated": "2026-10-30"
+    },
+    {
+      "key": "github-detail-budget",
+      "platform": "github",
+      "when": "GitHub search --read N 需要在候选失败时继续核验",
+      "action": "GitHub 发现阶段每条路线最多滚动 1 轮并关闭截图；--read N 详情最多尝试 N+3 个候选，连续不可用时继续补位，README 稳定时按 repository_dom_complete 完成。",
+      "updated": "2026-10-30"
+    },
+    {
+      "key": "github-core-intent-ranking",
+      "platform": "github",
+      "when": "GitHub 自然语言需求包含产品功能与通用技术词时",
+      "action": "GitHub 候选先按核心功能意图命中排序，再叠加关键词覆盖与 stars/forks；高星通用 SDK 不能压过真正命中产品目标的小众仓库，结果保留 github_core_matched_terms 解释排序。",
+      "updated": "2026-10-30"
+    },
+    {
+      "key": "github-web-transient",
+      "platform": "github",
+      "when": "GitHub Web 搜索偶发打不开但其他网站和 API 正常时",
+      "action": "GitHub Web 搜索入口会出现 about:blank、连接重置或超时；同时间 api.github.com、Bing 和 githubstatus.com 可读时，不判定为 IP 封禁，先看状态页并保留失败证据。",
+      "updated": "2026-10-30"
+    },
+    {
+      "key": "github-route-retry-fallback",
+      "platform": "github",
+      "when": "GitHub 原生仓库搜索落到 chrome-error、about:blank 或 unavailable 时",
+      "action": "原始 GitHub HTTPS URL 遇浏览器错误页时先有限重试原地址，再按 https/http 与 www 变体切换；原生入口明确不可用后跳过同主机重复路线，转 Bing site:github.com 发现入口，索引候选必须回到仓库页核验。",
+      "updated": "2026-10-30"
+    },
+    {
+      "key": "github-status-incident-20261030",
+      "platform": "github",
+      "when": "复核 2026-10-30 GitHub Web 搜索失败原因时",
+      "action": "2026-10-30 14:31–14:49 UTC GitHub Status 记录多服务降级：14:21–14:30 UTC 临时过载组件触发突发错误，Pages 与 Issues 短时受影响，随后恢复监控；本次证据页 valid_content=true。",
+      "updated": "2026-10-30"
+    },
+    {
+      "key": "github-query-quality",
+      "platform": "github",
+      "when": "GitHub 或其他开源项目需求检索",
+      "action": "开源项目先拆核心功能、生态术语与约束，同义词分开查询；保留 GitHub qualifier 的冒号、逗号、引号和显式 fork/archived 条件。Bing/社区只用普通功能词，待复核条件须写明；零候选不记成功。",
+      "updated": "2026-10-30"
+    },
+    {
+      "key": "opensource-form-confirmation",
+      "platform": "github",
+      "when": "中文开源项目社区的表单搜索",
+      "action": "GitCN 搜索输入为“请输入搜索关键字或 repo url”，HelloGitHub 为“搜索开源项目”，均用 Enter；等控件可交互并核对落地 q，不能误点 Go 或提交项目。导航失去执行上下文时只读核验，不重复提交。",
+      "updated": "2026-10-30"
+    },
+    {
+      "key": "opensource-route-verification",
+      "platform": "web",
+      "when": "补充开源目录、替代品站点或处理中文安全验证时",
+      "action": "运行搜索目录只登记有真实搜索证据的入口。首页、查询、项目详情分别验收；镜像、目录卡片、文章与原始仓库不能混同。中文“正在进行安全验证/验证您不是自动程序”按 verification_required 停放，不换入口规避。",
+      "updated": "2026-10-30"
+    },
+    {
+      "key": "github-browser-diagnosis",
+      "platform": "github",
+      "when": "GitHub 打不开或静默到可见浏览器补读失败时",
+      "action": "GitHub Web 空白、重置或超时不足以判 IP 被封；比较浏览器 Web、API、Status 与网络探测并保留各自边界。保存的浏览器 profile 断开时选已连接可见浏览器；连接失败不算已尝试网站，不能用泛化网络或登录结论掩盖。",
+      "updated": "2026-10-30"
     }
   ]
 }

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-30T09:05:20.443Z",
+  "updated_at": "2026-10-30T17:08:48.497Z",
   "description": "可扩展公开网站入口库。probe 仅记录历史派发状态；completed 不代表数据已验收。verification 分别表示单次样本的页面、搜索、详情、统计和媒体验收，默认 untested。入口可失效，执行前仍须观察原站并补充新站。",
   "verification_states": [
     "verified",
@@ -9492,6 +9492,339 @@
       "notes": [
         "2026-10-29 首页无法打开（unreachable），地址可能已迁移"
       ]
+    },
+    {
+      "id": "github",
+      "name": "GitHub",
+      "url": "https://github.com/",
+      "kind": "code_hosting",
+      "queries": [
+        "browser automation"
+      ],
+      "verification": {
+        "page": "partial",
+        "search": "partial",
+        "detail": "failed",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "route": {
+        "search_entry": "https://github.com/search",
+        "detail_sample": "https://github.com/vercel-labs/agent-browser"
+      },
+      "notes": [
+        "本轮指定浏览器与静默浏览器的仓库读取停在 about:blank；未见明确 403/429 或封禁提示。HTTP HEAD 首页、搜索、API、Status 均为 200，浏览器 API 根页可读，Status 显示 All Systems Operational。连通性不代表搜索或 README 已验收，不据此断言封 IP。"
+      ],
+      "verified_at": "2026-10-30T17:08:48.497Z",
+      "discovered_from": "开源项目检索补充入口"
+    },
+    {
+      "id": "gitcn",
+      "name": "GitCN（GitHub 中文社区）",
+      "url": "https://gitcn.org/",
+      "kind": "opensource_discovery",
+      "queries": [
+        "browser automation"
+      ],
+      "verification": {
+        "page": "verified",
+        "search": "verified",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "route": {
+        "search_entry": "https://gitcn.org/search",
+        "input_placeholder": "请输入搜索关键字或 repo url",
+        "submit": "Enter",
+        "query_parameter": "q",
+        "observed_result": "https://gitcn.org/search/result?q=browser%20automation",
+        "result_domains": [
+          "github.com"
+        ]
+      },
+      "notes": [
+        "非 GitHub 官方运营。真实表单搜索确认 5 个相关 GitHub 原仓库候选；等待输入控件可交互与落地查询，不点 Go 语言入口。",
+        "只接受带卡片上下文的 GitHub 原仓库链接；本轮上游详情未读通，不能称项目已验证好用。"
+      ],
+      "verified_at": "2026-10-30T17:08:48.497Z",
+      "discovered_from": "用户提供入口"
+    },
+    {
+      "id": "hellogithub",
+      "name": "HelloGitHub",
+      "url": "https://hellogithub.com/",
+      "kind": "opensource_discovery",
+      "queries": [
+        "浏览器"
+      ],
+      "verification": {
+        "page": "verified",
+        "search": "verified",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "route": {
+        "search_entry": "https://hellogithub.com/",
+        "input_placeholder": "搜索开源项目",
+        "submit": "Enter",
+        "query_parameter": "q",
+        "observed_result": "https://hellogithub.com/search/result?q=%E6%B5%8F%E8%A7%88%E5%99%A8",
+        "detail_sample": "https://hellogithub.com/repository/browseros-ai/BrowserOS"
+      },
+      "notes": [
+        "搜索得到 8 个相关项目候选，已读 BrowserOS 社区详情并观察到 GitHub 原仓库链接；详情 verified 仅指社区介绍，不证明源码可运行。",
+        "整张 article 卡片包在链接内仍是有效证据；卡片的编辑“推荐”标签不能当作侧栏导航剔除。提交项目不是搜索按钮。"
+      ],
+      "verified_at": "2026-10-30T17:08:48.497Z",
+      "discovered_from": "开源项目检索补充入口"
+    },
+    {
+      "id": "codeberg",
+      "name": "Codeberg",
+      "url": "https://codeberg.org/explore/repos",
+      "kind": "code_hosting",
+      "queries": [
+        "browser automation"
+      ],
+      "verification": {
+        "page": "verified",
+        "search": "verified",
+        "detail": "verified",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "route": {
+        "search_template": "https://codeberg.org/explore/repos?q={query}&sort=recentupdate&language=",
+        "detail_sample": "https://codeberg.org/psyb0t/docker-stealthy-auto-browse"
+      },
+      "notes": [
+        "真实搜索得到 13 个候选，包含文章和示例，仍需按需求筛选。已读取样本仓库 README 与安装说明，未运行软件。",
+        "保留 Codeberg 原始域名与来源；上游按页面实际链接核验，不重写成 GitHub。"
+      ],
+      "verified_at": "2026-10-30T17:08:48.497Z",
+      "discovered_from": "开源项目检索补充入口"
+    },
+    {
+      "id": "gitee",
+      "name": "Gitee",
+      "url": "https://gitee.com/explore",
+      "kind": "code_hosting",
+      "queries": [
+        "浏览器自动化"
+      ],
+      "verification": {
+        "page": "verified",
+        "search": "untested",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "notes": [
+        "已有独立搜索适配器。本轮只验证入口可读，未重新执行站内搜索或详情；镜像指标不与 GitHub 混排。"
+      ],
+      "verified_at": "2026-10-30T17:08:48.497Z",
+      "discovered_from": "开源项目检索补充入口"
+    },
+    {
+      "id": "gitlab",
+      "name": "GitLab",
+      "url": "https://gitlab.com/explore/projects",
+      "kind": "code_hosting",
+      "queries": [
+        "browser automation"
+      ],
+      "verification": {
+        "page": "verified",
+        "search": "partial",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "route": {
+        "input_selector": "input[data-testid=\"filtered-search-term-input\"]",
+        "submit_selector": "button[data-testid=\"search-button\"]"
+      },
+      "notes": [
+        "输入、Enter 和真实按钮点击后仍为 active 热门项目页，未确认本次查询生效。暂不加入运行 catalog，不把推荐列表当结果。",
+        "仓库可有嵌套 group 路径；/-/issues、/-/blob 和 /-/starrers 不是仓库搜索详情。"
+      ],
+      "verified_at": "2026-10-30T17:08:48.497Z",
+      "discovered_from": "开源项目检索补充入口"
+    },
+    {
+      "id": "gitcode",
+      "name": "AtomGit / GitCode",
+      "url": "https://atomgit.com/",
+      "kind": "code_hosting",
+      "aliases": [
+        "gitcode.com",
+        "atomgit.com"
+      ],
+      "queries": [
+        "browser automation"
+      ],
+      "verification": {
+        "page": "verified",
+        "search": "blocked",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "notes": [
+        "gitcode.com 当前落到 AtomGit，按同一平台处理。本轮首页可读，站内搜索触发登录，公开索引未给出可靠候选。暂不加入运行 catalog。",
+        "gh_mirrors 是当前平台镜像路径，不能伪装为 GitHub 原仓库。"
+      ],
+      "verified_at": "2026-10-30T17:08:48.497Z",
+      "discovered_from": "开源项目检索补充入口"
+    },
+    {
+      "id": "libhunt",
+      "name": "LibHunt",
+      "url": "https://www.libhunt.com/",
+      "kind": "opensource_discovery",
+      "queries": [
+        "browser automation"
+      ],
+      "verification": {
+        "page": "blocked",
+        "search": "blocked",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "notes": [
+        "技术栈与同类库发现候选；本轮中文 Cloudflare 安全验证阻塞，未执行搜索/详情；不重复访问或更换入口规避验证。"
+      ],
+      "verified_at": "2026-10-30T17:08:48.497Z",
+      "discovered_from": "开源项目检索补充入口"
+    },
+    {
+      "id": "openalternative",
+      "name": "OpenAlternative",
+      "url": "https://openalternative.co/",
+      "kind": "opensource_discovery",
+      "queries": [
+        "browser automation"
+      ],
+      "verification": {
+        "page": "blocked",
+        "search": "blocked",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "notes": [
+        "按商业产品寻找开源替代品的候选入口；本轮中文安全验证阻塞，搜索/详情未验收。"
+      ],
+      "verified_at": "2026-10-30T17:08:48.497Z",
+      "discovered_from": "开源项目检索补充入口"
+    },
+    {
+      "id": "awesomeopensource",
+      "name": "Awesome Open Source",
+      "url": "https://awesomeopensource.com/",
+      "kind": "opensource_directory",
+      "queries": [
+        "browser automation"
+      ],
+      "verification": {
+        "page": "verified",
+        "search": "untested",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "notes": [
+        "本轮浏览器取得 Find And Compare Open Source Projects 首页与分类入口；搜索与详情未验证，仅用于分类和术语发现。"
+      ],
+      "verified_at": "2026-10-30T17:08:48.497Z",
+      "discovered_from": "开源项目检索补充入口"
+    },
+    {
+      "id": "sourceforge",
+      "name": "SourceForge",
+      "url": "https://sourceforge.net/",
+      "kind": "code_hosting",
+      "queries": [
+        "browser automation"
+      ],
+      "verification": {
+        "page": "blocked",
+        "search": "blocked",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "notes": [
+        "传统桌面软件与发布下载候选；本轮中文安全验证阻塞，未执行搜索/详情。下载页不代替原始仓库核验。"
+      ],
+      "verified_at": "2026-10-30T17:08:48.497Z",
+      "discovered_from": "开源项目检索补充入口"
+    },
+    {
+      "id": "oschina",
+      "name": "OSCHINA",
+      "url": "https://www.oschina.net/",
+      "kind": "opensource_discovery",
+      "queries": [
+        "浏览器自动化"
+      ],
+      "verification": {
+        "page": "verified",
+        "search": "untested",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "notes": [
+        "首页公开文字与开源软件入口可读；站内搜索、软件详情与许可证尚未验收。"
+      ],
+      "verified_at": "2026-10-30T17:08:48.497Z",
+      "discovered_from": "开源项目检索补充入口"
+    },
+    {
+      "id": "alternativeto",
+      "name": "AlternativeTo",
+      "url": "https://alternativeto.net/",
+      "kind": "software_alternatives",
+      "queries": [
+        "browser automation"
+      ],
+      "verification": {
+        "page": "blocked",
+        "search": "blocked",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "notes": [
+        "按现有产品找替代品的候选；本轮中文安全验证阻塞。日后需确认开源筛选、许可证与仓库链接，不能把普通免费软件当开源。"
+      ],
+      "verified_at": "2026-10-30T17:08:48.497Z",
+      "discovered_from": "开源项目检索补充入口"
+    },
+    {
+      "id": "awesome-selfhosted",
+      "name": "Awesome-Selfhosted",
+      "url": "https://awesome-selfhosted.net/",
+      "kind": "opensource_directory",
+      "queries": [
+        "self-hosted browser automation"
+      ],
+      "verification": {
+        "page": "partial",
+        "search": "untested",
+        "detail": "untested",
+        "statistics": "untested",
+        "media": "untested"
+      },
+      "notes": [
+        "自托管分类清单候选；本轮读到页面标题，但 read/extract 正文均为空，不能声称目录已读取。搜索/详情未验证。"
+      ],
+      "verified_at": "2026-10-30T17:08:48.497Z",
+      "discovered_from": "开源项目检索补充入口"
     }
   ]
 }

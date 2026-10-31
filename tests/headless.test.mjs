@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { retryVisibleIfIncomplete, visibleFallbackReason, withHeadlessSession, withVisibleFallbackOnHeadlessStartFailure } from '../lib/headless.mjs';
 import { browserProxy, edgeUserAgent } from '../lib/edge.mjs';
 import { edgeAvailable, openTestBrowser } from './edge-page.mjs';
-import { extractPage } from '../lib/extract-page.mjs';
+import { extractPage, submitSearch } from '../lib/extract-page.mjs';
 import { domOperation, BrowserOperations } from '../lib/browser-operations.mjs';
 import { rememberPreferences } from '../lib/memory.mjs';
 import { testPolicy } from './helpers.mjs';
@@ -68,6 +68,29 @@ test('incomplete headless reads retry once in the saved foreground profile, but 
     if (previousProfile === undefined) delete process.env.LUZ_HEADLESS_PROFILE; else process.env.LUZ_HEADLESS_PROFILE = previousProfile;
     if (previousVisibleFallback === undefined) delete process.env.LUZ_VISIBLE_FALLBACK; else process.env.LUZ_VISIBLE_FALLBACK = previousVisibleFallback;
     await fs.rm(directory, { recursive: true, force: true });
+  }
+});
+
+test('a disconnected saved profile selects a connected browser before attempting the site', async () => {
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'luz-stale-visible-profile-'));
+  const priorState = process.env.LUZ_CRAWL_STATE, priorHeadless = process.env.LUZ_HEADLESS_PROFILE;
+  process.env.LUZ_CRAWL_STATE = directory; process.env.LUZ_HEADLESS_PROFILE = 'silent-profile';
+  try {
+    await rememberPreferences({profile:'disconnected-profile'});
+    const calls = [];
+    const result = await retryVisibleIfIncomplete(async options => {
+      calls.push(options.profile);
+      return options.profile === 'disconnected-profile'
+        ? {status:'failed',stop_reason:'unavailable',error:'Browser profile "disconnected-profile" is not connected'}
+        : {status:'captured',url_check:{valid_content:true}};
+    }, {out:directory,profile:'silent-profile'}, {status:'failed',stop_reason:'unavailable',browser:{context_id:'silent-profile'}}, {pickProfile:async exclude=>{assert.equal(exclude,'silent-profile');return 'connected-profile';}});
+    assert.deepEqual(calls, ['disconnected-profile','connected-profile']);
+    assert.equal(result.status, 'captured');
+    assert.equal(result.visible_fallback.profile_selection, 'reselected_disconnected_profile');
+  } finally {
+    if(priorState===undefined) delete process.env.LUZ_CRAWL_STATE; else process.env.LUZ_CRAWL_STATE=priorState;
+    if(priorHeadless===undefined) delete process.env.LUZ_HEADLESS_PROFILE; else process.env.LUZ_HEADLESS_PROFILE=priorHeadless;
+    await fs.rm(directory,{recursive:true,force:true});
   }
 });
 
@@ -210,6 +233,11 @@ test('hidden containers cannot become body text, and visible verification prompt
   try {
     const page = await browser.newPage();
     const options = { platform:'web', requestedURL:'https://example.com/', includePresentation:false };
+    await page.setContent('<body>Before navigation</body>');
+    await page.evaluate(() => document.documentElement.remove());
+    const navigating = await page.evaluate(extractPage, options);
+    assert.equal(navigating.target_present, false);
+    assert.equal(navigating.loading, true);
     await page.setContent('<body><main hidden><style>.ExperienceHero-enter{color:red}</style>Hidden content</main></body>');
     const hidden = await page.evaluate(extractPage, options);
     assert.equal(hidden.post?.text || '', ''); assert.equal(hidden.target_present, false);
@@ -224,6 +252,38 @@ test('hidden containers cannot become body text, and visible verification prompt
     assert.equal((await page.evaluate(extractPage, options)).gate, 'verification_required');
     const write = await page.evaluate(domOperation, { action:'click', selector:'button' });
     assert.equal(write.ok, false); assert.equal(write.error.code, 'verification_required');
+    await page.setContent('<main><h2>百度安全验证</h2><p>请完成下方验证后继续操作</p><p>图片由AI生成</p><p>拖动左侧滑块使图片为正</p></main>');
+    assert.equal((await page.evaluate(extractPage, options)).gate, 'verification_required');
+    await page.setContent('<title>请稍候…</title><main><h1>www.libhunt.com</h1><p>正在进行安全验证</p><p>本网站使用安全服务防护恶意自动程序。在验证您不是自动程序期间，将显示此页面。</p><button>Search</button></main>');
+    assert.equal((await page.evaluate(extractPage, options)).gate, 'verification_required');
+    assert.equal((await page.evaluate(domOperation, {action:'click',selector:'button'})).error.code, 'verification_required');
+  } finally { await browser.close(); }
+});
+
+test('project search submits the real input and never clicks unrelated topic or project actions', { skip: !edgeAvailable }, async () => {
+  const browser = await openTestBrowser();
+  try {
+    const page = await browser.newPage();
+    await page.setContent('<header><input placeholder="Search..."><button onclick="window.wrong=true">提交项目</button></header><main><input id="repo" placeholder="请输入搜索关键字或 repo url"><button onclick="window.wrong=true">Go</button></main><script>window.committed="";document.querySelector("#repo").oninput=e=>setTimeout(()=>{window.committed=e.target.value;},0);document.querySelector("#repo").onkeydown=e=>{if(e.key==="Enter")window.actualQuery=window.committed;};</script>');
+    const result = await page.evaluate(submitSearch, {query:'browser automation',mode:'form'});
+    assert.equal(result.method, 'enter_key');
+    assert.equal(await page.evaluate(() => window.actualQuery), 'browser automation');
+    assert.equal(await page.evaluate(() => Boolean(window.wrong)), false);
+    await page.setContent('<script id="__NEXT_DATA__" type="application/json">{}</script><main><input id="late" placeholder="请输入搜索关键字或 repo url"></main><script>setTimeout(()=>{document.querySelector("#late").onkeydown=e=>{if(e.key==="Enter")window.actualQuery=e.target.value;};},400);</script>');
+    await page.evaluate(submitSearch, {query:'hydrated query',mode:'form'});
+    assert.equal(await page.evaluate(() => window.actualQuery), 'hydrated query');
+    await page.setContent('<header><input id="query" placeholder="搜索开源项目"><a class="submit" onclick="window.wrong=true">提交项目</a></header><script>document.querySelector("#query").onkeydown=e=>{if(e.key==="Enter")window.actualQuery=e.target.value;};</script>');
+    await page.evaluate(submitSearch, {query:'浏览器',mode:'form'});
+    assert.equal(await page.evaluate(() => window.actualQuery), '浏览器');
+    assert.equal(await page.evaluate(() => Boolean(window.wrong)), false);
+    await page.setContent('<header><a href="https://github.com/example/noise">Popular project</a></header><main><article><a href="https://github.com/example/browser">Browser automation</a><p>Relevant browser automation project</p></article><article><a href="https://github.com/example/unrelated">Unrelated app</a><p>Unrelated utility project</p></article></main>');
+    const snapshot = await page.evaluate(extractPage, {platform:'github',requestedURL:'https://github.com/search',isSearch:true,includePresentation:false});
+    assert.equal(snapshot.links.find(item=>item.url.endsWith('/noise'))?.context || '', '');
+    assert(!snapshot.links.find(item=>item.url.endsWith('/unrelated')).context.includes('browser automation'));
+    await page.setContent('<main><article><a href="https://hellogithub.com/repository/lightpanda-io/browser"><header>推荐：启动速度极快的无头浏览器</header><p>这是一款支持自动化的开源浏览器项目</p></a></article></main><aside class="recommended"><a href="https://hellogithub.com/repository/example/noise">推荐项目 浏览器</a></aside>');
+    const wrapped = await page.evaluate(extractPage, {platform:'web',requestedURL:'https://hellogithub.com/search/result?q=浏览器',isSearch:true,includePresentation:false});
+    assert(wrapped.links.find(item=>item.url.endsWith('/browser')).context.includes('开源浏览器项目'));
+    assert.equal(wrapped.links.find(item=>item.url.endsWith('/noise')).search_chrome, true);
   } finally { await browser.close(); }
 });
 

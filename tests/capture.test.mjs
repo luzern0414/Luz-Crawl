@@ -10,6 +10,7 @@ import { htmlDocument } from '../lib/html.mjs';
 import { articleMediaFromNetwork } from '../lib/extract-page.mjs';
 import { search, sourceCandidates } from '../lib/search.mjs';
 import { testPolicy } from './helpers.mjs';
+import { OperationError } from '../lib/failure.mjs';
 
 const tmp = await fs.mkdtemp(path.join(os.tmpdir(), 'luz-crawl-test-'));
 process.env.LUZ_CRAWL_STATE = path.join(tmp, 'state');
@@ -19,10 +20,27 @@ function snapshot(overrides = {}) {
   const body = 'This is the real page body, with enough content to distinguish it from an empty loading placeholder. '.repeat(3);
   return { url: 'https://x.com/a/status/123', title: 'Test source', text: body, html: `<article>${body}</article>`, presentation: { html: `<article>${body}</article>`, text_chars: body.length, assets: [], width: 598 }, items: [{ id: '123', url: 'https://x.com/a/status/123', author: 'a', kind: 'target_post', text: body }], media: [], links: [], transcript: [], article_links: [], target_present: true, gate: null, scroll: { at_bottom: true, height: 1500 }, ...overrides };
 }
+function githubRepositorySnapshot(overrides = {}) {
+  const body = 'Customer Service\nAbout\n\nPractice app with Typescript. This README contains the repository setup and usage details. '.repeat(8);
+  return {
+    url: 'https://github.com/example/customer-service',
+    title: 'GitHub - example/customer-service: Customer Service · GitHub',
+    text: body,
+    html: `<main><article class="markdown-body"><h1>Customer Service</h1><p>${body}</p></article></main>`,
+    presentation: { html: `<article class="markdown-body"><p>${body}</p></article>`, text_chars: body.length, assets: [], width: 980 },
+    items: [{ id: 'github:example/customer-service', url: 'https://github.com/example/customer-service', kind: 'page_body', text: body }],
+    media: [], links: [], transcript: [], article_links: [], comments: [], post: null,
+    target_present: true, gate: null, loading: true,
+    github_repository_ready: true,
+    scroll: { at_bottom: false, height: 2427, top: 0, viewport: 628 },
+    ...overrides,
+  };
+}
 function page(snapshots) {
   let index = 0;
   return { opened: [], goto: async function (url) { this.opened.push(url); }, evaluate: async (code) => {
     if (code === 'location.href') return snapshots[0].url;
+    if (code === '({url:location.href,ready:Boolean(document.body)})') return {url:snapshots[0].url,ready:true};
     if (code.includes('function extractPage')) return snapshots[Math.min(index++, snapshots.length - 1)];
     if (code.includes('function expandPage')) return [];
     if (code.includes('function scrollPage')) return { at_bottom: true, height: 1500, top: 500, viewport: 1000 };
@@ -32,6 +50,34 @@ function page(snapshots) {
   } };
 }
 const opts = (out, more = {}) => ({ url: 'https://x.com/a/status/123', out: path.join(tmp, out), executionPolicy: testPolicy(tmp), delay: 0, scrolls: 5, screenshot: false, ...more });
+
+test('repository form searches verify the landed query before claiming submission took effect', async () => {
+  for (const success of [false, true]) {
+    const landed = success ? 'https://gitcn.org/search/result?q=browser%20automation' : 'https://gitcn.org/search';
+    const original = page([snapshot({url:landed})]);
+    const evaluate = original.evaluate;
+    original.evaluate = async code => code.includes('function submitSearch') ? { submitted:true, method:'enter_key', query:'browser automation' } : evaluate(code);
+    const result = await capture(original, opts(`form-query-${success}`, {url:'https://gitcn.org/search',query:'browser automation',search_form:{mode:'form',entry_url:'https://gitcn.org/search',query_parameter:'q'}}));
+    assert.equal(result.search_action.effect_verified, success);
+  }
+});
+
+test('a search navigation verifies an unknown dispatch outcome without submitting twice', async () => {
+  const landed = 'https://gitcn.org/search/result?q=browser%20automation';
+  const original = page([snapshot({url:landed})]);
+  const evaluate = original.evaluate;
+  let submissions = 0;
+  original.evaluate = async code => {
+    if (code.includes('function submitSearch')) { submissions++; throw new OperationError('write_outcome_unknown', 'Navigation replaced the search execution context'); }
+    return evaluate(code);
+  };
+  const result = await capture(original, opts('form-unknown-navigation', {url:'https://gitcn.org/search',query:'browser automation',search_form:{mode:'form',entry_url:'https://gitcn.org/search',query_parameter:'q'}}));
+  assert.equal(submissions, 1);
+  assert.equal(result.status, 'captured');
+  assert.equal(result.search_action.effect_verified, true);
+  assert.equal(result.search_action.submitted, true);
+  assert.equal(result.search_action.dispatch_outcome_unknown, true);
+});
 
 test('URL validation, aliases and ID deduplication', () => {
   for (const url of ['file:///secret', 'javascript:alert(1)', 'https://user:password@example.com']) assert.throws(() => validateURL(url));
@@ -47,6 +93,84 @@ test('URL validation, aliases and ID deduplication', () => {
 test('Bilibili search excludes creator upload screens and accepts real detail IDs', () => {
   const content = {requested_url:'https://search.bilibili.com/all?keyword=Python',links:[{url:'https://member.bilibili.com/platform/upload/video/frame'},{url:'https://www.bilibili.com/video/BV1GJ411x7h7/'},{url:'https://www.bilibili.com/video/not-a-video'}]};
   assert.deepEqual(sourceCandidates(content,CATALOG.find(site=>site.id==='bilibili')).map(item=>item.url),['https://www.bilibili.com/video/BV1GJ411x7h7/']);
+});
+
+test('search candidates use the result-row context when a search engine link has no own text', () => {
+  const site = CATALOG.find(item => item.id === 'bing');
+  const content = {
+    requested_url: 'https://www.bing.com/search?q=site%3Apep.com.cn+%E8%8B%B1%E8%AF%AD',
+    links: [{
+      url: 'https://www.pep.com.cn/zslth/yyptzy/',
+      text: '',
+      context: '人教网\n义务教育教科书英语教材数字配套资源\n三年级下册\n课文音频'
+    }]
+  };
+  const found = sourceCandidates(content, site, true, 'site:pep.com.cn 英语 数字教材 配套 音频 人教版');
+  assert.equal(found.length, 1);
+  assert.equal(found[0].url, 'https://www.pep.com.cn/zslth/yyptzy/');
+  assert.match(found[0].text, /数字配套资源/);
+});
+
+test('explicit site scopes reject search-engine results from other domains', () => {
+  const site = CATALOG.find(item => item.id === 'bing');
+  const content = {
+    requested_url: 'https://www.bing.com/search?q=site%3Apep.com.cn+%E8%8B%B1%E8%AF%AD',
+    links: [
+      { url: 'https://www.pep.com.cn/zslth/yyptzy/', text: '人教版英语数字教材官方资源' },
+      { url: 'https://example.com/english-resources', text: '人教版英语数字教材官方资源' }
+    ]
+  };
+  const found = sourceCandidates(content, site, true, 'site:pep.com.cn 英语 数字教材');
+  assert.deepEqual(found.map(item => item.url), ['https://www.pep.com.cn/zslth/yyptzy/']);
+});
+
+test('search result cards remain candidates when the snippet uses nearby vocabulary', () => {
+  const site = CATALOG.find(item => item.id === 'bing');
+  const content = {
+    requested_url: 'https://www.bing.com/search?q=%E4%BA%BA%E6%95%99%E7%89%88',
+    links: [{
+      url: 'https://www.pep.com.cn/zslth/yyptzy/',
+      text: '阅读更多',
+      context: '人教网\n义务教育教科书英语教材数字配套资源\n三年级下册\n课文音频'
+    }]
+  };
+  const found = sourceCandidates(content, site, true, '人教版 小学英语 数字教材 音频 官方');
+  assert.equal(found.length, 1);
+});
+
+test('search result cards survive Chinese phrase variants without exact query words', () => {
+  const site = CATALOG.find(item => item.id === 'bing');
+  const content = {
+    requested_url: 'https://www.bing.com/search?q=%E4%BA%BA%E6%95%99%E7%89%88',
+    links: [{
+      url: 'https://www.pep.com.cn/zslth/yyptzy/',
+      text: '阅读更多',
+      context: '人教网\n义务教育教科书英语教材数字配套资源\n三年级下册\n04 Read, circle and match. Then listen and check.'
+    }]
+  };
+  const found = sourceCandidates(content, site, true, '人教版 小学英语 数字教材 音频 官方');
+  assert.equal(found.length, 1);
+  assert.match(found[0].text, /数字配套资源/);
+  assert.ok(found[0].search_evidence.soft_terms.length >= 2);
+});
+
+test('search cards reject an explicitly conflicting school level in the link label', () => {
+  const site = CATALOG.find(item => item.id === 'bing');
+  const context = '人教网\n义务教育教科书英语教材数字配套资源';
+  const found = sourceCandidates({ requested_url: 'https://www.bing.com/search?q=%E5%B0%8F%E5%AD%A6%E8%8B%B1%E8%AF%AD', links: [
+    { url: 'https://www.pep.com.cn/zslth/yyptzy/czyy/7s/', text: '七年级上册 - 义务教育教科书英语教材数字配套资源', context },
+    { url: 'https://www.pep.com.cn/zslth/yyptzy/xypep/3s/', text: '三年级上册 - 义务教育教科书英语教材数字配套资源', context }
+  ] }, site, true, '小学英语 数字教材');
+  assert.deepEqual(found.map(item => item.url), ['https://www.pep.com.cn/zslth/yyptzy/xypep/3s/']);
+});
+
+test('a long query does not accept a result that matches only a generic trailing word', () => {
+  const site = CATALOG.find(item => item.id === 'sogou');
+  const found = sourceCandidates({ requested_url: 'https://www.sogou.com/web?query=test', links: [
+    { url: 'https://so.html5.qq.com/landingpage/page/redirect-page-pc?query=ad', text: '阿里巴巴工厂直供特惠', context: '热点新闻\n官方介绍五中全会最重要成果\n热' },
+    { url: 'https://mp.weixin.qq.com/s/example', text: '人教版小学英语音频', context: '人教版小学英语(电子课本+音频mp3)' }
+  ] }, site, true, '人教版 小学英语 数字教材 音频 官方');
+  assert.deepEqual(found.map(item => item.url), ['https://mp.weixin.qq.com/s/example']);
 });
 
 test('virtualized tweets survive scrolls; longer expansion wins', async () => {
@@ -99,6 +223,17 @@ test('scroll budget and absent target remain partial or blocked', async () => {
   assert.equal(result.stop_reason, 'scroll_budget');
   const missing = await capture(page([snapshot({ target_present: false, items: [] })]), opts('missing', { scrolls: 0 }));
   assert.equal(missing.status, 'blocked');
+});
+
+test('GitHub repository README is complete when a persistent shell loader never reaches the page bottom', async () => {
+  const result = await capture(page([githubRepositorySnapshot()]), opts('github-repository-loader', {
+    url: 'https://github.com/example/customer-service',
+    scrolls: 8,
+  }));
+  assert.equal(result.status, 'captured');
+  assert.equal(result.stop_reason, 'repository_dom_complete');
+  assert.equal(result.url_check.valid_content, true);
+  assert(result.completeness.chars > 500);
 });
 
 test('public search candidates cannot hide a native login gate when no source body was readable', async () => {
@@ -237,6 +372,27 @@ test('redirected browser URL selects the actual platform extractor', async () =>
   const content = JSON.parse(await fs.readFile(path.join(result.folder, 'raw/content.json')));
   assert.equal(content.platform, 'wechat');
   assert.equal(content.resolved_url, data.url);
+});
+
+test('public-index search pages keep the requested platform result extractor after landing on Bing', async () => {
+  const data = snapshot({ url: 'https://www.bing.com/search?q=site%3Agithub.com+playwright', items: [{ id: 'search', text: 'GitHub search results', kind: 'page_body', url: 'https://www.bing.com/search?q=site%3Agithub.com+playwright' }] });
+  const browser = page([data]);
+  const extractionPlatforms = [];
+  const evaluate = browser.evaluate;
+  browser.evaluate = async (code) => {
+    if (code.includes('function extractPage')) extractionPlatforms.push(code.includes('"platform":"github"'));
+    return evaluate(code);
+  };
+  const result = await capture(browser, opts('search-platform', {
+    url: data.url,
+    query: 'playwright',
+    search_platform: 'github',
+    scrolls: 0
+  }));
+  const content = JSON.parse(await fs.readFile(path.join(result.folder, 'raw/content.json')));
+  assert.equal(content.platform, 'bing');
+  assert(extractionPlatforms.length > 0);
+  assert(extractionPlatforms.every(Boolean));
 });
 
 test('resuming a renamed related page retains its snapshots and verifies current paths', async () => {
