@@ -280,7 +280,7 @@ test('project search submits the real input and never clicks unrelated topic or 
     const snapshot = await page.evaluate(extractPage, {platform:'github',requestedURL:'https://github.com/search',isSearch:true,includePresentation:false});
     assert.equal(snapshot.links.find(item=>item.url.endsWith('/noise'))?.context || '', '');
     assert(!snapshot.links.find(item=>item.url.endsWith('/unrelated')).context.includes('browser automation'));
-    await page.setContent('<main><article><a href="https://hellogithub.com/repository/lightpanda-io/browser"><header>推荐：启动速度极快的无头浏览器</header><p>这是一款支持自动化的开源浏览器项目</p></a></article></main><aside class="recommended"><a href="https://hellogithub.com/repository/example/noise">推荐项目 浏览器</a></aside>');
+    await page.setContent('<main><article><a href="https://hellogithub.com/repository/example/browser"><header>推荐：启动速度极快的无头浏览器</header><p>这是一款支持自动化的开源浏览器项目</p></a></article></main><aside class="recommended"><a href="https://hellogithub.com/repository/example/noise">推荐项目 浏览器</a></aside>');
     const wrapped = await page.evaluate(extractPage, {platform:'web',requestedURL:'https://hellogithub.com/search/result?q=浏览器',isSearch:true,includePresentation:false});
     assert(wrapped.links.find(item=>item.url.endsWith('/browser')).context.includes('开源浏览器项目'));
     assert.equal(wrapped.links.find(item=>item.url.endsWith('/noise')).search_chrome, true);

@@ -59,7 +59,7 @@ test('batch validates the whole plan and write authorization before executing an
   await check('scheme', ['https://a.test/', 'file:///private'], {}, /HTTP/);
   await check('credentials', ['https://user:pass@a.test/'], {}, /credentials/);
   await check('override', [{ url: 'https://a.test/', out: 'elsewhere' }], {}, /only id/);
-  await check('write', [{ url: 'https://a.test/', steps: [{ action: 'type', selector: '#q', text: '门窗' }] }], {}, /allow-write/);
+  await check('write', [{ url: 'https://a.test/', steps: [{ action: 'type', selector: '#q', text: '设备' }] }], {}, /allow-write/);
   assert.equal(attempted, 0);
   const settings = await options('actions', [{ id: 'search', url: 'https://a.test/', steps: [{ action: 'read' }] }]);
   const jobs = await readBatch(settings); assert.equal(jobs[0].id, 'search');

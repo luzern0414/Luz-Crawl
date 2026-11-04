@@ -1729,8 +1729,6 @@ async function handleCommand(cmd) {
         return await handleNavigate(cmd, leaseKey);
       case "tabs":
         return await handleTabs(cmd, leaseKey);
-      case "cookies":
-        return await handleCookies(cmd);
       case "screenshot":
         return await handleScreenshot(cmd, leaseKey);
       case "close-window":
@@ -2235,25 +2233,6 @@ async function handleTabs(cmd, leaseKey) {
     default:
       return { id: cmd.id, ok: false, error: `Unknown tabs op: ${cmd.op}` };
   }
-}
-async function handleCookies(cmd) {
-  if (!cmd.domain && !cmd.url) {
-    return { id: cmd.id, ok: false, error: "Cookie scope required: provide domain or url to avoid dumping all cookies" };
-  }
-  const details = {};
-  if (cmd.domain) details.domain = cmd.domain;
-  if (cmd.url) details.url = cmd.url;
-  const cookies = await chrome.cookies.getAll(details);
-  const data = cookies.map((c) => ({
-    name: c.name,
-    value: c.value,
-    domain: c.domain,
-    path: c.path,
-    secure: c.secure,
-    httpOnly: c.httpOnly,
-    expirationDate: c.expirationDate
-  }));
-  return { id: cmd.id, ok: true, data };
 }
 async function handleScreenshot(cmd, leaseKey) {
   const cmdTabId = await resolveCommandTabId(cmd);

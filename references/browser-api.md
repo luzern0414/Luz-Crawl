@@ -52,12 +52,8 @@ jobs.json 可以包含 URL、动作步骤或搜索任务：
 ## 返回状态
 
 - completed：动作和显式 expect 完成，仍需检查目标内容。
-- captured：正文已确认。
-- partial：有内容但有缺项或预算耗尽。
-- awaiting_user：等待登录或验证，使用返回的 task_id 执行 continue。
-- blocked：限流、权限或目标缺失。
-- failed：浏览器、传输或归档失败。
 - outcome_unknown：写操作结果未知，只允许核验。
+- captured、partial、awaiting_user、blocked、failed 的含义见 [evidence.md](evidence.md)；awaiting_user 用返回的 task_id 执行 continue。
 
 GitHub 结果中的 verified_sources 只统计已打开且确认正文的仓库；搜索卡片不代替 README。
 

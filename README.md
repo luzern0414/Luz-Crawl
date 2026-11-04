@@ -28,7 +28,7 @@ GitHub 结果不足时补用 Bing `site:`、GitCN、HelloGitHub、Codeberg、Git
    node scripts/luz-crawl.mjs doctor
    ```
 
-3. `doctor` 返回 `ready: true` 后，为每项需求建立一个外部任务目录：
+3. `doctor` 返回 `ready: true`（已连接可见 Edge）或 `silent_ready: true`（可启动静默 Edge）后，为每项需求建立一个外部任务目录：
 
    ```powershell
    $task = (node scripts/luz-crawl.mjs begin "主题" --out "D:\输出" --new | ConvertFrom-Json).folder
@@ -40,7 +40,11 @@ GitHub 结果不足时补用 Bing `site:`、GitCN、HelloGitHub、Codeberg、Git
    node scripts/luz-crawl.mjs summary $task
    ```
 
-常用命令：`search` 搜索，`capture` 读取详情，`collect` 汇总主题，`batch` 批量读取，`download` 下载已观察媒体，`pending` 查看等待任务，`continue TASK_ID` 接续登录或验证。
+目录只有一种形状：输出根下是“序号_主题”任务文件夹，`raw\` 存放爬取的全部内容和机器记录（每个页面一个“序号_标题”子文件夹），总结 html（`序号_主题.html`）与 `raw\` 同级。旧目录用 `scripts/migrate_layout.py` 整理。
+
+常用命令：`search` 搜索，`capture` 读取详情，`collect` 汇总主题，`batch` 批量读取，`download` 下载已观察媒体，`robots URL` 查看站点爬虫规则，`pending` 查看等待任务，`continue TASK_ID` 接续登录或验证。
+
+为其他技能做前置检索用 `python -X utf8 scripts/crawl_preflight.py run|conclude|check`，说明见 [references/preflight.md](references/preflight.md)。采集前的合规核对见 [references/compliance.md](references/compliance.md)，来源评估见 [references/research-method.md](references/research-method.md)。
 
 状态：`captured` 已确认正文，`partial` 有缺项，`awaiting_user` 等待手动处理，`blocked` 被限流或权限阻止，`failed` 执行失败。
 

@@ -21,11 +21,11 @@ test('business portals and unknown domains never silently fall back to an extern
     await fs.writeFile(path.join(process.env.LUZ_CRAWL_STATE,'sites.json'),JSON.stringify(sites));
     for(const platform of ['ccgp','qcc','1688','huitun','douyin-creator','unlisted.example']) {
       const urls=[];
-      const result=await search({}, {platform,query:'门窗',read:0,out:path.join(temp,`native-${platform}`)}, {summary:()=>({})}, async (_page,options)=>{
+      const result=await search({}, {platform,query:'设备',read:0,out:path.join(temp,`native-${platform}`)}, {summary:()=>({})}, async (_page,options)=>{
         urls.push(options.url);
         const folder=path.join(options.out,'raw','discovery');
-        await fs.mkdir(path.join(folder,'raw'),{recursive:true});
-        await fs.writeFile(path.join(folder,'raw/content.json'),JSON.stringify({requested_url:options.url,links:[]}));
+        await fs.mkdir(folder,{recursive:true});
+        await fs.writeFile(path.join(folder, 'content.json'),JSON.stringify({requested_url:options.url,links:[]}));
         return {folder,status:'partial',resolved_url:options.url,url_check:{valid_content:false},search_action:{submitted:false},limitations:['no result yet']};
       });
       assert.equal(urls.length,1,platform);
@@ -49,8 +49,8 @@ test('searches in one task reuse a single numbered folder and keep separate resu
     let captures = 0;
     const capturePage = async (_page, options) => {
       const folder = path.join(options.out, 'raw', `capture-${++captures}`);
-      await fs.mkdir(path.join(folder, 'raw'), { recursive: true });
-      await fs.writeFile(path.join(folder, 'raw', 'content.json'), JSON.stringify({ requested_url: options.url, links: [] }));
+      await fs.mkdir(folder, { recursive: true });
+      await fs.writeFile(path.join(folder, 'content.json'), JSON.stringify({ requested_url: options.url, links: [] }));
       return { folder, status: 'captured', resolved_url: options.url, url_check: { valid_content: true }, search_action: { submitted: true }, limitations: [] };
     };
 
@@ -65,19 +65,20 @@ test('searches in one task reuse a single numbered folder and keep separate resu
     assert.equal(path.basename(first.search_archive), '001_xhs_folder rule');
     assert.notEqual(first.search_index, second.search_index);
     assert.notEqual(second.search_index, delegated.search_index);
-    assert.equal(path.dirname(first.search_index), first.search_archive);
-    assert.equal(path.dirname(second.search_index), second.search_archive);
-    assert.equal(path.dirname(delegated.search_index), delegated.search_archive);
+    assert.equal(path.dirname(first.search_index), path.join(first.search_archive, 'raw'));
+    assert.equal(path.dirname(second.search_index), path.join(second.search_archive, 'raw'));
+    assert.equal(path.dirname(delegated.search_index), path.join(delegated.search_archive, 'raw'));
     assert.equal(JSON.parse(await fs.readFile(first.search_index, 'utf8')).search_archive, first.search_archive);
     assert.ok(entries.length === 1 && entries.every((entry) => entry.isDirectory()));
     assert.ok(captures >= 3);
     assert.ok((await fs.readdir(path.join(first.search_archive, 'raw'))).length > 0);
-    assert.ok((await fs.readdir(first.search_archive)).filter((name) => name.startsWith('search-')).length === 3);
+    assert.ok((await fs.readdir(path.join(first.search_archive, 'raw'))).filter((name) => name.startsWith('search-')).length === 3);
+    assert.ok(!(await fs.readdir(first.search_archive)).some((name) => name.startsWith('search-')));
 
-    const explicitRaw = path.join(temp, 'explicit-output', 'raw');
-    const third = await search({}, { platform: 'xhs', query: 'raw output', read: 0, out: explicitRaw }, operations, capturePage);
-    assert.equal(path.dirname(third.search_archive), explicitRaw);
-    assert.ok((await fs.readdir(path.dirname(explicitRaw), { withFileTypes: true })).every((entry) => entry.isDirectory()));
+    const explicit = path.join(temp, 'explicit-output');
+    const third = await search({}, { platform: 'xhs', query: 'raw output', read: 0, out: explicit }, operations, capturePage);
+    assert.equal(path.dirname(third.search_archive), explicit);
+    assert.ok((await fs.readdir(explicit, { withFileTypes: true })).every((entry) => entry.isDirectory()));
   } finally {
     if (previousThread === undefined) delete process.env.CODEX_THREAD_ID;
     else process.env.CODEX_THREAD_ID = previousThread;
@@ -86,21 +87,19 @@ test('searches in one task reuse a single numbered folder and keep separate resu
   }
 });
 
-test('a loose file at raw root is filed into its own numbered folder before the search runs', async () => {
+test('a scattered file in the output root stops the search before any browser work and is left where it is', async () => {
   const previousState = process.env.LUZ_CRAWL_STATE;
   process.env.LUZ_CRAWL_STATE = path.join(temp, 'loose-state');
   try {
     const out = path.join(temp, 'loose-output');
-    const raw = path.join(out, 'raw');
-    await fs.mkdir(raw, { recursive: true });
-    await fs.writeFile(path.join(raw, 'legacy.html'), 'keep');
+    await fs.mkdir(out, { recursive: true });
+    await fs.writeFile(path.join(out, 'legacy.html'), 'keep');
     let browserCalls = 0;
 
-    const result = await search({}, { platform: 'xhs', query: 'kept going', read: 0, out }, { summary: () => ({}) }, async () => { browserCalls++; throw new Error('browser unavailable'); });
-    assert.ok(browserCalls >= 1);
-    assert.equal(path.basename(result.search_archive), '002_xhs_kept going');
-    assert.equal(await fs.readFile(path.join(raw, '001_散落文件归档', 'legacy.html'), 'utf8'), 'keep');
-    assert.deepEqual((await fs.readdir(raw)).sort(), ['001_散落文件归档', '002_xhs_kept going']);
+    await assert.rejects(() => search({}, { platform: 'xhs', query: 'kept going', read: 0, out }, { summary: () => ({}) }, async () => { browserCalls++; throw new Error('browser unavailable'); }), /散落文件.*migrate_layout\.py/s);
+    assert.equal(browserCalls, 0);
+    assert.deepEqual(await fs.readdir(out), ['legacy.html']);
+    assert.equal(await fs.readFile(path.join(out, 'legacy.html'), 'utf8'), 'keep');
   } finally {
     if (previousState === undefined) delete process.env.LUZ_CRAWL_STATE;
     else process.env.LUZ_CRAWL_STATE = previousState;
@@ -135,8 +134,8 @@ test('an interrupted detail read keeps discovered candidates and the concrete st
     const result = await search({}, {platform: 'x', query: 'AI tutorial', read: 1, out: path.join(temp, 'interrupted')}, {summary: () => ({})}, async (_page, options) => {
       if (++calls > 1) throw new OperationError('operation_budget', 'Local request window is exhausted');
       const folder = path.join(options.out, 'raw', '001_search');
-      await fs.mkdir(path.join(folder, 'raw'), {recursive: true});
-      await fs.writeFile(path.join(folder, 'raw/content.json'), JSON.stringify({requested_url: options.url, links: [{url: 'https://x.com/example/status/123', text: 'AI tutorial'}]}));
+      await fs.mkdir(folder, {recursive: true});
+      await fs.writeFile(path.join(folder, 'content.json'), JSON.stringify({requested_url: options.url, links: [{url: 'https://x.com/example/status/123', text: 'AI tutorial'}]}));
       return {folder, status: 'captured', resolved_url: options.url, url_check: {valid_content: true}, search_action: {submitted: true}, limitations: []};
     });
     assert.equal(result.status, 'partial');
@@ -158,8 +157,8 @@ test('a readable search with no candidates is recorded as partial instead of a s
   try {
     const result = await search({}, { platform: 'xhs', query: 'no matching result', read: 0, out: path.join(temp, 'no-candidate') }, { summary: () => ({}) }, async (_page, options) => {
       const folder = path.join(options.out, 'raw', 'discovery');
-      await fs.mkdir(path.join(folder, 'raw'), { recursive: true });
-      await fs.writeFile(path.join(folder, 'raw/content.json'), JSON.stringify({ requested_url: options.url, text: 'A readable search page with no matching result.', links: [] }));
+      await fs.mkdir(folder, { recursive: true });
+      await fs.writeFile(path.join(folder, 'content.json'), JSON.stringify({ requested_url: options.url, text: 'A readable search page with no matching result.', links: [] }));
       return { folder, status: 'captured', stop_reason: 'stable_after_3_scrolls', resolved_url: options.url, url_check: { valid_content: true }, search_action: { submitted: true }, limitations: [] };
     });
     assert.equal(result.status, 'partial');
@@ -180,8 +179,8 @@ test('candidate discovery remains successful when the search page ends at its sc
   try {
     const result = await search({}, { platform: 'xhs', query: 'useful result', read: 0, out: path.join(temp, 'budget-candidate') }, { summary: () => ({}) }, async (_page, options) => {
       const folder = path.join(options.out, 'raw', 'discovery');
-      await fs.mkdir(path.join(folder, 'raw'), { recursive: true });
-      await fs.writeFile(path.join(folder, 'raw/content.json'), JSON.stringify({ requested_url: options.url, text: 'A readable search page with a useful result.', links: [{ url: 'https://www.xiaohongshu.com/explore/abc123', text: 'useful result' }] }));
+      await fs.mkdir(folder, { recursive: true });
+      await fs.writeFile(path.join(folder, 'content.json'), JSON.stringify({ requested_url: options.url, text: 'A readable search page with a useful result.', links: [{ url: 'https://www.xiaohongshu.com/explore/abc123', text: 'useful result' }] }));
       return { folder, status: 'partial', stop_reason: 'scroll_budget', resolved_url: options.url, url_check: { valid_content: true }, search_action: { submitted: true }, limitations: ['scroll budget'] };
     });
     assert.equal(result.discovered_candidates, 1);

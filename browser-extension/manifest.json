@@ -6,8 +6,6 @@
   "permissions": [
     "debugger",
     "tabs",
-    "cookies",
-    "activeTab",
     "alarms",
     "storage",
     "tabGroups",

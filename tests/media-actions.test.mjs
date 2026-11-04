@@ -72,7 +72,7 @@ test('refuses media type confusion, reports missing video and does not claim emp
 
 test('paired Bilibili streams require MP4 bytes and preserve both parts in the manifest', async () => {
   const folder = await archive('dash',{images:[],videos:[{url:'https://upos.bilivideo.com/video.m4s',audio_url:'https://upos.bilivideo.com/audio.m4s',mime:'video/mp4'}]});
-  const content = JSON.stringify({requested_url:'https://www.bilibili.com/video/BV1GJ411x7h7/',url_check:{valid_content:true},post:{images:[],videos:[{url:'https://upos.bilivideo.com/video.m4s',audio_url:'https://upos.bilivideo.com/audio.m4s',mime:'video/mp4'}]}});
+  const content = JSON.stringify({requested_url:'https://www.bilibili.com/video/BV1Ab4y1x7Cd/',url_check:{valid_content:true},post:{images:[],videos:[{url:'https://upos.bilivideo.com/video.m4s',audio_url:'https://upos.bilivideo.com/audio.m4s',mime:'video/mp4'}]}});
   await atomicWrite(path.join(folder,'raw/content.json'),content);
   await atomicWrite(path.join(folder,'raw/manifest.json'),{files:[{path:'raw/content.json',sha256:hash(content)}]});
   const bytes = Buffer.from([0,0,0,16,102,116,121,112,105,115,111,109,0,0,0,0]);

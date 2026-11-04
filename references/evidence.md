@@ -2,9 +2,15 @@
 
 ## 输出
 
-单页任务在输出根生成 HTML；证据、媒体和快照放在任务目录的 raw/。每次任务自动生成 raw/爬取总结.html。search、capture、batch、browser 的结果分别保存 JSON。
+输出根下只放“序号_主题”文件夹，每个文件夹是一个任务：`raw/` 存放爬取的全部内容和机器记录，总结 html 与 `raw/` 同级；目录全貌见 [SKILL.md](../SKILL.md)。
 
-manifest.json 记录规范 URL、实际 URL、平台、路线、状态、停止原因、正文范围、媒体统计和文件 SHA-256。verify 只检查本地文件与记录一致，不证明网页真实性或内容完整。
+每次任务自动生成总结 html（`序号_主题.html`：标题、带表题的采集结果表，版式与前置检索结论页相同），`summary` 可随时重建。search、capture、batch、browser 的结果分别保存 JSON，放在任务的 `raw/` 里。
+
+每个页面存档的文件直接放在“序号_标题”文件夹：content.json（正文与字段）、manifest.json、identity.json、snapshots/（每轮滚动的 JSON 与 HTML）、page.png（截图）、media/（已下载媒体）和页面 html。manifest.json 的文件路径相对该文件夹；记录规范 URL、实际 URL、请求 URL、平台、路线、状态、停止原因、正文范围、媒体统计、`captured_at`、`extractor_version` 和每个文件的 SHA-256。verify 只检查本地文件与记录一致，不证明网页真实性或内容完整。引用字段与来源评估见 [research-method.md](research-method.md)。
+
+## 与 WARC 的关系
+
+本技能保存的是浏览器渲染后的 DOM、可见文字和截图，不保存 HTTP 请求与响应原文及头部，所以不是 WARC（ISO 28500；[WARC 1.1](https://iipc.github.io/warc-specifications/specifications/warc-format/warc-1.1/) 的记录含 `WARC-Date`、`WARC-Target-URI`、`WARC-Payload-Digest`）。manifest 的 SHA-256 能发现本地文件被改动，但没有可信时间戳，也无法证明页面当时的服务端响应。需要诉讼或公证级保全时，另用 WARC 工具和第三方时间戳，不用本技能的归档代替。
 
 ## 内容边界
 
@@ -12,7 +18,7 @@ manifest.json 记录规范 URL、实际 URL、平台、路线、状态、停止�
 - 视频简介不是完整视频；当前加载的评论不是全部评论。
 - 只保存浏览器实际看到且用户有权访问的媒体。
 - DRM、过期签名、无直链或权限不足时保留缺项，不绕过限制。
-- 原始快照不改写，成品 HTML 不代替 raw 证据。
+- 原始快照不改写，页面 html 不代替 snapshots/ 里的证据。
 
 ## 状态
 
@@ -28,9 +34,13 @@ manifest.json 记录规范 URL、实际 URL、平台、路线、状态、停止�
 
 ## 续接与校验
 
-同一任务再次 capture 同一 URL 会先检查旧 manifest，再续接或重新读取。旧成功不能覆盖当前错误页、登录页或不完整结果。
+同一任务再次 capture 同一 URL 不改动旧存档，而是另存为新序号的存档（manifest 与 identity 写 `recapture_of`）；加 `--resume` 才先核验再续接该网址最新的一份。旧成功不能覆盖当前错误页、登录页或不完整结果。
 
 登录、验证和限流任务保存 task_id；用户处理后运行 continue。批量只停止受阻站点，其余项目继续。不要重放结果未知的写操作。
+
+## 旧版目录
+
+旧版把任务文件夹放在 `<输出根>/raw/` 下、页面存档里再套一层 `raw/`、网页 html 散落在输出根。这些目录仍可读取和续接；`scripts/migrate_layout.py` 把它们整理成上面的形状（默认只预览，`--apply` 才执行，`--revert 移动记录.json` 撤回）。迁移后，仍写着旧绝对路径又不能改写的记录（被审批冻结的前置检索记录）由 `crawl_preflight.py` 读取时按 `000_目录整理记录/raw/旧路径映射.json` 解析到新位置；映射里没有的旧路径照常报错，记录本身不变。输出根之外的项目目录用 `--rewrite-with 移动记录.json --extra-root 目录` 改写，审批绑定的文件不动。
 
 ## 经验
 

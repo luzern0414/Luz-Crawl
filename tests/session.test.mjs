@@ -45,7 +45,7 @@ test('bridge setup failures are structured and saved before any page is opened',
 
 test('summary write failure preserves capture status and closes only its owned page', async () => {
   const out=path.join(tmp,'summary-write-error'), browser=fake();
-  await fs.mkdir(path.join(out,'raw/爬取总结.html'),{recursive:true});
+  await fs.mkdir(path.join(out,`${path.basename(out)}.html`),{recursive:true});
   const result=await withBrowser('capture',{url:'https://example.com/article',out},async()=>({status:'captured'}),browser.factory);
   assert.equal(result.status,'captured');
   assert.equal(result.browser.closed,true);
@@ -202,8 +202,8 @@ test('search candidates decode engine redirects and reject lookalike domains and
   assert.equal(canonicalURL('https://jingxuan.douyin.com/m/video/123'), canonicalURL('https://www.douyin.com/video/123'));
   assert.equal(publicSourceAlternate('https://jingxuan.douyin.com/m/video/123'), 'https://www.douyin.com/video/123');
   assert.equal(publicSourceAlternate('https://jingxuan.douyin.com.evil.test/m/video/123'), null);
-  assert.equal(publicSourceAlternate('https://apps.weibo.com/3223014472/P8PCpnQkb'), 'https://weibo.com/3223014472/P8PCpnQkb');
-  assert.equal(publicSourceAlternate('https://apps.weibo.com.evil.test/3223014472/P8PCpnQkb'), null);
+  assert.equal(publicSourceAlternate('https://apps.weibo.com/1234567890/AbCdEf123'), 'https://weibo.com/1234567890/AbCdEf123');
+  assert.equal(publicSourceAlternate('https://apps.weibo.com.evil.test/1234567890/AbCdEf123'), null);
 });
 
 test('GitHub repository discovery rejects stars, forks, files and site navigation', () => {

@@ -45,7 +45,7 @@
       "key": "douyin-single-video",
       "platform": "douyin",
       "when": "用户要抖音单视频文件（v.douyin.com 短链或 /video/ID）",
-      "action": "匿名即可播放：capture 链接 --download --profile <已连接 context_id> 一次完成。视频上方可关闭的登录框不算登录门（哔哩哔哩、TikTok、YouTube 同理），不运行 headless-login、不请用户登录；raw/media/video-*.mp4 已含音轨和视频轨。",
+      "action": "匿名即可播放：capture 链接 --download --profile <已连接 context_id> 一次完成。视频上方可关闭的登录框不算登录门（哔哩哔哩、TikTok、YouTube 同理），不运行 headless-login、不请用户登录；页面存档的 media/video-*.mp4 已含音轨和视频轨。",
       "updated": "2026-10-29"
     },
     {
@@ -72,9 +72,9 @@
     {
       "key": "extension-disconnected",
       "platform": "web",
-      "when": "doctor 显示浏览器扩展未连接",
-      "action": "看 doctor 里扩展的 disabled / connected 状态，按 references/install.md 重新加载扩展；不要换成非浏览器的抓取工具再称为浏览器采集。",
-      "updated": "2026-10-29"
+      "when": "doctor 显示 ready 为 false",
+      "action": "doctor 的 ready 为 false 而 silent_ready 为 true 时可直接搜索采集，会启动静默 Edge；silent_ready 也为 false 时看 silent_missing 和 extensions 里的 disabled 状态，按 references/install.md 处理。不要换成非浏览器的抓取工具再称为浏览器采集。",
+      "updated": "2026-11-02"
     },
     {
       "key": "unreachable-site",
@@ -101,14 +101,14 @@
       "key": "pipe-json-utf8",
       "platform": "web",
       "when": "在 Windows 上用管道解析命令输出时报 JSON 解析错误",
-      "action": "解析命令输出时读任务目录里的 batch-*.json 或 content.json；要接管道就用 py -X utf8、ConvertFrom-Json 或 Node，Windows 上不加 -X utf8 的 Python 按 GBK 读，中文吞掉引号会报 JSON 解析错误",
+      "action": "解析命令输出时读任务目录 raw/ 里的 batch-*.json 或页面存档里的 content.json；要接管道就用 py -X utf8、ConvertFrom-Json 或 Node，Windows 上不加 -X utf8 的 Python 按 GBK 读，中文吞掉引号会报 JSON 解析错误",
       "updated": "2026-10-29"
     },
     {
       "key": "cn-delivery-h5-blocked",
       "platform": "web",
       "when": "要采集国内外卖平台（美团、饿了么）网页版的界面",
-      "action": "国内外卖平台的网页版不适合静默采集：美团外卖 H5 对自动化浏览器只返回“网络不太给力”，饿了么 H5 直接跳登录；学点单界面优先用用户录屏，或京东手机商品页、有赞店铺页这类公开页",
+      "action": "国内外卖平台的网页版不适合静默采集：美团外卖 H5 对自动化浏览器只返回“网络不太给力”，饿了么 H5 直接跳登录；参考点单界面优先用用户录屏，或京东手机商品页、有赞店铺页这类公开页",
       "updated": "2026-10-29"
     },
     {
@@ -150,7 +150,7 @@
       "key": "uinotes-real-app-screens",
       "platform": "web",
       "when": "需要真实上线 App 或小程序截图",
-      "action": "UI Notes（uinotes.com）App 详情页匿名可读，含 6 张 480 宽应用商店截图和 40 个截图页链接；单张截图页 /pin/ID 匿名可下 1170x2532 原图；按功能筛选（?functions=）需要登录。收录喜茶、瑞幸、肯德基、盒马、叮咚、小象超市、饿了么等",
+      "action": "UI Notes（uinotes.com）App 详情页匿名可读，含 6 张 480 宽应用商店截图和 40 个截图页链接；单张截图页 /pin/ID 匿名可下 1170x2532 原图；按功能筛选（?functions=）需要登录。收录多家连锁餐饮、生鲜零售和外卖品牌",
       "updated": "2026-10-29"
     },
     {
@@ -171,7 +171,7 @@
       "key": "image-url-capture",
       "platform": "web",
       "when": "文档里的规范表格是图片，需要单独采集图片",
-      "action": "直接采集图片网址（.png/.jpg）没有文字正文会被判 awaiting_user，这是误报：截图 raw/page.png 已含整张图，读图即可，不请用户登录",
+      "action": "直接采集图片网址（.png/.jpg）没有文字正文会被判 awaiting_user，这是误报：截图 page.png 已含整张图，读图即可，不请用户登录",
       "updated": "2026-10-29"
     },
     {
@@ -191,8 +191,8 @@
     {
       "key": "github-query-decomposition",
       "platform": "github",
-      "when": "用户用自然语言寻找 GitHub 开源项目或原生仓库搜索无结果时",
-      "action": "GitHub 开源项目需求先拆成功能目标、技术栈、语言和部署约束；保留原词并补语义、语言和 stars 质量变体，候选不足时用 Bing site:github.com 发现入口，索引候选必须打开原仓库核验。",
+      "when": "用户用自然语言寻找 GitHub 或其他开源项目，或原生仓库搜索无结果时",
+      "action": "开源项目需求先拆成功能目标、核心功能、生态术语、技术栈、语言和部署约束；保留原词并补语义、语言和 stars 质量变体，同义词分开查询，不要把所有同义词拼成 AND 条件，长查询至少要求两个独立证据词命中；保留 GitHub qualifier 的冒号、逗号、引号和显式 fork/archived 条件。候选不足时用 Bing site:github.com 或社区入口发现，它们只用普通功能词，待复核条件须写明，索引候选必须打开原仓库核验；零候选不记成功。",
       "updated": "2026-10-30"
     },
     {
@@ -200,13 +200,6 @@
       "platform": "github",
       "when": "GitHub 搜索结果卡片或搜索引擎 site:github.com 候选",
       "action": "GitHub 结果卡片必须连同上下文和仓库路径一起判断；只有裸链接或泛导航文本不能成为候选。",
-      "updated": "2026-10-30"
-    },
-    {
-      "key": "github-query-evidence",
-      "platform": "github",
-      "when": "用户用自然语言寻找开源项目",
-      "action": "长查询至少要求两个独立证据词命中；将功能、技术栈和约束拆成有限查询变体，避免把所有同义词拼成 AND 条件。",
       "updated": "2026-10-30"
     },
     {
@@ -231,13 +224,6 @@
       "updated": "2026-10-30"
     },
     {
-      "key": "github-real-regression-2026-10-30",
-      "platform": "web",
-      "when": "GitHub",
-      "action": "真实 GitHub 英文检索 self-hosted customer support platform TypeScript 通过 native 不可用后的 Bing fallback 找到 2 个候选，并成功核验 1 个 README。",
-      "updated": "2026-10-30"
-    },
-    {
       "key": "github-detail-budget",
       "platform": "github",
       "when": "GitHub search --read N 需要在候选失败时继续核验",
@@ -252,31 +238,10 @@
       "updated": "2026-10-30"
     },
     {
-      "key": "github-web-transient",
-      "platform": "github",
-      "when": "GitHub Web 搜索偶发打不开但其他网站和 API 正常时",
-      "action": "GitHub Web 搜索入口会出现 about:blank、连接重置或超时；同时间 api.github.com、Bing 和 githubstatus.com 可读时，不判定为 IP 封禁，先看状态页并保留失败证据。",
-      "updated": "2026-10-30"
-    },
-    {
       "key": "github-route-retry-fallback",
       "platform": "github",
       "when": "GitHub 原生仓库搜索落到 chrome-error、about:blank 或 unavailable 时",
       "action": "原始 GitHub HTTPS URL 遇浏览器错误页时先有限重试原地址，再按 https/http 与 www 变体切换；原生入口明确不可用后跳过同主机重复路线，转 Bing site:github.com 发现入口，索引候选必须回到仓库页核验。",
-      "updated": "2026-10-30"
-    },
-    {
-      "key": "github-status-incident-20261030",
-      "platform": "github",
-      "when": "复核 2026-10-30 GitHub Web 搜索失败原因时",
-      "action": "2026-10-30 14:31–14:49 UTC GitHub Status 记录多服务降级：14:21–14:30 UTC 临时过载组件触发突发错误，Pages 与 Issues 短时受影响，随后恢复监控；本次证据页 valid_content=true。",
-      "updated": "2026-10-30"
-    },
-    {
-      "key": "github-query-quality",
-      "platform": "github",
-      "when": "GitHub 或其他开源项目需求检索",
-      "action": "开源项目先拆核心功能、生态术语与约束，同义词分开查询；保留 GitHub qualifier 的冒号、逗号、引号和显式 fork/archived 条件。Bing/社区只用普通功能词，待复核条件须写明；零候选不记成功。",
       "updated": "2026-10-30"
     },
     {
@@ -296,8 +261,8 @@
     {
       "key": "github-browser-diagnosis",
       "platform": "github",
-      "when": "GitHub 打不开或静默到可见浏览器补读失败时",
-      "action": "GitHub Web 空白、重置或超时不足以判 IP 被封；比较浏览器 Web、API、Status 与网络探测并保留各自边界。保存的浏览器 profile 断开时选已连接可见浏览器；连接失败不算已尝试网站，不能用泛化网络或登录结论掩盖。",
+      "when": "GitHub Web 搜索偶发打不开、空白，或静默到可见浏览器补读失败时",
+      "action": "GitHub Web 出现 about:blank、连接重置或超时不足以判 IP 被封；同时间 api.github.com、Bing 和 githubstatus.com 可读时，先看状态页，比较浏览器 Web、API、Status 与网络探测并保留各自边界和失败证据。保存的浏览器 profile 断开时选已连接可见浏览器；连接失败不算已尝试网站，不能用泛化网络或登录结论掩盖。",
       "updated": "2026-10-30"
     }
   ]

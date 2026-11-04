@@ -223,11 +223,11 @@ test('GitHub search executes focused routes and merges duplicate repositories', 
   const capturePage = async (_page, options) => {
     calls.push(options);
     const folder = path.join(options.out, 'raw', `route-${calls.length}`);
-    await fs.mkdir(path.join(folder, 'raw'), { recursive: true });
+    await fs.mkdir(folder, { recursive: true });
     const links = calls.length === 1
       ? [{ url: 'https://github.com/example/project', text: 'example/project', context: 'Python crawler for collecting web pages 1k stars' }]
       : [{ url: 'https://github.com/example/project', text: 'example/project', context: 'Python crawler for collecting web pages 1k stars' }, { url: 'https://github.com/example/second', text: 'example/second', context: 'Python scraper for collecting web pages 500 stars' }, { url: 'https://github.com/example/noise', text: 'example/noise', context: 'An unrelated audio editing project' }];
-    await fs.writeFile(path.join(folder, 'raw', 'content.json'), JSON.stringify({ requested_url: options.url, text: 'GitHub repository search results', links }));
+    await fs.writeFile(path.join(folder, 'content.json'), JSON.stringify({ requested_url: options.url, text: 'GitHub repository search results', links }));
     return { folder, status: 'captured', resolved_url: options.url, url_check: { valid_content: true }, search_action: { submitted: true }, limitations: [] };
   };
   try {
@@ -255,13 +255,13 @@ test('GitHub detail reads continue after an unavailable top candidate', async ()
   const capturePage = async (_page, options) => {
     calls.push(options);
     const folder = path.join(options.out, 'raw', `route-${calls.length}`);
-    await fs.mkdir(path.join(folder, 'raw'), { recursive: true });
+    await fs.mkdir(folder, { recursive: true });
     const discovery = Boolean(options.query);
     const links = discovery ? [
       { url: 'https://github.com/example/unavailable', text: 'example/unavailable', context: 'Python crawler for collecting web pages 10k stars' },
       { url: 'https://github.com/example/usable', text: 'example/usable', context: 'Python crawler for collecting web pages 100 stars' },
     ] : [];
-    await fs.writeFile(path.join(folder, 'raw', 'content.json'), JSON.stringify({ requested_url: options.url, text: 'GitHub repository page', links }));
+    await fs.writeFile(path.join(folder, 'content.json'), JSON.stringify({ requested_url: options.url, text: 'GitHub repository page', links }));
     if (discovery) return { folder, status: 'captured', resolved_url: options.url, url_check: { valid_content: true }, search_action: { submitted: true }, limitations: [] };
     const usable = options.url.endsWith('/usable');
     return {
@@ -293,14 +293,14 @@ test('GitHub detail reads keep searching after several unavailable candidates', 
   const capturePage = async (_page, options) => {
     calls.push(options);
     const folder = path.join(options.out, 'raw', `route-${calls.length}`);
-    await fs.mkdir(path.join(folder, 'raw'), { recursive: true });
+    await fs.mkdir(folder, { recursive: true });
     const discovery = Boolean(options.query);
     const links = discovery ? [1, 2, 3, 4].map((number) => ({
       url: `https://github.com/example/candidate-${number}`,
       text: `example/candidate-${number}`,
       context: `Python crawler for collecting web pages ${100 - number} stars`,
     })) : [];
-    await fs.writeFile(path.join(folder, 'raw', 'content.json'), JSON.stringify({ requested_url: options.url, text: 'GitHub repository page', links }));
+    await fs.writeFile(path.join(folder, 'content.json'), JSON.stringify({ requested_url: options.url, text: 'GitHub repository page', links }));
     if (discovery) return { folder, status: 'captured', resolved_url: options.url, url_check: { valid_content: true }, search_action: { submitted: true }, limitations: [] };
     const usable = options.url.endsWith('/candidate-4');
     return { folder, status: usable ? 'captured' : 'partial', stop_reason: usable ? 'stable_after_3_scrolls' : 'unavailable', resolved_url: options.url, url_check: { valid_content: usable }, limitations: [] };
@@ -325,14 +325,14 @@ test('GitHub search uses GitCN only after native and Bing discovery miss', async
   const capturePage = async (_page, options) => {
     calls.push(options);
     const folder = path.join(options.out, 'raw', `route-${calls.length}`);
-    await fs.mkdir(path.join(folder, 'raw'), { recursive: true });
+    await fs.mkdir(folder, { recursive: true });
     const mirror = options.search_form?.entry_url === 'https://gitcn.org/search';
     const links = mirror ? [{
       url: 'https://github.com/example/browser-automation',
       text: 'example/browser-automation',
       context: 'Browser automation with Playwright and Python 1.2k stars'
     }] : [];
-    await fs.writeFile(path.join(folder, 'raw', 'content.json'), JSON.stringify({ requested_url: options.url, text: 'Search results', links }));
+    await fs.writeFile(path.join(folder, 'content.json'), JSON.stringify({ requested_url: options.url, text: 'Search results', links }));
     return { folder, status: 'captured', resolved_url: options.url, url_check: { valid_content: true }, search_action: { submitted: true }, limitations: [] };
   };
   try {
@@ -356,13 +356,13 @@ test('GitHub search skips GitCN when a native route already has a candidate', as
   const capturePage = async (_page, options) => {
     calls.push(options);
     const folder = path.join(options.out, 'raw', `route-${calls.length}`);
-    await fs.mkdir(path.join(folder, 'raw'), { recursive: true });
+    await fs.mkdir(folder, { recursive: true });
     const links = calls.length === 1 ? [{
       url: 'https://github.com/example/browser-automation',
       text: 'example/browser-automation',
       context: 'Browser automation with Playwright 1.2k stars'
     }] : [];
-    await fs.writeFile(path.join(folder, 'raw', 'content.json'), JSON.stringify({ requested_url: options.url, text: 'Search results', links }));
+    await fs.writeFile(path.join(folder, 'content.json'), JSON.stringify({ requested_url: options.url, text: 'Search results', links }));
     return { folder, status: 'captured', resolved_url: options.url, url_check: { valid_content: true }, search_action: { submitted: true }, limitations: [] };
   };
   try {

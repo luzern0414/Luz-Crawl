@@ -48,4 +48,13 @@ GitLab、AtomGit/GitCode、LibHunt、OpenAlternative、Awesome Open Source、Sou
 
 抖音公开视频页有可见 video 时可以直接 capture --download，不要因为登录弹窗自动判为登录失败。需要账号权限的后台必须由用户手动登录，登录页不能算数据已采集。
 
+小红书、抖音和 GitHub 的 robots.txt 与用户条款对自动化读取有限制，只读用户指定的少量公开页面，不批量、不转售、不商用；站点规则用 `robots URL` 查看，依据见 [compliance.md](compliance.md)。
+
+## 小红书与抖音的记录
+
+- 每个字段保留来源类型（page_state、json_ld、dom、visible_text、observed_media）和原始值；无法确认的时间写 `iso: null`，相对时间同时记录采集时刻和时区。
+- 评论只代表本次页面实际加载的条目，按评论 ID（缺失时按作者、时间和正文）去重，并记录页面显示的总数、已加载数、覆盖率和停止原因。
+- 不接入签名破解、逆向接口、代理池、验证码绕过或 Cookie 导出；登录内容只在用户明确授权并指定已连接浏览器时读取，并与公开结果分开标记。
+- 详情页必须确认目标内容 ID；页面壳、登录页和搜索卡片不能升级为正文成功。
+
 站点库见 [site-library.json](site-library.json)，检索策略见 [github-search.md](github-search.md)。

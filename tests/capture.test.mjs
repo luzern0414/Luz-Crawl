@@ -91,8 +91,8 @@ test('URL validation, aliases and ID deduplication', () => {
 });
 
 test('Bilibili search excludes creator upload screens and accepts real detail IDs', () => {
-  const content = {requested_url:'https://search.bilibili.com/all?keyword=Python',links:[{url:'https://member.bilibili.com/platform/upload/video/frame'},{url:'https://www.bilibili.com/video/BV1GJ411x7h7/'},{url:'https://www.bilibili.com/video/not-a-video'}]};
-  assert.deepEqual(sourceCandidates(content,CATALOG.find(site=>site.id==='bilibili')).map(item=>item.url),['https://www.bilibili.com/video/BV1GJ411x7h7/']);
+  const content = {requested_url:'https://search.bilibili.com/all?keyword=Python',links:[{url:'https://member.bilibili.com/platform/upload/video/frame'},{url:'https://www.bilibili.com/video/BV1Ab4y1x7Cd/'},{url:'https://www.bilibili.com/video/not-a-video'}]};
+  assert.deepEqual(sourceCandidates(content,CATALOG.find(site=>site.id==='bilibili')).map(item=>item.url),['https://www.bilibili.com/video/BV1Ab4y1x7Cd/']);
 });
 
 test('search candidates use the result-row context when a search engine link has no own text', () => {
@@ -122,6 +122,23 @@ test('explicit site scopes reject search-engine results from other domains', () 
   };
   const found = sourceCandidates(content, site, true, 'site:pep.com.cn 英语 数字教材');
   assert.deepEqual(found.map(item => item.url), ['https://www.pep.com.cn/zslth/yyptzy/']);
+});
+
+test('the search engine vendor help pages in an answer card never become result candidates', () => {
+  const site = CATALOG.find(item => item.id === 'bing');
+  const answerCard = '喜欢\n不喜欢\nB2B订货系统功能模块 业务流程\nB2B订货系统的核心功能模块包括订单管理、商品展示、渠道定价与资金核销。';
+  const content = {
+    requested_url: 'https://www.bing.com/search?q=B2B%E8%AE%A2%E8%B4%A7%E7%B3%BB%E7%BB%9F+%E5%8A%9F%E8%83%BD+%E6%A8%A1%E5%9D%97',
+    links: [
+      { url: 'https://support.microsoft.com/zh-cn/bing/how-bing-delivers-search-results', text: '了解必应如何提供搜索结果', context: answerCard },
+      { url: 'https://go.microsoft.com/fwlink/?linkid=2259814', text: 'B2B订货系统功能模块', context: answerCard },
+      { url: 'https://zhuanlan.zhihu.com/p/1234567890', text: 'B2B订货平台与经销商平台的功能模块', context: answerCard },
+    ]
+  };
+  assert.deepEqual(sourceCandidates(content, site, true, 'B2B订货系统 功能 模块').map(item => item.url), ['https://zhuanlan.zhihu.com/p/1234567890']);
+  // A query that names the vendor host keeps its pages.
+  const scoped = sourceCandidates({ ...content, links: [content.links[0]] }, site, true, 'site:support.microsoft.com 必应 搜索结果');
+  assert.equal(scoped.length, 1);
 });
 
 test('search result cards remain candidates when the snippet uses nearby vocabulary', () => {
@@ -182,7 +199,8 @@ test('virtualized tweets survive scrolls; longer expansion wins', async () => {
   assert.equal(result.completeness.items, 2);
   assert.equal(browser.opened.length, 1);
   assert.equal((await verifyArchive(result.folder)).ok, true);
-  await assert.rejects(() => fs.access(path.join(result.folder, path.basename(result.html_file))), { code: 'ENOENT' });
+  assert.equal(path.dirname(result.html_file), result.folder);
+  assert.ok((JSON.parse(await fs.readFile(path.join(result.folder, 'manifest.json'), 'utf8'))).files.some((entry) => entry.path === path.basename(result.html_file)));
   assert.equal(mergeItems([{ id: '1', text: 'short' }], [{ id: '1', text: 'a longer expanded paragraph' }])[0].text, 'a longer expanded paragraph');
 });
 
@@ -266,15 +284,40 @@ test('loading replies cannot become stable completion and displayed counts survi
   assert.ok(result.limitations.some((value) => value.includes('未加载评论')));
 });
 
+test('the same URL captured again is its own archive and the old one stays as it was', async () => {
+  const options = opts('recapture');
+  const first = await capture(page([snapshot()]), options);
+  const frozen = async () => ({ manifest: hash(await fs.readFile(path.join(first.folder, 'manifest.json'))), html: hash(await fs.readFile(first.html_file)) });
+  const before = await frozen();
+  const again = await capture(page([snapshot({ title: '改过标题的第二次抓取' })]), options);
+  assert.notEqual(again.folder, first.folder);
+  assert.notEqual(again.html_file, first.html_file);
+  assert.equal(path.basename(again.folder).slice(0, 4), '0002');
+  assert.deepEqual(await frozen(), before, 'the first archive is not rewritten');
+  assert.equal((await verifyArchive(first.folder)).ok, true);
+  assert.equal((await verifyArchive(again.folder)).ok, true);
+  const manifest = JSON.parse(await fs.readFile(path.join(again.folder, 'manifest.json'), 'utf8'));
+  assert.equal(manifest.recapture_of, path.basename(first.folder));                    // the new archive says which one it follows
+  const identity = JSON.parse(await fs.readFile(path.join(again.folder, 'identity.json'), 'utf8'));
+  assert.equal(identity.recapture_of, path.basename(first.folder));
+  const third = await capture(page([snapshot()]), options);
+  assert.equal(path.basename(third.folder).slice(0, 4), '0003');
+  assert.equal(JSON.parse(await fs.readFile(path.join(third.folder, 'manifest.json'), 'utf8')).recapture_of, path.basename(again.folder));
+  assert.deepEqual(await frozen(), before);
+  // --resume is the explicit way to continue: it picks the newest archive of that URL and leaves the older ones alone.
+  const resumed = await capture(page([snapshot()]), { ...options, resume: true });
+  assert.equal(path.basename(resumed.folder).slice(0, 4), '0003');
+  assert.deepEqual(await frozen(), before);
+});
+
 test('resume verifies evidence, appends snapshots, never overwrites corrupted evidence', async () => {
   const options = opts('resume');
   const first = await capture(page([snapshot()]), options);
-  // The same URL without --resume continues its existing archive instead of failing.
-  assert.equal((await capture(page([snapshot()]), options)).folder, first.folder);
   const second = await capture(page([snapshot()]), { ...options, resume: true });
+  assert.equal(second.folder, first.folder);
   assert.ok(second.completeness.snapshots > first.completeness.snapshots);
   assert.equal((await verifyArchive(second.folder)).ok, true);
-  const manifest = path.join(second.folder, 'raw/manifest.json');
+  const manifest = path.join(second.folder, 'manifest.json');
   const before = hash(await fs.readFile(manifest));
   await fs.appendFile(second.html_file, '\nTampered');
   await assert.rejects(() => capture(page([snapshot()]), { ...options, resume: true }), /Cannot resume/);
@@ -286,7 +329,7 @@ test('browser failure still leaves an honest verifiable failure archive', async 
   const browser = page([]); browser.goto = async () => { throw new Error('Browser Bridge disconnected'); };
   const result = await capture(browser, opts('failed'));
   assert.equal(result.status, 'failed');
-  const manifest = JSON.parse(await fs.readFile(path.join(result.folder, 'raw/manifest.json')));
+  const manifest = JSON.parse(await fs.readFile(path.join(result.folder, 'manifest.json')));
   assert.equal(manifest.browser_opened, false);
   assert.equal((await verifyArchive(result.folder)).ok, true);
 });
@@ -300,7 +343,7 @@ test('an occupied raw directory does not discard readable content or its titled 
     };
     const result = await capture(page([snapshot()]), opts('occupied-raw'));
     assert.equal(result.status, 'captured');
-    assert.equal(path.basename(result.html_file), '001_Test source.html');
+    assert.equal(path.basename(result.html_file), '0001_Test source.html');
     assert.equal((await verifyArchive(result.folder)).ok, true);
   } finally { fs.rename = originalRename; }
 });
@@ -348,20 +391,19 @@ for (const taskLayout of [false, true]) test(`X article links preserve child ver
   const options = opts(taskLayout ? 'article-task' : 'article');
   if (taskLayout) options.out = await createTaskArchive(options.out, 'article task', {newTask: true});
   const result = await capture(browser, options);
-  const content = JSON.parse(await fs.readFile(path.join(result.folder, 'raw/content.json')));
+  const content = JSON.parse(await fs.readFile(path.join(result.folder, 'content.json')));
   assert.equal(content.related.length, 1);
   assert.equal(content.related[0].status, 'captured');
   assert.equal((await verifyArchive(result.folder)).ok, true);
   const resumed = await capture(browser, {...options, resume: true});
-  const resumedContent = JSON.parse(await fs.readFile(path.join(resumed.folder, 'raw/content.json')));
+  const resumedContent = JSON.parse(await fs.readFile(path.join(resumed.folder, 'content.json')));
   assert.equal(resumedContent.related.length, 1);
   assert.equal((await verifyArchive(resumed.folder)).ok, true);
-  const child = JSON.parse(await fs.readFile(path.join(content.related[0].folder, 'raw/content.json')));
-  if (taskLayout) {
-    // Related evidence stays inside the parent's raw folder; its delivery HTML sits beside the parent's.
-    assert.ok(content.related[0].folder.startsWith(result.folder + path.sep));
-    assert.equal(path.dirname(content.related[0].html_file), path.dirname(result.html_file));
-  }
+  const child = JSON.parse(await fs.readFile(path.join(content.related[0].folder, 'content.json')));
+  // Related pages stay inside the parent archive, each with its own HTML inside its own folder.
+  assert.ok(content.related[0].folder.startsWith(result.folder + path.sep));
+  assert.equal(path.dirname(content.related[0].html_file), content.related[0].folder);
+  if (taskLayout) assert.equal(path.dirname(result.folder), path.join(options.out, 'raw'));
   await fs.appendFile(content.related[0].html_file, '\nModified child');
   assert.equal((await verifyArchive(result.folder)).ok, false);
 });
@@ -369,7 +411,7 @@ for (const taskLayout of [false, true]) test(`X article links preserve child ver
 test('redirected browser URL selects the actual platform extractor', async () => {
   const data = snapshot({ url: 'https://mp.weixin.qq.com/s/article', items: [{ id: 'article', text: 'Real article body', kind: 'page_body', url: 'https://mp.weixin.qq.com/s/article' }] });
   const result = await capture(page([data]), opts('redirect', { url: 'https://t.co/example' }));
-  const content = JSON.parse(await fs.readFile(path.join(result.folder, 'raw/content.json')));
+  const content = JSON.parse(await fs.readFile(path.join(result.folder, 'content.json')));
   assert.equal(content.platform, 'wechat');
   assert.equal(content.resolved_url, data.url);
 });
@@ -389,7 +431,7 @@ test('public-index search pages keep the requested platform result extractor aft
     search_platform: 'github',
     scrolls: 0
   }));
-  const content = JSON.parse(await fs.readFile(path.join(result.folder, 'raw/content.json')));
+  const content = JSON.parse(await fs.readFile(path.join(result.folder, 'content.json')));
   assert.equal(content.platform, 'bing');
   assert(extractionPlatforms.length > 0);
   assert(extractionPlatforms.every(Boolean));
@@ -408,14 +450,14 @@ test('resuming a renamed related page retains its snapshots and verifies current
   }};
   const options = opts('renamed-related');
   const first = await capture(browser, options);
-  const oldChild = JSON.parse(await fs.readFile(path.join(first.folder, 'raw/content.json'))).related[0];
-  const oldManifest = JSON.parse(await fs.readFile(path.join(oldChild.folder, 'raw/manifest.json')));
+  const oldChild = JSON.parse(await fs.readFile(path.join(first.folder, 'content.json'))).related[0];
+  const oldManifest = JSON.parse(await fs.readFile(path.join(oldChild.folder, 'manifest.json')));
   linkedTitle = '新关联标题';
   const resumed = await capture(browser, {...options,resume:true});
-  const currentChild = JSON.parse(await fs.readFile(path.join(resumed.folder, 'raw/content.json'))).related[0];
+  const currentChild = JSON.parse(await fs.readFile(path.join(resumed.folder, 'content.json'))).related[0];
   assert.match(currentChild.folder, /新关联标题$/);
   assert.equal((await verifyArchive(resumed.folder)).ok, true);
-  for (const entry of oldManifest.files.filter(e => e.path.startsWith('raw/snapshots/'))) {
+  for (const entry of oldManifest.files.filter(e => e.path.startsWith('snapshots/'))) {
     assert.equal(hash(await fs.readFile(path.join(currentChild.folder, entry.path))), entry.sha256);
   }
   await fs.appendFile(currentChild.html_file, '\nChanged current child');
@@ -446,55 +488,72 @@ test('unchanged text above page bottom cannot stop lazy-loading capture early', 
 test('readable serial and source title replace URL hashes; resume keeps the serial', async () => {
   assert.equal(safeTitle('标题: 一 / 二? <三>\n'), '标题 一 二 三');
   assert.equal([...safeTitle('😀'.repeat(100))].length, 64);
-  const first = await capture(page([snapshot({ title: '第一篇：保留中文' })]), opts('names'));
-  assert.equal(path.basename(first.html_file), '001_第一篇：保留中文.html');
-  assert.equal(path.dirname(first.html_file), opts('names').out);
-  assert.equal(path.basename(path.dirname(first.folder)), 'raw');
-  const second = await capture(page([snapshot({ url: 'https://x.com/a/status/456', title: '第二篇', items: [{ id: '456', text: 'second' }] })]), opts('names', { url: 'https://x.com/a/status/456' }));
-  assert.equal(path.basename(second.folder), '002_第二篇');
-  const resumed = await capture(page([snapshot({ title: '第一篇新标题' })]), opts('names', { resume: true }));
-  assert.equal(path.basename(resumed.folder), '001_第一篇新标题');
+  const names = opts('names');
+  names.out = await createTaskArchive(names.out, 'names task', { newTask: true, threadId: null });
+  const first = await capture(page([snapshot({ title: '第一篇：保留中文' })]), names);
+  assert.equal(path.basename(first.html_file), '0001_第一篇：保留中文.html');
+  assert.equal(path.dirname(first.html_file), first.folder);
+  assert.equal(path.dirname(first.folder), path.join(names.out, 'raw'));
+  const second = await capture(page([snapshot({ url: 'https://x.com/a/status/456', title: '第二篇', items: [{ id: '456', text: 'second' }] })]), { ...names, url: 'https://x.com/a/status/456' });
+  assert.equal(path.basename(second.folder), '0002_第二篇');
+  const resumed = await capture(page([snapshot({ title: '第一篇新标题' })]), { ...names, resume: true });
+  assert.equal(path.basename(resumed.folder), '0001_第一篇新标题');
   assert.equal((await verifyArchive(resumed.folder)).ok, true);
   await assert.rejects(() => fs.access(first.html_file));
-  assert.equal(path.basename(resumed.html_file), '001_第一篇新标题.html');
+  assert.equal(path.basename(resumed.html_file), '0001_第一篇新标题.html');
   // The crawl summary keeps one row per source URL, so the resumed title replaces the first one.
-  const summary = await fs.readFile(path.join(opts('names').out, 'raw', '爬取总结.html'), 'utf8');
+  const summary = await fs.readFile(path.join(names.out, `${path.basename(names.out)}.html`), 'utf8');
   assert.ok(summary.includes('第一篇新标题'));
   assert.ok(summary.includes('第二篇'));
   assert.ok(!summary.includes('第一篇：保留中文'));
-  await assert.rejects(() => fs.access(path.join(opts('names').out, '参考链接.md')),{code:'ENOENT'});
+  await assert.rejects(() => fs.access(path.join(names.out, '参考链接.md')),{code:'ENOENT'});
   await assert.rejects(() => fs.access(path.join(resumed.folder, 'content.md')));
 });
 
-test('resuming a legacy archive moves evidence under raw and preserves its serial', async () => {
-  const options = opts('legacy-layout');
+// Turns an archive written by the current layout into the older one: files under <archive>\raw\, the HTML in the delivery folder.
+async function toOlderLayout(folder, deliveryRoot) {
+  const manifestFile = path.join(folder, 'manifest.json');
+  const manifest = JSON.parse(await fs.readFile(manifestFile, 'utf8'));
+  const inner = path.join(folder, 'raw');
+  await fs.mkdir(inner);
+  for (const name of await fs.readdir(folder)) if (name !== 'raw' && name !== manifest.primary_file) await fs.rename(path.join(folder, name), path.join(inner, name));
+  await fs.rename(path.join(folder, manifest.primary_file), path.join(deliveryRoot, manifest.primary_file));
+  const html = manifest.files.find((entry) => entry.path === manifest.primary_file);
+  Object.assign(manifest, { output_layout: 'html_and_raw_v1', delivery: { file: manifest.primary_file, bytes: html.bytes, sha256: html.sha256 }, related_deliveries: [], files: manifest.files.filter((entry) => entry !== html).map((entry) => ({ ...entry, path: `raw/${entry.path}` })) });
+  await fs.writeFile(path.join(inner, 'manifest.json'), JSON.stringify(manifest));
+}
+
+test('resuming an archive of the older layout continues it in place with its serial, raw/ and delivery HTML', async () => {
+  const options = opts('older-layout');
   const output = options.out;
-  options.out = path.join(output, 'raw', '001_legacy task');
-  await fs.mkdir(options.out, {recursive:true});
-  await fs.writeFile(path.join(options.out, 'luz-task.json'), JSON.stringify({schema_version:1,kind:'task_archive',delivery_layout:'sibling_raw_v1',title:'legacy task'}));
+  options.out = path.join(output, 'raw', '001_older task');
+  await fs.mkdir(options.out, { recursive: true });
+  await fs.writeFile(path.join(options.out, 'luz-task.json'), JSON.stringify({ schema_version: 1, kind: 'task_archive', delivery_layout: 'sibling_raw_v1', title: 'older task' }));
   const first = await capture(page([snapshot()]), options);
-  const oldFolder = path.join(output, path.basename(first.folder));
-  const manifestFile = path.join(first.folder, 'raw/manifest.json');
-  const manifest = JSON.parse(await fs.readFile(manifestFile));
-  delete manifest.output_layout;
-  await fs.writeFile(manifestFile, JSON.stringify(manifest));
-  await fs.rename(first.folder, oldFolder);
+  await toOlderLayout(first.folder, output);
+  assert.equal((await verifyArchive(first.folder)).ok, true);
   const resumed = await capture(page([snapshot()]), { ...options, resume: true });
   assert.equal(resumed.folder, first.folder);
-  assert.equal(resumed.html_file, first.html_file);
+  assert.equal(resumed.html_file, path.join(output, path.basename(first.html_file)));
   assert.equal((await verifyArchive(resumed.folder)).ok, true);
-  await assert.rejects(() => fs.access(oldFolder));
+  assert.ok(resumed.completeness.snapshots > first.completeness.snapshots);
+  const manifest = JSON.parse(await fs.readFile(path.join(resumed.folder, 'raw', 'manifest.json'), 'utf8'));
+  assert.equal(manifest.output_layout, 'html_and_raw_v1');
+  assert.ok(manifest.files.every((entry) => entry.path.startsWith('raw/')));
+  assert.deepEqual((await fs.readdir(resumed.folder)).sort(), ['raw']);
+  // Corrupting the delivery HTML still refuses the next resume.
+  await fs.appendFile(resumed.html_file, '\nTampered');
+  await assert.rejects(() => capture(page([snapshot()]), { ...options, resume: true }), /Cannot resume/);
 });
 
-test('user-owned HTML beside raw/ is left in place and the capture takes the next number', async () => {
-  const options = opts('html-collision');
-  await fs.mkdir(options.out, { recursive: true });
-  const reserved = path.join(options.out, '001_留存.html');
-  await fs.writeFile(reserved, 'User-owned HTML');
+test('folders already numbered in the output make the next capture take the next number', async () => {
+  const options = opts('number-collision');
+  await fs.mkdir(path.join(options.out, '0001_留存'), { recursive: true });
+  await fs.writeFile(path.join(options.out, '0001_留存', 'note.txt'), 'User-owned');
   const result = await capture(page([snapshot()]), options);
   assert.equal(result.status, 'captured');
-  assert.equal(await fs.readFile(reserved, 'utf8'), 'User-owned HTML');
-  assert.match(path.basename(result.html_file), /^002_/);
+  assert.equal(await fs.readFile(path.join(options.out, '0001_留存', 'note.txt'), 'utf8'), 'User-owned');
+  assert.match(path.basename(result.folder), /^0002_/);
 });
 
 test('a verified complete X Article exports directly without scrolling through replies', async () => {
@@ -542,22 +601,26 @@ test('observed Article response media is limited to the target post and official
 });
 
 
-test('task evidence stays in the task raw folder while its delivery HTML stays in the project folder', async () => {
+test('a task keeps pages and records in raw/ with their HTML inside, and its summary beside raw/', async () => {
   const options = opts('task-delivery');
   const output = options.out;
-  const task = await createTaskArchive(output, 'one user request', {newTask: true});
+  const task = await createTaskArchive(output, 'one user request', {newTask: true, threadId: null});
   options.out = task;
   const captured = await capture(page([snapshot()]), options);
-  assert.equal(path.dirname(captured.html_file), output);
-  assert.ok(captured.folder.startsWith(task + path.sep));
-  assert.deepEqual((await fs.readdir(output)).filter(name => name.endsWith('.html')), [path.basename(captured.html_file)]);
+  assert.equal(path.dirname(captured.folder), path.join(task, 'raw'));
+  assert.equal(path.dirname(captured.html_file), captured.folder);
+  assert.deepEqual((await fs.readdir(task)).sort(), [`${path.basename(task)}.html`, 'raw']);
+  assert.deepEqual(await fs.readdir(output), [path.basename(task)]);
+  assert.deepEqual((await fs.readdir(captured.folder)).filter(name => !name.endsWith('.html')).sort(), ['content.json', 'identity.json', 'manifest.json', 'snapshots']);
+  const manifest = JSON.parse(await fs.readFile(path.join(captured.folder, 'manifest.json'), 'utf8'));
+  assert.equal(manifest.output_layout, 'archive_html_v2');
+  assert.ok(manifest.files.every(entry => !entry.path.startsWith('raw/')));
   assert.ok((await verifyArchive(captured.folder)).ok);
   const resumed = await capture(page([snapshot()]), {...options, resume: true});
   assert.equal(resumed.folder, captured.folder);
   assert.equal(resumed.html_file, captured.html_file);
   assert.ok((await verifyArchive(resumed.folder)).ok);
 });
-
 
 test('search thumbnails preserve source URLs without spending any media operations', async () => {
   const source = 'https://example.com/search';

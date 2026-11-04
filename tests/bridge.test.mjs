@@ -58,6 +58,25 @@ test('the daemon relays commands to the selected profile, keeps page identity an
   await assert.rejects(sendCommand('frobnicate', { contextId: 'edge-a' }), (error) => error instanceof BrowserCommandError && /Unknown action/.test(error.message));
 });
 
+test('automation signals stay visible by default and are hidden only with LUZ_STEALTH=1', async (t) => {
+  const codes = [];
+  const ext = await fakeExtension('edge-stealth', (command) => {
+    if (command.action === 'exec') codes.push(command.code);
+    return { id: command.id, ok: true, data: { url: command.url ?? null }, page: 'TARGET-2' };
+  });
+  t.after(() => { ext.close(); delete process.env.LUZ_STEALTH; });
+  const page = await new BrowserBridge().connect({ session: 'luzcrawl-stealth', contextId: 'edge-stealth', windowMode: 'background' });
+  await page.goto('https://example.com/', { waitUntil: 'none' });
+  assert.equal(codes.length, 0);
+  await page.goto('https://example.com/', { settleMs: 5 });
+  assert.equal(codes.length, 1);
+  assert.doesNotMatch(codes[0], /webdriver/);
+  process.env.LUZ_STEALTH = '1';
+  await page.goto('https://example.com/', { waitUntil: 'none' });
+  assert.equal(codes.length, 2);
+  assert.match(codes[1], /navigator.*webdriver/s);
+});
+
 test('an unknown profile fails fast and multiple profiles require a choice', async (t) => {
   const answer = (command) => ({ id: command.id, ok: true, data: 'ok' });
   const a = await fakeExtension('edge-a', answer);

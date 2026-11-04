@@ -11,8 +11,8 @@ test.after(() => fs.rm(temp, { recursive: true, force: true }));
 async function savedCapture(calls, options, links = []) {
   calls.push(options);
   const folder = path.join(options.out, 'raw', `capture-${calls.length}`);
-  await fs.mkdir(path.join(folder, 'raw'), { recursive: true });
-  await fs.writeFile(path.join(folder, 'raw', 'content.json'), JSON.stringify({ requested_url: options.url, text: options.query || '', links }));
+  await fs.mkdir(folder, { recursive: true });
+  await fs.writeFile(path.join(folder, 'content.json'), JSON.stringify({ requested_url: options.url, text: options.query || '', links }));
   return { folder, status: 'captured', resolved_url: options.url, url_check: { valid_content: true }, search_action: { submitted: Boolean(options.query), effect_verified: true }, limitations: [] };
 }
 
@@ -37,14 +37,14 @@ test('social detail failure continues to the next candidate and records stop rea
   const capture = async (_page, options) => {
     calls.push(options);
     const folder = path.join(options.out, 'raw', `capture-${calls.length}`);
-    await fs.mkdir(path.join(folder, 'raw'), { recursive: true });
+    await fs.mkdir(folder, { recursive: true });
     if (!options.query) {
       details++;
-      await fs.writeFile(path.join(folder, 'raw', 'content.json'), JSON.stringify({ requested_url: options.url, links: [] }));
+      await fs.writeFile(path.join(folder, 'content.json'), JSON.stringify({ requested_url: options.url, links: [] }));
       if (details === 1) return { folder, status: 'blocked', stop_reason: 'unavailable', url_check: { valid_content: false }, limitations: [] };
       return { folder, status: 'captured', stop_reason: 'stable_after_2_scrolls', url_check: { valid_content: true }, post: { id: 'v2' }, limitations: [] };
     }
-    await fs.writeFile(path.join(folder, 'raw', 'content.json'), JSON.stringify({ requested_url: options.url, text: options.query, links: [
+    await fs.writeFile(path.join(folder, 'content.json'), JSON.stringify({ requested_url: options.url, text: options.query, links: [
       { url: 'https://www.douyin.com/video/111', text: '主题 视频 1', context: '主题 视频 作者 一' },
       { url: 'https://www.douyin.com/video/222', text: '主题 视频 2', context: '主题 视频 作者 二' },
     ] }));

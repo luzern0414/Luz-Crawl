@@ -10,7 +10,7 @@
        node scripts/luz-crawl.mjs install
        node scripts/luz-crawl.mjs doctor
 
-doctor 返回 ready: true 且扩展已加载后即可使用。扩展文件更新后，在扩展管理页重新加载。
+doctor 返回 ready: true（可见 Edge 已连接扩展）即可使用。没有打开可见 Edge 时，doctor 返回 ready: false、silent_ready: true，搜索与采集会自己启动静默 Edge，同样可用，只是没有可见浏览器可供补读或手动登录；silent_ready: false 时看 silent_missing 列出的缺项。扩展文件或权限更新后，在扩展管理页重新加载。
 
 ## 基本操作
 
@@ -39,7 +39,7 @@ doctor 返回 ready: true 且扩展已加载后即可使用。扩展文件更新
 
        node scripts/luz-crawl.mjs remember --out "D:\输出" --format html
 
-单次 --out 优先于默认目录。任务目录中保存搜索、详情、媒体、manifest.json 和 爬取总结.html。
+单次 --out 优先于默认目录。目录全貌见 [SKILL.md](../SKILL.md)。
 
 ## 浏览器动作
 

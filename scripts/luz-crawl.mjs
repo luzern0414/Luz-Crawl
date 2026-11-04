@@ -21,6 +21,7 @@ import { writeCrawlSummary } from '../lib/crawl-summary.mjs';
 import { lzNote, lzNotes, lzNotesCheck, lzNotesList, lzNotesPrune } from '../lib/notes.mjs';
 import { lzScope } from '../lib/scope.mjs';
 import { lzLibrary } from '../lib/site-library.mjs';
+import { checkRobots } from '../lib/robots.mjs';
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const print = (value) => console.log(JSON.stringify(value, null, 2));
@@ -87,6 +88,7 @@ const usage = `LuzCrawl ${VERSION} — skill, browser extension and local memory
   node scripts/luz-crawl.mjs collect "topic or URL" [--platform xhs,github,bing] [--file plan.json] [--read 1] --out TASK_FOLDER
   node scripts/luz-crawl.mjs report COLLECTION_DIRECTORY
   node scripts/luz-crawl.mjs summary TASK_DIRECTORY
+  node scripts/luz-crawl.mjs robots URL
   node scripts/luz-crawl.mjs capture URL --out TASK_FOLDER [--scrolls 20] [--comments] [--download] [--profile ID]
   node scripts/luz-crawl.mjs batch --file jobs.json --out TASK_FOLDER [--concurrency 4] [--allow-write] [--resume]
   node scripts/luz-crawl.mjs search PLATFORM_OR_DOMAIN "query" --out TASK_FOLDER [--read 1] [--comments] [--download]
@@ -111,7 +113,7 @@ const usage = `LuzCrawl ${VERSION} — skill, browser extension and local memory
   node scripts/luz-crawl.mjs schema
   node scripts/luz-crawl.mjs policy [--file policy.json]
 Read order: an isolated silent Edge first; if the target body is not confirmed, one retry in the connected visible Edge (the saved profile, or a newly launched Edge) inside a minimized window; only a login or verification brings that window to the front and returns awaiting_user with continue TASK_ID. --profile ID uses that visible profile directly; doctor reports browser preference separately from site login state.
-Output: --out wins, then the saved output preference, else ${DEFAULT_OUTPUT}; keep the output root outside this skill directory. The coordinator runs begin --out OUTPUT_ROOT --new once per request and passes the returned folder with --out to every operation and delegated agent; delegated agents never run begin. Task folders are bound to the session (CODEX_THREAD_ID or CLAUDE_CODE_SESSION_ID); without a session ID, begin without --new reuses the latest active task under the same raw root.
+Output: --out wins, then the saved output preference, else ${DEFAULT_OUTPUT}; keep the output root outside this skill directory. The coordinator runs begin --out OUTPUT_ROOT --new once per request and passes the returned folder with --out to every operation and delegated agent; delegated agents never run begin. Task folders are bound to the session (CODEX_THREAD_ID or CLAUDE_CODE_SESSION_ID); without a session ID, begin without --new reuses the latest active task under the same output root. Layout: OUTPUT_ROOT/NNN_topic/ holds raw/ (everything crawled and every machine record, one folder per page under raw/NNNN_title/) and NNN_topic.html (the summary) beside it.
 Browser Bridge must be connected. Follow SKILL.md (调用协议); installation is in references/install.md.`;
 
 async function main() {
@@ -170,9 +172,10 @@ async function execute(values, positionals) {
     const result = await doctor({ profile: values.profile });
     if (values.out) {
       const folder = (await findTaskArchive(values.out))?.folder || await createTaskArchive(values.out, 'doctor');
-      await atomicWrite(path.join(folder, 'doctor.json'), result);
+      await atomicWrite(path.join(folder, 'raw', 'doctor.json'), result);
     }
-    print(result); process.exitCode = result.ready ? 0 : 2; return;
+    // Exit 0 when the environment can start a read: a connected extension (ready) or the silent Edge (silent_ready).
+    print(result); process.exitCode = result.ready || result.silent_ready ? 0 : 2; return;
   }
   if (command === 'install') {
     // Nothing to install: the runtime, bridge and extension all live in this folder. Check the environment, start the
@@ -187,6 +190,8 @@ async function execute(values, positionals) {
     if (values.compact) { print(await lzCompactEvents(true)); return; }
     print({ notes: await lzNotes(values.query || '', values.platform), ...await findExperience(values.query || '', values.platform) }); return;
   }
+  // Advice before a bulk or repeated read: what the site's robots.txt says about this path (RFC 9309). Exit 2 = disallowed or unreachable.
+  if (command === 'robots') { if (!args[0]) throw new Error('A URL is required.'); const result = await checkRobots(args[0]); print(result); process.exitCode = result.allowed ? 0 : 2; return; }
   if (command === 'sites') { print((await sites()).filter((item) => !values.category || item.category === values.category)); return; }
   if (command === 'pending') { print(await pendingTasks()); return; }
   if (command === 'note') { print(await lzNote(values)); return; }
@@ -229,10 +234,10 @@ async function execute(values, positionals) {
   const archiveFolder = (await findTaskArchive(values.out))?.folder || await createTaskArchive(values.out, archiveTitle);
   const health = await doctor({ profile: values.profile });
   if (!health.ready && !(['profile_selection_required', 'profile_disconnected'].includes(health.state) && values.profile)) {
-    await atomicWrite(path.join(archiveFolder, 'preflight.json'), { command, status: 'blocked', browser_opened: false, requested: batchURLs?.length ?? (command === 'capture' ? 1 : undefined), sources: batchURLs, attempted: 0, health });
+    await atomicWrite(path.join(archiveFolder, 'raw', 'preflight.json'), { command, status: 'blocked', browser_opened: false, requested: batchURLs?.length ?? (command === 'capture' ? 1 : undefined), sources: batchURLs, attempted: 0, health });
     print(health); process.exitCode = 2; return;
   }
-  await atomicWrite(path.join(archiveFolder, 'preflight.json'), { command, status: 'ready_to_attempt', requested: batchURLs?.length, health });
+  await atomicWrite(path.join(archiveFolder, 'raw', 'preflight.json'), { command, status: 'ready_to_attempt', requested: batchURLs?.length, health });
   if (command === 'collect') {
     const result=await collect(args[0] || values.name || path.basename(values.file),{...values,out:archiveFolder});
     print(result); if(!['captured','completed'].includes(result.status)) process.exitCode=2;

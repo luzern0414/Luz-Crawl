@@ -9,6 +9,8 @@
     "node": ">=24.5.0"
   },
   "scripts": {
-    "test": "node --test \"tests/*.test.mjs\""
+    "test": "node --test \"tests/*.test.mjs\"",
+    "test:preflight": "python -X utf8 -m unittest discover -s scripts -p \"test_*.py\"",
+    "test:all": "npm test && npm run test:preflight"
   }
 }

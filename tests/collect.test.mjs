@@ -12,10 +12,10 @@ test.after(()=>fs.rm(temp,{recursive:true,force:true}));
 
 async function source(task,options,extra={}) {
   const url=`https://example.com/${task.platform}`;
-  const folder=path.join(options.out,'raw','001_原文');
+  const folder=path.join(options.out,'0001_原文');
   const content={requested_url:url,resolved_url:url,title:'原文',platform:task.platform,status:'captured',url_check:{valid_content:true},items:[{kind:'page_body',text:`${task.platform}原文尾部`}],comments:[{text:'最后一条评论'}]};
-  const json=JSON.stringify(content); await atomicWrite(path.join(folder,'raw/content.json'),json);
-  await atomicWrite(path.join(folder,'raw/manifest.json'),{files:[{path:'raw/content.json',sha256:hash(json)}]});
+  const json=JSON.stringify(content); await atomicWrite(path.join(folder,'content.json'),json);
+  await atomicWrite(path.join(folder,'manifest.json'),{files:[{path:'content.json',sha256:hash(json)}]});
   return{folder,status:'captured',browser:{closed:true},...extra};
 }
 
@@ -34,14 +34,12 @@ test('collect runs sequentially and exports one HTML with complete source text a
   const result=await collect('开源工具',{out,platform:'github,bing',read:1},async(task,options)=>{visited.push(task.platform);return source(task,options);});
   assert.deepEqual(visited,['github','bing']);assert.equal(result.status,'captured');assert.equal(result.verified_sources,2);
   assert.equal(result.requested_tasks,2);assert.equal(result.attempted_tasks,2);
-  assert.equal(path.dirname(result.html_file),out);
-  assert.deepEqual((await fs.readdir(out)).sort(),[path.basename(result.html_file),'raw'].sort());
-  const summary=await fs.readFile(path.join(out,'raw/爬取总结.html'),'utf8');
-  assert.ok(summary.includes('github原文尾部') && summary.includes('bing原文尾部'));
+  assert.equal(path.dirname(result.html_file),result.folder);
+  assert.deepEqual(await fs.readdir(out),[path.basename(result.folder)]);
   const html=await fs.readFile(result.html_file,'utf8');
   assert.ok(html.includes('github原文尾部') && html.includes('bing原文尾部') && html.includes('最后一条评论'));
   assert.ok((await verifyArchive(result.folder)).ok);
-  await assert.rejects(() => fs.access(path.join(result.folder,path.basename(result.html_file))),{code:'ENOENT'});
+  assert.deepEqual((await fs.readdir(result.folder)).sort(),['collection.json','identity.json','manifest.json',path.basename(result.html_file),'sources'].sort());
   assert.equal((await refreshCollection(result.folder)).status,'captured');
   await fs.appendFile(result.html_file,'用户修改');
   await assert.rejects(()=>refreshCollection(result.folder),/edited/);
@@ -67,15 +65,18 @@ test('report picks up a continued login task without replacing user-edited outpu
 });
 
 
-test('a collection inside a task archive keeps its evidence in the task and delivers HTML beside raw/', async () => {
+test('a collection inside a task keeps its report and sources in raw/ and the task summary beside raw/', async () => {
   const output = path.join(temp, 'category-output');
-  const task = await createTaskArchive(output, 'one collection request', {newTask: true});
+  const task = await createTaskArchive(output, 'one collection request', {newTask: true, threadId: null});
   const result = await collect('browser tooling', {out: task, platform: 'github,bing'}, source);
-  assert.equal(path.dirname(result.html_file), output);
+  assert.equal(path.dirname(result.html_file), result.folder);
   assert.equal(path.dirname(path.dirname(result.folder)), task);
   assert.equal(result.status, 'captured');
   assert.ok((await verifyArchive(result.folder)).ok);
-  assert.deepEqual((await fs.readdir(output)).sort(), [path.basename(result.html_file), 'raw'].sort());
+  assert.deepEqual(await fs.readdir(output), [path.basename(task)]);
+  assert.deepEqual((await fs.readdir(task)).sort(), [`${path.basename(task)}.html`, 'raw']);
+  const summary = await fs.readFile(path.join(task, `${path.basename(task)}.html`), 'utf8');
+  assert.ok(summary.includes('github原文尾部') && summary.includes('bing原文尾部'));
   const refreshed = await refreshCollection(result.folder);
   assert.equal(refreshed.html_file, result.html_file);
   assert.equal(refreshed.verified_sources, 2);

@@ -39,6 +39,8 @@
 
 GitHub 已明确限流或验证时停止该站；不要用其他入口规避限流。无候选时改一个功能词、生态词或约束，不能重复同一句查询。
 
+浏览器搜索只用于少量候选发现；需要批量、持续或带筛选的大范围检索时改用官方 REST API 的搜索接口（认证后每分钟 30 次，未认证 10 次，代码搜索 10 次），遇到 403 或 429 按 `retry-after`、`x-ratelimit-reset` 等待。GitHub 的 robots 与使用政策依据见 [compliance.md](compliance.md)。
+
 PowerShell 示例：
 
     node scripts/luz-crawl.mjs search github "browser automation" --read 0 --out TASK_FOLDER
@@ -63,10 +65,7 @@ PowerShell 示例：
 - search_not_confirmed：输入或提交后没有确认查询生效。
 - no_candidates：查询已生效但没有候选。
 - no_verified_candidates：有结果但没有合格仓库卡片。
-- partial：搜索完成，但详情或正文不足。
-- awaiting_user：需要用户登录或完成验证。
-- blocked：限流、权限或安全策略阻止。
-- failed：浏览器、传输或归档执行失败。
+- partial、awaiting_user、blocked、failed 的含义见 [evidence.md](evidence.md)。
 
 HTTP 200 只能证明连接，不代表搜索或 README 已读。单次 about:blank、超时或连接重置也不能证明 IP 被封；分别检查浏览器、API 根页、Status 和同域连通性。
 

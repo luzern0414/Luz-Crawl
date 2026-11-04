@@ -24,8 +24,8 @@ test('HelloGitHub accepts project cards and excludes articles, images and empty 
   const hello = site('hellogithub');
   assert.equal(hello.form_url, 'https://hellogithub.com/');
   assert.equal(hello.query_parameter, 'q');
-  const urls = ['https://hellogithub.com/repository/browseros-ai/BrowserOS', 'https://hellogithub.com/article/browser', 'https://hellogithub.com/favicon.png', 'https://hellogithub.com/repository/browseros-ai/BrowserOS/issues'];
-  const candidates = sourceCandidates({ requested_url: hello.form_url, links: urls.map(url => ({ url, text: '浏览器 BrowserOS', context: '浏览器 BrowserOS：可通过 AI 控制的开源浏览器项目' })) }, hello, false, '浏览器');
+  const urls = ['https://hellogithub.com/repository/example/browser-tool', 'https://hellogithub.com/article/browser', 'https://hellogithub.com/favicon.png', 'https://hellogithub.com/repository/example/browser-tool/issues'];
+  const candidates = sourceCandidates({ requested_url: hello.form_url, links: urls.map(url => ({ url, text: '浏览器 示例', context: '浏览器 示例：可通过 AI 控制的开源浏览器项目' })) }, hello, false, '浏览器');
   assert.deepEqual(candidates.map(item => item.url), urls.slice(0, 1));
 });
 
