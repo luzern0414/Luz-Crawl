@@ -62,7 +62,7 @@ test('searches in one task reuse a single numbered folder and keep separate resu
 
     assert.equal(first.search_archive, second.search_archive);
     assert.equal(first.search_archive, delegated.search_archive);
-    assert.equal(path.basename(first.search_archive), '001_xhs_folder rule');
+    assert.equal(path.basename(first.search_archive), '001-xhs_folder rule');
     assert.notEqual(first.search_index, second.search_index);
     assert.notEqual(second.search_index, delegated.search_index);
     assert.equal(path.dirname(first.search_index), path.join(first.search_archive, 'raw'));

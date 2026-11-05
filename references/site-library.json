@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-11-04T10:18:17.638Z",
+  "updated_at": "2026-11-04T23:06:17.761Z",
   "description": "可扩展公开网站入口库。probe 仅记录历史派发状态；completed 不代表数据已验收。verification 分别表示单次样本的页面、搜索、详情、统计和媒体验收，默认 untested。入口可失效，执行前仍须观察原站并补充新站。",
   "verification_states": [
     "verified",
@@ -5460,16 +5460,16 @@
       ],
       "probe": {
         "status": "completed",
-        "observations": 31,
-        "observed_at": "2026-11-04T09:06:07.700Z",
-        "last_action_status": "awaiting_user",
-        "last_stop_reason": "target_body_not_found",
-        "last_text_chars": 0
+        "observations": 32,
+        "observed_at": "2026-11-04T17:47:46.089Z",
+        "last_action_status": "captured",
+        "last_stop_reason": "stable_after_2_scrolls",
+        "last_text_chars": 47383
       },
       "verification": {
         "page": "verified",
         "search": "untested",
-        "detail": "blocked",
+        "detail": "verified",
         "statistics": "untested",
         "media": "untested"
       },
@@ -5599,11 +5599,11 @@
       ],
       "probe": {
         "status": "completed",
-        "observations": 37,
-        "observed_at": "2026-11-04T09:50:10.651Z",
+        "observations": 39,
+        "observed_at": "2026-11-04T17:41:07.353Z",
         "last_action_status": "captured",
         "last_stop_reason": "stable_after_2_scrolls",
-        "last_text_chars": 13573
+        "last_text_chars": 6064
       },
       "verification": {
         "page": "verified",
@@ -5710,11 +5710,11 @@
       ],
       "probe": {
         "status": "completed",
-        "observations": 38,
-        "observed_at": "2026-11-04T10:18:17.638Z",
+        "observations": 39,
+        "observed_at": "2026-11-04T17:31:42.377Z",
         "last_action_status": "partial",
         "last_stop_reason": "scroll_budget",
-        "last_text_chars": 9424
+        "last_text_chars": 10590
       },
       "verification": {
         "page": "verified",
@@ -5737,11 +5737,11 @@
       ],
       "probe": {
         "status": "completed",
-        "observations": 47,
-        "observed_at": "2026-11-04T09:11:48.104Z",
+        "observations": 50,
+        "observed_at": "2026-11-04T17:37:48.976Z",
         "last_action_status": "captured",
         "last_stop_reason": "stable_after_2_scrolls",
-        "last_text_chars": 3452
+        "last_text_chars": 11570
       },
       "verification": {
         "page": "untested",
@@ -9518,11 +9518,11 @@
       "discovered_from": "开源项目检索补充入口",
       "probe": {
         "status": "completed",
-        "observations": 18,
-        "observed_at": "2026-11-04T09:46:26.202Z",
-        "last_action_status": "partial",
-        "last_stop_reason": "scroll_budget",
-        "last_text_chars": 7466
+        "observations": 19,
+        "observed_at": "2026-11-04T23:06:17.761Z",
+        "last_action_status": "captured",
+        "last_stop_reason": "repository_dom_complete",
+        "last_text_chars": 4100
       }
     },
     {

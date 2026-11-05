@@ -20,7 +20,7 @@ description: Use when you need real-browser search, page capture, public media d
 - 拆解关键词，生成少量可解释的同义词、场景词和相关词；候选不足时有限补搜。
 - 失败候选继续补采，按候选量和成功率调整详情与评论预算。
 - 保存 HTML、原始快照、截图、结构化字段、时间解析、字段来源、评论覆盖率和停止原因。
-- 前置检索结论页和爬取总结页使用同一份正式文档版式：标题在先、带表题的表、单一字体族、无装饰；字号按 Markdown 层级（桌面正文 18、手机 16）。
+- 前置检索结论页和爬取总结页使用同一份正式文档版式：`lang="zh-CN"`、标题在先、每节一张带表题的表（没有内容的节不写）、单一字体族、不禁用缩放、无装饰；字号按 Markdown 层级（桌面正文 18、手机 16）。
 - 扩展显示连接、公开/授权浏览器模式、查询、候选、详情、评论进度。
 
 ## 作用
@@ -37,7 +37,7 @@ description: Use when you need real-browser search, page capture, public media d
 
 ```powershell
 node scripts/luz-crawl.mjs doctor
-$task = (node scripts/luz-crawl.mjs begin "主题" --out "D:\输出" --new | ConvertFrom-Json).folder
+$task = (node scripts/luz-crawl.mjs begin "主题" --out "D:\Codes\skill输出\Luz-Crawl" --new | ConvertFrom-Json).folder
 node scripts/luz-crawl.mjs experience --query "关键词"
 node scripts/luz-crawl.mjs robots "https://example.com/path"
 node scripts/luz-crawl.mjs search github "browser automation" --read 0 --out $task
@@ -47,25 +47,26 @@ node scripts/luz-crawl.mjs capture "https://example.com/article" --comments --ou
 node scripts/luz-crawl.mjs summary $task
 ```
 
-每项需求只建立一个任务目录（`<输出根>\NNN_主题`），输出根放在技能目录之外。`doctor` 返回 `ready: true`（已连接可见 Edge）或 `silent_ready: true`（可以启动静默 Edge）后再搜索，两者都不是时先按 [references/install.md](references/install.md) 处理。需要登录或验证时运行 `pending`，手动处理后运行 `continue TASK_ID`。
+每项需求只建立一个任务目录（`<输出根>\NNN-主题`），输出根放在技能目录之外。`doctor` 返回 `ready: true`（已连接可见 Edge）或 `silent_ready: true`（可以启动静默 Edge）后再搜索，两者都不是时先按 [references/install.md](references/install.md) 处理。需要登录或验证时运行 `pending`，手动处理后运行 `continue TASK_ID`。
 
 结果状态：`captured` 已确认正文，`partial` 有内容但仍有缺项，`awaiting_user` 等待手动登录或验证，`blocked` 被限流或权限阻止，`failed` 执行失败。
 
 ## 目录
 
-输出根下只有“序号_主题”文件夹；每个文件夹是一个任务：`raw\` 存放爬取的全部内容和机器记录，总结 html 与 `raw\` 同级。
+输出根默认 `D:\Codes\skill输出\Luz-Crawl`（`--out` 或环境变量 `LUZ_CRAWL_OUTPUT` 可改），下面只有“序号-主题”文件夹；每个文件夹是一个任务，根目录只有 `raw\` 和同名总结页：`raw\` 存放爬取的全部内容和机器记录，总结页 `NNN-主题.html` 与 `raw\` 同级。
 
 ```text
 <输出根>\
-  085_主题\                    begin 返回的 folder，之后每条命令 --out 它
+  085-主题\                    begin 返回的 folder，之后每条命令 --out 它
     raw\                       爬取的全部内容与机器记录
       luz-task.json  preflight.json  search-*.json  batch-*.json  tasks\
+      00-crawl\                前置检索记录与结论页（crawl_preflight.py 写入）
       0001_页面标题\           每个页面一份存档，文件直接放在这一层
         content.json  manifest.json  identity.json  page.png  snapshots\  media\  0001_页面标题.html
-    085_主题.html              总结 html（summary 生成），与 raw\ 同级
+    085-主题.html              总结页（begin 建立，summary 重写），与 raw\ 同级
 ```
 
-序号取输出根下一级文件夹的最大序号加一，页面序号在同一输出根内递增；输出根里不放散落文件。根目录里还有旧版散落文件或 `raw\` 时，`begin` 会报错：先运行 `py -X utf8 scripts/migrate_layout.py --root <输出根>` 看迁移计划，确认后加 `--apply`（`--revert` 撤回）。旧版任务目录（标记在 `raw\` 旁边）给 `--out` 仍可读取和续接。
+任务序号是三位数字，取输出根下所有一级文件夹的最大序号加一，不补洞、不复用；旧的 `NNN_主题`（下划线）文件夹也计入。页面序号在同一输出根内递增；输出根里不放散落文件。旧任务不改名：`NNN_主题` 目录和标记在 `raw\` 旁边的旧任务，给 `--out` 仍可读取和续接，`summary` 照常生成。输出根里还有旧版散落文件时 `begin` 会报错：先运行 `py -X utf8 scripts/migrate_layout.py --root <输出根>` 看迁移计划，确认后加 `--apply`（`--revert` 撤回）。
 
 ## 边界
 
@@ -84,4 +85,4 @@ node scripts/luz-crawl.mjs note --kind fact --key 来源名 --text "来源网址
 
 ## 项目模式
 
-提供 `luz-project` 上下文时，每个阶段仍按 doctor、共享任务、experience、capture/search 的顺序执行，但复用同一个项目 Crawl 任务（`project.json` 的 `crawl.task_root`），不为每个技能另建任务。原始快照保存在项目的 `raw/` 下，来源编号与覆盖范围登记到项目数据，每个阶段提供可复核的 HTML 结论。没有项目上下文时保持独立的输出目录和任务生命周期。
+提供 `luz-project` 上下文时，每个阶段仍按 doctor、共享任务、experience、capture/search 的顺序执行，但复用同一个项目 Crawl 任务（`project.json` 的 `crawl.task_root`，任务就在上面的输出根下），不为每个技能另建任务。项目不保存爬取的原始内容；前置检索记录和结论页写在状态根（含 `project.json` 的目录，即 `D:\Codes\skill输出\Luz-Project\<项目目录名>\raw`）的 `00-crawl\`，来源编号与覆盖范围登记到项目数据，每个阶段提供可复核的 HTML 结论。没有项目上下文时保持独立的输出目录和任务生命周期。

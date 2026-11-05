@@ -60,11 +60,30 @@ test('a task folder of the older layout (marker beside raw/) is summarized into 
 });
 
 test('a summary can be written from the raw folder of a current task and never lands inside raw/',async()=>{
-  const root=path.join(tmp,'fromraw','012_主题');
-  await atomicWrite(path.join(root,'raw/luz-task.json'),{schema_version:1,kind:'task_archive',delivery_layout:'task_folder_v2',title:'主题'});
-  await atomicWrite(path.join(root,'raw/0001_页面/content.json'),{requested_url:'https://example.com/p',status:'captured',captured_at:'2026-10-25T01:00:00Z',title:'页面',text:'来自任务 raw 目录的正文内容说明。'});
-  const result=await writeCrawlSummary(path.join(root,'raw'));
-  assert.equal(result.file,path.join(root,'012_主题.html'));
-  assert.deepEqual((await fs.readdir(root)).sort(),['012_主题.html','raw']);
-  assert.deepEqual((await fs.readdir(path.join(root,'raw'))).sort(),['0001_页面','luz-task.json']);
+  for(const name of ['012-主题','013_主题']){   // the current NNN-主题 name and the older underscore name
+    const root=path.join(tmp,'fromraw',name);
+    await atomicWrite(path.join(root,'raw/luz-task.json'),{schema_version:1,kind:'task_archive',delivery_layout:'task_folder_v2',title:'主题'});
+    await atomicWrite(path.join(root,'raw/0001_页面/content.json'),{requested_url:'https://example.com/p',status:'captured',captured_at:'2026-10-25T01:00:00Z',title:'页面',text:'来自任务 raw 目录的正文内容说明。'});
+    const result=await writeCrawlSummary(path.join(root,'raw'));
+    assert.equal(result.file,path.join(root,`${name}.html`));
+    assert.deepEqual((await fs.readdir(root)).sort(),[`${name}.html`,'raw']);
+    assert.deepEqual((await fs.readdir(path.join(root,'raw'))).sort(),['0001_页面','luz-task.json']);
+  }
+});
+
+test('a task without any record gets a page that is only its title; a section is written only when it has content',async()=>{
+  const root=path.join(tmp,'empty','001-空任务');
+  await atomicWrite(path.join(root,'raw/luz-task.json'),{schema_version:1,kind:'task_archive',delivery_layout:'task_folder_v2',title:'空任务'});
+  const empty=await writeCrawlSummary(root);
+  assert.equal(empty.records,0);
+  const html=await fs.readFile(empty.file,'utf8');
+  assert.match(html,/<html lang="zh-CN">/);
+  assert.match(html,/<main><h1>空任务 爬取总结<\/h1><\/main>/);
+  assert.doesNotMatch(html,/<h2|<table|user-scalable|maximum-scale/);
+  await atomicWrite(path.join(root,'raw/batch-bad.json'),{results:[{url:'https://example.com/a',status:'captured',title:'页',text:'有正文的页面内容说明文字。'}]});
+  await fs.writeFile(path.join(root,'raw/batch-broken.json'),'{not json');
+  const filled=await fs.readFile((await writeCrawlSummary(root)).file,'utf8');
+  assert.deepEqual([...filled.matchAll(/<caption>([^<]+)<\/caption>/g)].map(m=>m[1]),['表 1　采集结果','表 2　无法读取的记录']);
+  assert.equal(filled.match(/<h1\b/g).length,1);
+  assert.equal(filled.match(/<h2>/g).length,2);
 });

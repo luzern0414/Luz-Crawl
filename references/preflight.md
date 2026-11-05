@@ -8,13 +8,15 @@
 
 三条命令的 `--caller`、`--session`、`--stage` 必须一致，记录位于 `<session>/raw/00-crawl/<caller>[-stage].json`，结论页同名 `.html`。
 
+项目里 `--session` 传项目目录或状态根（含 `project.json` 的目录；项目目录的状态根是 `D:\Codes\skill输出\Luz-Project\<目录名>\raw`），记录和结论页写在状态根下 `project.json` 的 `crawl.evidence_index`（`00-crawl`；旧项目的 `raw/00-crawl` 保持不变）。项目不保存爬取的原始内容：复用的 Crawl 任务（`crawl.task_root`）在 Crawl 输出根下。
+
 | 命令 | 传入 | 返回 | 退出码 |
 |---|---|---|---|
-| `run` | `--caller` 实际执行者；`--session` 本技能会话或项目根；`--topic` 这次缺什么信息；可选 `--task`、`--stage`、`--query`（可重复，缺省用 topic）、`--url`（可重复，已知官方原文）、`--platform`（默认 bing，可用 github、gitee、xhs、douyin 等）、`--read`（每个查询打开的详情数，1 到 5，默认 1） | JSON：`record`、`status`（needs-conclusion）、`task`、`sources[]`（`archive` 指向正文归档）、`next` | 0；未取得有效正文时 1，记录保留为 blocked |
+| `run` | `--caller` 实际执行者；`--session` 本技能会话、项目目录或状态根；`--topic` 这次缺什么信息；可选 `--task`、`--stage`、`--query`（可重复，缺省用 topic）、`--url`（可重复，已知官方原文）、`--platform`（默认 bing，可用 github、gitee、xhs、douyin 等）、`--read`（每个查询打开的详情数，1 到 5，默认 1） | JSON：`record`、`status`（needs-conclusion）、`task`、`sources[]`（`archive` 指向正文归档）、`next` | 0；未取得有效正文时 1，记录保留为 blocked |
 | `conclude` | 同上加 `--file <补充信息.json>` | JSON：`record`、`report`（结论页路径）、`status: complete` | 0；补充信息不完整或证据无效时 1 |
 | `check` | 同上 | JSON：`ok`、`errors[]`，通过时另有 `report` | 0 通过，1 不通过 |
 
-`run` 依次执行 doctor、begin（或复用任务）、experience、search/capture、summary。`--topic` 与 `--query` 不含密钥或真实用户数据；`--topic` 写成不带括号说明的短名称，它就是结论页的标题。`--caller` 支持六个专属技能及 Crawl 自己（`luz-crawl`）。
+`run` 依次执行 doctor、begin（或复用任务）、experience、search/capture、summary。一条搜索或采集路线失败（退出码非 0、超时）时，记录保留它的日志和退出码，继续跑其余路线，只有所有路线都没有取得正文才记为 blocked；doctor、experience、summary 失败仍然停下。同一阶段的全部来源放进同一次 `run`（再跑一次会重写该阶段的记录，原来的来源不再列入）。`--topic` 与 `--query` 不含密钥或真实用户数据；`--topic` 写成不带括号说明的短名称，它就是结论页的标题。`--caller` 支持六个专属技能及 Crawl 自己（`luz-crawl`）。
 
 ```powershell
 python -X utf8 scripts/crawl_preflight.py run --caller luz-design --session "<本技能会话>" --topic "<这次缺什么信息>" --task "<begin 返回的任务目录>" --stage design --query "<关键词>" --url "<已知官方原文>"
@@ -27,7 +29,7 @@ python -X utf8 scripts/crawl_preflight.py check --caller luz-design --session "<
 | 情况 | 做法 |
 |---|---|
 | 同一需求的多个技能或阶段 | 主会话 `begin --new` 一次，把返回的目录作为 `--task` 传给每个技能；每个技能每个阶段仍各自 `run`、`conclude`、`check` |
-| 缺省 `--task` | 会话根有 `project.json` 时用其中 `crawl.task_root`；否则自动 doctor、`begin --new`，输出根取环境变量 `LUZ_CRAWL_OUTPUT`，未设置时用 `crawl_preflight.py` 里的 `DEFAULT_OUTPUT`，任务目录是其下的“序号_主题”文件夹 |
+| 缺省 `--task` | 项目（状态根有 `project.json`）时用其中 `crawl.task_root`；否则自动 doctor、`begin --new`，输出根取环境变量 `LUZ_CRAWL_OUTPUT`，未设置时用 `crawl_preflight.py` 里的 `DEFAULT_OUTPUT`（`D:\Codes\skill输出\Luz-Crawl`），任务目录是其下的“序号-主题”文件夹 |
 | 并发的不同需求 | 各用自己的任务目录，不共用 |
 | 阶段隔离 | 来源只取自本次 `run` 的 search/capture 日志；同一任务里别的阶段读到的页面不能当作本阶段的证据，记录也不能换 caller 或 stage 复用 |
 

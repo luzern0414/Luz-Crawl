@@ -87,7 +87,11 @@ PROJECT_PY = Path(crawl_preflight.__file__).resolve().parents[2] / "Luz-Project"
 
 def make_project(base, task, archive_a, started):
     """A Luz project outside the output root: research approved (its evidence frozen by hash), design still open."""
-    subprocess.run([sys.executable, "-X", "utf8", str(PROJECT_PY), "init", "演示项目", "--output-root", str(base / "projects")], check=True, capture_output=True)
+    made = subprocess.run([sys.executable, "-X", "utf8", str(PROJECT_PY), "init", "演示项目", "--output-root", str(base / "projects")], capture_output=True, text=True, encoding="utf-8")
+    # This fixture is a project of the old shape (project.json and raw/ in the project root). A Luz-Project whose init follows the
+    # newer output standard (project directory NNN-项目名, state elsewhere) no longer makes one; then there is nothing to rewrite.
+    if made.returncode != 0 or not (base / "projects").is_dir() or not any((p / "project.json").is_file() for p in (base / "projects").iterdir()):
+        raise unittest.SkipTest("Luz-Project 的 init 不再生成旧布局项目：" + ((made.stderr or made.stdout).strip().splitlines() or ["无输出"])[0])
     project = next((base / "projects").iterdir())
     manifest = json.loads((project / "project.json").read_text(encoding="utf-8"))
     stages = {s["id"]: s for s in manifest["stages"]}
@@ -205,8 +209,8 @@ class MigrateTests(unittest.TestCase):
         self.assertEqual(plan.counts["根目录网页 html"], 4)
         self.assertEqual(plan.counts["其中归入所属页面存档"], 3)
         self.assertEqual(plan.counts["其中归入 000_旧版散落网页存档"], 1)
-        # second-generation folders are numbered after the highest task number, oldest first, '-' becomes '_'
-        self.assertTrue(all(int(new[:3]) >= 29 and new[3] == "_" for _, new in plan.gen2))
+        # second-generation folders are numbered after the highest task number, oldest first, and are named in the current NNN-主题 form
+        self.assertTrue(all(int(new[:3]) >= 29 and new[3] == "-" for _, new in plan.gen2))
 
     def test_apply_builds_the_new_layout_and_keeps_every_record_verifiable(self):
         self.assertEqual(migrate_layout.main(["--root", str(self.root), "--outputs-root", str(self.out), "--repos-root", str(self.repos), "--quiet", "--apply"]), 0)
@@ -214,7 +218,8 @@ class MigrateTests(unittest.TestCase):
         names = sorted(p.name for p in root.iterdir())
         self.assertTrue(all(p.is_dir() for p in root.iterdir()))
         self.assertNotIn("raw", names)
-        self.assertEqual([n for n in names if not n[:3].isdigit() or n[3] != "_"], [])
+        self.assertEqual([n for n in names if not n[:3].isdigit() or n[3] not in "-_"], [])
+        self.assertEqual(sorted(n[:4] for n in names if n[3] == "-"), ["029-", "030-", "031-"])   # renumbered folders take the new form, tasks keep their names
         task = root / TASK
         self.assertEqual(sorted(p.name for p in task.iterdir()), [f"{TASK}.html", "raw"])
         self.assertEqual((task / f"{TASK}.html").read_text(encoding="utf-8"), "<html>summary</html>")

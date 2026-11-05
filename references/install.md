@@ -16,7 +16,7 @@ doctor 返回 ready: true（可见 Edge 已连接扩展）即可使用。没有�
 
 每项需求使用一个输出目录，目录放在技能目录之外：
 
-       node scripts/luz-crawl.mjs begin "主题" --out "D:\输出" --new
+       node scripts/luz-crawl.mjs begin "主题" --out "D:\Codes\skill输出\Luz-Crawl" --new
        node scripts/luz-crawl.mjs experience --query "关键词"
        node scripts/luz-crawl.mjs search github "关键词" --read 1 --out TASK_FOLDER
        node scripts/luz-crawl.mjs capture "https://example.com" --out TASK_FOLDER
@@ -37,7 +37,7 @@ doctor 返回 ready: true（可见 Edge 已连接扩展）即可使用。没有�
 
 扩展弹窗可以保存默认输出目录，也可以运行：
 
-       node scripts/luz-crawl.mjs remember --out "D:\输出" --format html
+       node scripts/luz-crawl.mjs remember --out "D:\Codes\skill输出\Luz-Crawl" --format html
 
 单次 --out 优先于默认目录。目录全貌见 [SKILL.md](../SKILL.md)。
 

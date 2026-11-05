@@ -5,6 +5,11 @@ run invokes doctor -> begin/reuse -> experience -> search/capture -> summary.
 conclude records the specialist's findings and their intended use and writes the conclusion page.
 check is read-only: it re-verifies the evidence files and the conclusion page.
 No project scaffolding is created by this helper.
+
+Where the record and the conclusion page go (--session):
+  a skill session   <session>/raw/00-crawl/<caller>[-stage].json (+ .html)
+  a Luz project     <state root>/<crawl.evidence_index of project.json>/...  (state root: see state_root)
+The crawled pages themselves always stay in the Crawl task (project.json crawl.task_root); a project keeps none of them.
 """
 from __future__ import annotations
 
@@ -25,6 +30,7 @@ ROOT = Path(__file__).resolve().parents[1]
 CLI = ROOT / "scripts" / "luz-crawl.mjs"
 CALLERS = ("luz-project", "luz-system", "luz-design", "luz-dev", "luz-ops", "luz-writing", "luz-crawl")
 DEFAULT_OUTPUT = os.environ.get("LUZ_CRAWL_OUTPUT") or r"D:\Codes\skill输出\Luz-Crawl"
+PROJECT_OUTPUT = os.environ.get("LUZ_PROJECT_OUTPUT") or r"D:\Codes\skill输出\Luz-Project"  # a project's state root is <PROJECT_OUTPUT>\<project directory name>\raw
 STYLE = ROOT / "lib" / "formal-report.css"  # the one stylesheet shared with lib/formal-html.mjs
 ICON = "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%228%22%20fill%3D%22%23E8F0EB%22%2F%3E%3Ccircle%20cx%3D%2214%22%20cy%3D%2214%22%20r%3D%227%22%20fill%3D%22none%22%20stroke%3D%22%231F5F46%22%20stroke-width%3D%222.6%22%2F%3E%3Cpath%20d%3D%22M19.5%2019.5%2025%2025%22%20stroke%3D%22%231F5F46%22%20stroke-width%3D%222.6%22%20stroke-linecap%3D%22round%22%2F%3E%3C%2Fsvg%3E"
 CSP = "default-src 'none'; img-src data:; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'"
@@ -54,10 +60,49 @@ def write(path, value):
     temp.replace(path)
 
 
+def state_root(path):
+    """The project state root that a path stands for, or None when the path is no project.
+
+    A path holding project.json is the state root (a project root from before the split works the same way); any other path is
+    taken as a project directory, whose state root is <PROJECT_OUTPUT>\\<directory name>\\raw. A path that is neither is a skill session."""
+    path = Path(path)
+    if (path / "project.json").is_file():
+        return path
+    candidate = Path(PROJECT_OUTPUT) / path.name / "raw"
+    return candidate if path.name and (candidate / "project.json").is_file() else None
+
+
+def evidence_dir(session):
+    """The folder that keeps the preflight records, logs and conclusion pages of a session.
+
+    A skill session: <session>/raw/00-crawl. A project: project.json's crawl.evidence_index, relative to the state root
+    ("00-crawl"; a project from before the split says "raw/00-crawl" and keeps writing there). Without a usable index
+    (missing, absolute, leaving the state root, or a placeholder file) the project's own layout decides."""
+    state = state_root(session)
+    if state is None:
+        return Path(session).resolve() / "raw" / "00-crawl"
+    state = state.resolve()
+    try:
+        crawl = read(state / "project.json").get("crawl")
+    except (OSError, ValueError, AttributeError):
+        crawl = None
+    index = crawl.get("evidence_index") if isinstance(crawl, dict) else None
+    if not _text(index) or index.lower().endswith(".json"):
+        return state / "raw" / "00-crawl" if (state / "raw").is_dir() else state / "00-crawl"
+    target = (state / index.strip()).resolve()
+    try:
+        target.relative_to(state)
+    except ValueError:
+        raise ValueError(f"project.json 的 crawl.evidence_index 必须是状态根内的相对路径: {index}") from None
+    if target == state:
+        raise ValueError("project.json 的 crawl.evidence_index 不能是状态根本身")
+    return target
+
+
 def record_path(session, caller, stage=None):
     if caller not in CALLERS or (stage and not re.fullmatch(r"[a-z][a-z0-9-]*", stage)):
         raise ValueError("无效 caller/stage")
-    return Path(session).resolve() / "raw" / "00-crawl" / f"{caller}{'-' + stage if stage else ''}.json"
+    return evidence_dir(session) / f"{caller}{'-' + stage if stage else ''}.json"
 
 
 _COMPAT = {}
@@ -113,6 +158,19 @@ def _inside(path, root):
     target = canon(path).resolve()
     target.relative_to(canon(root).resolve())
     return target
+
+
+def _log_inside(path, root):
+    """A record names its command logs by absolute path. When the evidence folder has moved (a project migrated to the state root), read the log from
+    the same place below the current ``00-crawl`` folder; its hash is still checked, so nothing is accepted that was not recorded."""
+    try:
+        return _inside(path, root)
+    except ValueError:
+        parts = Path(str(path)).parts
+        marks = [i for i, part in enumerate(parts) if part.lower() == "00-crawl"]
+        if not marks:
+            raise
+        return _inside(Path(root, *parts[marks[-1] + 1:]), root)
 
 
 def task_marker(task):
@@ -299,7 +357,7 @@ def validate_preflight(session, caller, stage=None, *, require_findings=True):
             errors.append("前置检索执行顺序错误")
         observed_archives = set()
         for step in steps:
-            log = _inside(step["file"], Path(session) / "raw" / "00-crawl")
+            log = _log_inside(step["file"], path.parent)
             if not log.is_file() or digest(log) != step.get("sha256"):
                 errors.append("命令日志哈希不符/丢失")
             elif step.get("command") == "doctor" and not doctor_ok(read(log)):
@@ -456,25 +514,41 @@ def run(session, caller, topic, task=None, queries=None, urls=None, stage=None, 
     logs = path.parent / "logs" / f"{path.stem}-{run_id}"
     logs.mkdir(parents=True)
 
-    def command(name, *args):
+    def command(name, *args, route=False):
+        """Run one Crawl command and log it. A ``route`` (one search or one capture) that fails keeps its log and its exit code and the run goes on:
+        another route may still bring the body (references/preflight.md 判定); every other command failing stops the run."""
         index = len(value["steps"])
         output = logs / f"{index:02d}-{name}.json"
         print(f"[preflight] {caller}: {name}", file=sys.stderr, flush=True)
-        result = subprocess.run(["node", str(CLI), name, *map(str, args)], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=300, shell=False)
-        output.write_text(result.stdout or "{}", encoding="utf-8")
-        (logs / f"{index:02d}-{name}.stderr.txt").write_text(result.stderr, encoding="utf-8")
-        value["steps"].append({"command": name, "args": [name, *map(str, args)], "exit_code": result.returncode, "file": str(output), "sha256": digest(output)})
+        try:
+            result = subprocess.run(["node", str(CLI), name, *map(str, args)], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=300, shell=False)
+            code, stdout, stderr = result.returncode, result.stdout, result.stderr
+        except subprocess.TimeoutExpired:
+            if not route:
+                raise
+            code, stdout, stderr = 124, "", "timeout after 300 s"
+        output.write_text(stdout or "{}", encoding="utf-8")
+        (logs / f"{index:02d}-{name}.stderr.txt").write_text(stderr, encoding="utf-8")
+        value["steps"].append({"command": name, "args": [name, *map(str, args)], "exit_code": code, "file": str(output), "sha256": digest(output)})
         write(path, value)
-        if result.returncode:
-            raise ValueError(f"{name} 失败；详情 {output}")
-        return json.loads(result.stdout)
+        if code:
+            if not route:
+                raise ValueError(f"{name} 失败；详情 {output}")
+            print(f"[preflight] {caller}: {name} 没有取得正文（退出码 {code}），保留日志，继续其他路线", file=sys.stderr, flush=True)
+            try:
+                parsed = json.loads(stdout)
+            except ValueError:
+                return {}
+            return parsed if isinstance(parsed, dict) else {}
+        return json.loads(stdout)
 
     try:
         if not doctor_ok(command("doctor")):
             raise ValueError("Crawl 未就绪：本机 Edge、桥接服务或扩展文件不可用，先按 references/install.md 处理")
-        project_file = Path(session) / "project.json"
-        if task is None and project_file.is_file():
-            task = read(project_file).get("crawl", {}).get("task_root")
+        state = state_root(session)
+        if task is None and state is not None:
+            crawl = read(state / "project.json").get("crawl")
+            task = crawl.get("task_root") if isinstance(crawl, dict) else None
         if task is None:
             task = command("begin", topic, "--out", DEFAULT_OUTPUT, "--new")["folder"]
         task = Path(task).resolve()
@@ -484,10 +558,10 @@ def run(session, caller, topic, task=None, queries=None, urls=None, stage=None, 
         command("experience", "--query", topic)
         archives = []
         for query in (queries or ([] if urls else [topic])):
-            result = command("search", platform, query, "--read", read_count, "--out", task)
+            result = command("search", platform, query, "--read", read_count, "--out", task, route=True)
             archives += _observed_sources(value["steps"][-1], result, task)
         for url in urls or []:
-            result = command("capture", url, "--out", task)
+            result = command("capture", url, "--out", task, route=True)
             archives += _observed_sources(value["steps"][-1], result, task)
         command("summary", task)
         seen_urls = set()
@@ -522,7 +596,7 @@ def main():
     sub = parser.add_subparsers(dest="command", required=True)
     for name in ("run", "conclude", "check"):
         p = sub.add_parser(name)
-        p.add_argument("--session", type=Path, required=True, help="本技能会话目录或项目根；记录写在其 raw/00-crawl/")
+        p.add_argument("--session", type=Path, required=True, help="本技能会话目录（记录写在其 raw/00-crawl/），或项目目录/状态根（写在状态根下 project.json 的 crawl.evidence_index）")
         p.add_argument("--caller", choices=CALLERS, required=True, help="实际执行检索的技能")
         p.add_argument("--stage", help="项目阶段，如 research、design；三条命令必须一致")
         if name == "run":

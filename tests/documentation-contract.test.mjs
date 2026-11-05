@@ -88,14 +88,33 @@ test('user-facing docs stay focused on function, purpose and operation', async (
   }
 });
 
-test('the docs describe one output layout: 序号_主题 task folders holding raw/ and the summary html', async () => {
+test('the docs describe one output layout: 序号-主题 task folders holding raw/ and the summary html', async () => {
   for (const name of ['SKILL.md', 'README.md', path.join('references', 'evidence.md'), path.join('references', 'workflows.md')]) {
     const text = await fs.readFile(path.join(root, name), 'utf8');
-    assert.match(text, /序号_主题|NNN_主题/, name);
+    assert.match(text, /序号-主题|NNN-主题/, name);
     assert.match(text, /raw/, name);
     assert.doesNotMatch(text, /三层|sibling_raw|raw[\/]NNN|raw[\/]爬取总结|散落文件归档/, name);
   }
+  // The underscore form is only ever named as the older one that stays readable; it is never the current format.
+  for (const name of ['SKILL.md', 'README.md', 'CONTRIBUTING.md', 'CHANGELOG.md', path.join('references', 'evidence.md'), path.join('references', 'workflows.md'), path.join('references', 'preflight.md'), path.join('references', 'install.md'), path.join('agents', 'openai.yaml')]) {
+    const text = await fs.readFile(path.join(root, name), 'utf8');
+    assert.doesNotMatch(text, /序号_主题/, name);
+    for (const line of text.split('\n').filter((line) => /NNN_主题|\d{3}_主题/.test(line))) assert.match(line, /旧|下划线|older|不改名/, `${name}: ${line.slice(0, 80)}`);
+  }
   const skill = await fs.readFile(path.join(root, 'SKILL.md'), 'utf8');
   assert.match(skill, /migrate_layout\.py/);
-  assert.match(skill, /085_主题\.html/);
+  assert.match(skill, /085-主题\.html/);
+  assert.match(skill, /D:\\Codes\\skill输出\\Luz-Crawl/);
+});
+
+test('the docs say a project keeps no crawled content: its records go to the state root, its crawl task stays in the Crawl output root', async () => {
+  const skill = await fs.readFile(path.join(root, 'SKILL.md'), 'utf8');
+  const preflight = await fs.readFile(path.join(root, 'references', 'preflight.md'), 'utf8');
+  for (const text of [skill, preflight]) {
+    assert.match(text, /状态根/);
+    assert.match(text, /00-crawl/);
+    assert.match(text, /crawl\.task_root/);
+    assert.doesNotMatch(text, /保存在项目的 `?raw/);
+  }
+  assert.match(skill, /项目不保存爬取的原始内容/);
 });

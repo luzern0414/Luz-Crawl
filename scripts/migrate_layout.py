@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """Move a Luz-Crawl output root to the task_folder_v2 layout (Python standard library only).
 
-    <root>\\NNN_主题\\raw\\...            everything crawled and every machine record
-    <root>\\NNN_主题\\NNN_主题.html       the summary page, beside raw\\
+    <root>\\NNN-主题\\raw\\...            everything crawled and every machine record
+    <root>\\NNN-主题\\NNN-主题.html       the summary page, beside raw\\
 
-Three older shapes are folded in:
+A task keeps the name it has (an older NNN_主题 stays NNN_主题: nothing is renamed that a record may point at); only a folder
+that has to be renumbered gets the current NNN-主题 form. Three older shapes are folded in:
   1. <root>\\raw\\NNN_主题\\ (marker beside raw\\, page archives with an inner raw\\)  -> <root>\\NNN_主题\\raw\\, pages flattened,
-     each page's HTML moved from <root> into its page folder (task numbers stay as they are);
-  2. <root>\\NNN-主题\\ (HTML + raw\\) from the first collections                   -> renumbered after the highest task number;
+     each page's HTML moved from <root> into its page folder (task numbers and names stay as they are);
+  2. <root>\\NNN-主题\\ (HTML + raw\\) from the first collections                   -> renumbered after the highest task number (as NNN-主题);
   3. loose pages and folders in <root>                                              -> 000_旧版散落网页存档\\raw\\.
 raw\\tasks\\ goes to 000_目录整理记录\\raw\\旧版任务状态, together with 移动记录.json and a one-page report.
 
@@ -241,7 +242,7 @@ def scan(root: Path, workers: int = 16, progress=None) -> Plan:
     used = {n for n in plan.tasks}
     for index, old in enumerate(ordered):
         rest = re.sub(r"^\d+[-_]", "", old)
-        new = f"{first + index:03d}_{rest}"
+        new = f"{first + index:03d}-{rest}"
         if new in used or (root / new).exists():
             plan.blockers.append(f"改号后的名字已存在：{new}")
         used.add(new)
@@ -1012,8 +1013,8 @@ def render_report(root: Path, plan: Plan, journal: Journal, verify: dict, sample
     rows_refs = [[k, str(v["files"]), str(v["references"])] for k, v in (stats.get("reference_files") or {}).items()] or [["（没有需要改写的引用）", "0", "0"]]
     rows_gen2 = [[old, new] for old, new in plan.gen2] or [["（无）", ""]]
     rows_verify = [[k, str(v)] for k, v in verify.items()]
-    before = "<pre>" + esc("<输出根>\\\n  raw\\NNN_主题\\{luz-task.json, preflight.json, search-*.json, raw\\{NNNN_标题\\raw\\*, 爬取总结.html}}\n  NNN-主题\\{NNN_主题.html, raw\\}\n  NNNN_标题.html × 数千 + 分类文件夹\\\n  raw\\tasks\\") + "</pre>"
-    after = "<pre>" + esc("<输出根>\\\n  NNN_主题\\raw\\{luz-task.json, preflight.json, search-*.json, NNNN_标题\\{content.json, manifest.json, …, NNNN_标题.html}}\n  NNN_主题\\NNN_主题.html\n  000_旧版散落网页存档\\raw\\{无存档的旧网页, 分类文件夹\\}\n  000_目录整理记录\\{raw\\{移动记录.json, 旧版任务状态\\}, 000_目录整理记录.html}") + "</pre>"
+    before = "<pre>" + esc("<输出根>\\\n  raw\\NNN_主题\\{luz-task.json, preflight.json, search-*.json, raw\\{NNNN_标题\\raw\\*, 爬取总结.html}}\n  NNN-主题\\{NNN-主题.html, raw\\}\n  NNNN_标题.html × 数千 + 分类文件夹\\\n  raw\\tasks\\") + "</pre>"
+    after = "<pre>" + esc("<输出根>\\\n  NNN_主题\\raw\\{luz-task.json, preflight.json, search-*.json, NNNN_标题\\{content.json, manifest.json, …, NNNN_标题.html}}（已有任务保留原名）\n  NNN_主题\\NNN_主题.html\n  NNN-主题\\{raw\\, NNN-主题.html}（改号的任务）\n  000_旧版散落网页存档\\raw\\{无存档的旧网页, 分类文件夹\\}\n  000_目录整理记录\\{raw\\{移动记录.json, 旧版任务状态\\}, 000_目录整理记录.html}") + "</pre>"
     if table is None:
         body = "<p>未找到 crawl_preflight.py，报告只含文字。</p>"
     else:
@@ -1616,8 +1617,8 @@ def main(argv=None):
             verify["迁移后新出现的检查失败（应为 0）"] = len(broken)
             verify["sources[].archive 存在（迁移前 → 迁移后）"] = f"{sum(1 for _, _, ok in before_archives if ok)} → {sum(1 for _, _, ok in after_archives if ok)}（共 {len(after_archives)} 个）"
             applier.journal.data["check_broken"] = broken
-        leftovers = sorted(p.name for p in root.iterdir() if not (p.is_dir() and re.match(r"^\d{3}_", p.name)))
-        verify["输出根下不是“序号_主题”文件夹的条目（应为空）"] = "、".join(leftovers) or "无"
+        leftovers = sorted(p.name for p in root.iterdir() if not (p.is_dir() and re.match(r"^\d{3}[-_]", p.name)))
+        verify["输出根下不是“序号-主题”（或旧写法“序号_主题”）文件夹的条目（应为空）"] = "、".join(leftovers) or "无"
         applier.journal.data["verify"] = {k: str(v) for k, v in verify.items()}
         applier.journal.data["status"] = "done"
         applier.journal.data["finished_at"] = now()

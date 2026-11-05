@@ -39,9 +39,9 @@ test('one task keeps its pages in task/raw/NNNN_标题 and its summary beside ra
   assert.equal(resumed.folder, again.folder);
   assert.equal(resumed.recaptureOf, null);
   await resumed.release();
-  // Nothing but the task folder in the output root; nothing but raw/ in the task before the summary is written.
+  // Nothing but the task folder in the output root; nothing but raw/ and the summary page (written when the task began) in the task.
   assert.deepEqual(await fs.readdir(output), [path.basename(task)]);
-  assert.deepEqual(await fs.readdir(task), ['raw']);
+  assert.deepEqual((await fs.readdir(task)).sort(), [`${path.basename(task)}.html`, 'raw']);
 });
 
 test('page serials keep counting up across the tasks of one output root', async () => {

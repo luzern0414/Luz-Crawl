@@ -3,14 +3,14 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { ARCHIVE_LAYOUT, archiveFile, createTaskArchive, findTaskArchive, hash, outputRootOf, verifyArchive } from '../lib/archive.mjs';
+import { ARCHIVE_LAYOUT, allocateRun, archiveFile, createTaskArchive, findTaskArchive, hash, outputRootOf, verifyArchive } from '../lib/archive.mjs';
 
 const temp = await fs.mkdtemp(path.join(os.tmpdir(), 'luz-crawl-archive-'));
 process.env.LUZ_CRAWL_STATE = path.join(temp, 'state');
 test.after(() => fs.rm(temp, { recursive: true, force: true }));
 const exists = (file) => fs.access(file).then(() => true, () => false);
 
-test('a task is a numbered NNN_主题 folder directly under the output root, with raw/ and its marker inside', async () => {
+test('a task is a numbered NNN-主题 folder directly under the output root, with raw/, its marker and its summary page', async () => {
   const out = path.join(temp, 'output');
   await fs.mkdir(path.join(out, '003_历史任务'), { recursive: true });
   await fs.mkdir(path.join(out, '004-旧写法'), { recursive: true });
@@ -18,17 +18,57 @@ test('a task is a numbered NNN_主题 folder directly under the output root, wit
   const first = await createTaskArchive(out, 'xhs_新查询/人工智能', { newTask: true, threadId: null });
   const second = await createTaskArchive(out, 'xhs_新查询/人工智能', { newTask: true, threadId: null });
   assert.equal(path.dirname(first), out);
-  assert.equal(path.basename(first), '005_xhs_新查询 人工智能');
-  assert.equal(path.basename(second), '006_xhs_新查询 人工智能');
+  assert.equal(path.basename(first), '005-xhs_新查询 人工智能');
+  assert.equal(path.basename(second), '006-xhs_新查询 人工智能');
 
   const marker = JSON.parse(await fs.readFile(path.join(first, 'raw', 'luz-task.json'), 'utf8'));
   assert.equal(marker.schema_version, 1);
   assert.equal(marker.kind, 'task_archive');
   assert.equal(marker.delivery_layout, 'task_folder_v2');
   assert.equal(marker.title, 'xhs_新查询 人工智能');
-  assert.deepEqual(await fs.readdir(first), ['raw']);
+  // The task root holds raw/ and the same-named summary page, nothing else.
+  assert.deepEqual((await fs.readdir(first)).sort(), ['005-xhs_新查询 人工智能.html', 'raw']);
   // The output root holds task folders only: no raw/ of its own, no scattered files, no lock left behind.
-  assert.deepEqual((await fs.readdir(out)).sort(), ['003_历史任务', '004-旧写法', '005_xhs_新查询 人工智能', '006_xhs_新查询 人工智能']);
+  assert.deepEqual((await fs.readdir(out)).sort(), ['003_历史任务', '004-旧写法', '005-xhs_新查询 人工智能', '006-xhs_新查询 人工智能']);
+});
+
+test('a new task is numbered after every existing folder, older NNN_主题 ones included, and the older tasks stay usable', async () => {
+  const out = path.join(temp, 'mixed-output');
+  // An older task written by the previous release: underscore name, marker inside raw/, summary beside raw/.
+  const underscored = path.join(out, '076_差旅费报销单据');
+  await fs.mkdir(path.join(underscored, 'raw'), { recursive: true });
+  await fs.writeFile(path.join(underscored, 'raw', 'luz-task.json'), JSON.stringify({ schema_version: 1, kind: 'task_archive', delivery_layout: 'task_folder_v2', title: '差旅费报销单据' }));
+  // An older task of the oldest shape: marker beside raw/.
+  const beside = path.join(out, '110_最早的写法');
+  await fs.mkdir(path.join(beside, 'raw'), { recursive: true });
+  await fs.writeFile(path.join(beside, 'luz-task.json'), JSON.stringify({ schema_version: 1, kind: 'task_archive', delivery_layout: 'sibling_raw_v1', title: '最早的写法' }));
+  await fs.mkdir(path.join(out, '000_目录整理记录'), { recursive: true });
+
+  const created = await createTaskArchive(out, '新需求', { newTask: true, threadId: null });
+  assert.equal(path.basename(created), '111-新需求');
+  assert.equal(path.basename(await createTaskArchive(out, '又一项', { newTask: true, threadId: null })), '112-又一项');
+
+  // The older tasks are found by their marker and take new pages in the current shape; their names are untouched.
+  assert.equal((await findTaskArchive(underscored)).folder, underscored);
+  assert.equal((await findTaskArchive(path.join(underscored, 'raw'))).folder, underscored);
+  assert.equal((await findTaskArchive(beside)).layout, 'sibling_raw_v1');
+  const run = await allocateRun(underscored, 'https://example.com/old-task-page');
+  try { assert.equal(path.dirname(run.folder), path.join(underscored, 'raw')); } finally { await run.release(); }
+  assert.deepEqual((await fs.readdir(out)).sort(), ['000_目录整理记录', '076_差旅费报销单据', '110_最早的写法', '111-新需求', '112-又一项']);
+});
+
+test('numbering takes the highest number plus one and never fills a gap', async () => {
+  const out = path.join(temp, 'gap-output');
+  await fs.mkdir(path.join(out, '001_甲'), { recursive: true });
+  await fs.mkdir(path.join(out, '009-乙'), { recursive: true });
+  assert.equal(path.basename(await createTaskArchive(out, '丙', { newTask: true, threadId: null })), '010-丙');
+});
+
+test('tasks an unmigrated output root still keeps under raw/ count for the next number', async () => {
+  const out = path.join(temp, 'unmigrated-output');
+  await fs.mkdir(path.join(out, 'raw', '026_旧任务'), { recursive: true });
+  await fs.mkdir(path.join(out, 'raw', '0007_页面存档'), { recursive: true });
+  assert.equal(path.basename(await createTaskArchive(out, '主题', { newTask: true, threadId: null })), '027-主题');
 });
 
 test('concurrent task creation never hands out the same number', async () => {
@@ -48,7 +88,7 @@ test('scattered files in the output root stop task creation and point to the mig
   assert.deepEqual((await fs.readdir(out)).sort(), ['.hidden', '0001_散落网页.html', 'desktop.ini']);
   await fs.rm(path.join(out, '0001_散落网页.html'));
   const folder = await createTaskArchive(out, '主题', { newTask: true, threadId: null });
-  assert.equal(path.basename(folder), '001_主题');
+  assert.equal(path.basename(folder), '001-主题');
 });
 
 test('one Codex thread reuses its task archive across repeated and concurrent begin calls', async () => {

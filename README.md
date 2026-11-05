@@ -31,7 +31,7 @@ GitHub 结果不足时补用 Bing `site:`、GitCN、HelloGitHub、Codeberg、Git
 3. `doctor` 返回 `ready: true`（已连接可见 Edge）或 `silent_ready: true`（可启动静默 Edge）后，为每项需求建立一个外部任务目录：
 
    ```powershell
-   $task = (node scripts/luz-crawl.mjs begin "主题" --out "D:\输出" --new | ConvertFrom-Json).folder
+   $task = (node scripts/luz-crawl.mjs begin "主题" --out "D:\Codes\skill输出\Luz-Crawl" --new | ConvertFrom-Json).folder
    node scripts/luz-crawl.mjs experience --query "关键词"
    node scripts/luz-crawl.mjs search github "browser automation" --read 0 --out $task
    node scripts/luz-crawl.mjs search xhs "家居收纳" --read 5 --comments --out $task
@@ -40,7 +40,7 @@ GitHub 结果不足时补用 Bing `site:`、GitCN、HelloGitHub、Codeberg、Git
    node scripts/luz-crawl.mjs summary $task
    ```
 
-目录只有一种形状：输出根下是“序号_主题”任务文件夹，`raw\` 存放爬取的全部内容和机器记录（每个页面一个“序号_标题”子文件夹），总结 html（`序号_主题.html`）与 `raw\` 同级。旧目录用 `scripts/migrate_layout.py` 整理。
+目录只有一种形状：输出根（默认 `D:\Codes\skill输出\Luz-Crawl`）下是“序号-主题”任务文件夹（如 `117-主题`），`raw\` 存放爬取的全部内容和机器记录（每个页面一个“四位序号_标题”子文件夹），总结页（`117-主题.html`）与 `raw\` 同级。旧的 `NNN_主题` 任务不改名，照常读取和续接，新任务的序号排在它们之后；旧版散落文件用 `scripts/migrate_layout.py` 整理。
 
 常用命令：`search` 搜索，`capture` 读取详情，`collect` 汇总主题，`batch` 批量读取，`download` 下载已观察媒体，`robots URL` 查看站点爬虫规则，`pending` 查看等待任务，`continue TASK_ID` 接续登录或验证。
 

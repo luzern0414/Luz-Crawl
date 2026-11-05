@@ -2,11 +2,11 @@
 
 ## 输出
 
-输出根下只放“序号_主题”文件夹，每个文件夹是一个任务：`raw/` 存放爬取的全部内容和机器记录，总结 html 与 `raw/` 同级；目录全貌见 [SKILL.md](../SKILL.md)。
+输出根下只放“序号-主题”文件夹，每个文件夹是一个任务：`raw/` 存放爬取的全部内容和机器记录，总结页与 `raw/` 同级；目录全貌见 [SKILL.md](../SKILL.md)。
 
-每次任务自动生成总结 html（`序号_主题.html`：标题、带表题的采集结果表，版式与前置检索结论页相同），`summary` 可随时重建。search、capture、batch、browser 的结果分别保存 JSON，放在任务的 `raw/` 里。
+每个任务自动生成总结页（`序号-主题.html`：标题加带表题的采集结果表，没有内容的节不写，版式与前置检索结论页相同），`begin` 建任务时写出，每次采集重写，`summary` 可随时重建。search、capture、batch、browser 的结果分别保存 JSON，放在任务的 `raw/` 里。
 
-每个页面存档的文件直接放在“序号_标题”文件夹：content.json（正文与字段）、manifest.json、identity.json、snapshots/（每轮滚动的 JSON 与 HTML）、page.png（截图）、media/（已下载媒体）和页面 html。manifest.json 的文件路径相对该文件夹；记录规范 URL、实际 URL、请求 URL、平台、路线、状态、停止原因、正文范围、媒体统计、`captured_at`、`extractor_version` 和每个文件的 SHA-256。verify 只检查本地文件与记录一致，不证明网页真实性或内容完整。引用字段与来源评估见 [research-method.md](research-method.md)。
+每个页面存档的文件直接放在“四位序号_标题”文件夹（如 `0001_页面标题`）：content.json（正文与字段）、manifest.json、identity.json、snapshots/（每轮滚动的 JSON 与 HTML）、page.png（截图）、media/（已下载媒体）和页面 html。manifest.json 的文件路径相对该文件夹；记录规范 URL、实际 URL、请求 URL、平台、路线、状态、停止原因、正文范围、媒体统计、`captured_at`、`extractor_version` 和每个文件的 SHA-256。verify 只检查本地文件与记录一致，不证明网页真实性或内容完整。引用字段与来源评估见 [research-method.md](research-method.md)。
 
 ## 与 WARC 的关系
 
@@ -40,7 +40,7 @@
 
 ## 旧版目录
 
-旧版把任务文件夹放在 `<输出根>/raw/` 下、页面存档里再套一层 `raw/`、网页 html 散落在输出根。这些目录仍可读取和续接；`scripts/migrate_layout.py` 把它们整理成上面的形状（默认只预览，`--apply` 才执行，`--revert 移动记录.json` 撤回）。迁移后，仍写着旧绝对路径又不能改写的记录（被审批冻结的前置检索记录）由 `crawl_preflight.py` 读取时按 `000_目录整理记录/raw/旧路径映射.json` 解析到新位置；映射里没有的旧路径照常报错，记录本身不变。输出根之外的项目目录用 `--rewrite-with 移动记录.json --extra-root 目录` 改写，审批绑定的文件不动。
+下划线写法的任务文件夹（`NNN_主题`）保持原名，仍可读取、续接和生成总结，也计入新任务的序号。更早的版本把任务文件夹放在 `<输出根>/raw/` 下、页面存档里再套一层 `raw/`、网页 html 散落在输出根，这些目录同样可读取和续接；`scripts/migrate_layout.py` 把它们整理成上面的形状（任务沿用原名，只有改号的文件夹用新写法；默认只预览，`--apply` 才执行，`--revert 移动记录.json` 撤回）。迁移后，仍写着旧绝对路径又不能改写的记录（被审批冻结的前置检索记录）由 `crawl_preflight.py` 读取时按 `000_目录整理记录/raw/旧路径映射.json` 解析到新位置；映射里没有的旧路径照常报错，记录本身不变。输出根之外的项目目录用 `--rewrite-with 移动记录.json --extra-root 目录` 改写，审批绑定的文件不动。
 
 ## 经验
 
