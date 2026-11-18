@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { gunzipSync } from 'node:zlib';
 import { canonicalURL, platformOf, searchURL, validateURL, extractURLs, CATALOG } from '../lib/platforms.mjs';
 import { capture } from '../lib/capture.mjs';
 import { createTaskArchive, verifyArchive, hash, mergeItems, recordExperience, findExperience, matchesQuery, safeTitle } from '../lib/archive.mjs';
@@ -50,6 +51,23 @@ function page(snapshots) {
   } };
 }
 const opts = (out, more = {}) => ({ url: 'https://x.com/a/status/123', out: path.join(tmp, out), executionPolicy: testPolicy(tmp), delay: 0, scrolls: 5, screenshot: false, ...more });
+
+test('large DOM snapshots round-trip losslessly and remain verifiable on resume', async () => {
+  const body = 'Sample browser snapshot text. '.repeat(45000);
+  const observed = snapshot({ text: body, html: '<article>' + body + '</article>' });
+  const options = opts('large-snapshots', { scrolls: 0 });
+  const first = await capture(page([observed]), options);
+  const saved = JSON.parse(await fs.readFile(path.join(first.folder, 'content.json'), 'utf8'));
+  const stored = saved.snapshots[0].path;
+  assert.match(stored, /\.json\.gz$/);
+  assert.equal(JSON.parse(gunzipSync(await fs.readFile(path.join(first.folder, stored)))).text, body);
+  assert.equal(gunzipSync(await fs.readFile(path.join(first.folder, stored.replace('.json.gz', '.html.gz')))).toString(), observed.html);
+  assert.ok((await fs.stat(path.join(first.folder, stored))).size < Buffer.byteLength(body));
+  await assert.rejects(fs.access(path.join(first.folder, stored.replace('.gz', ''))), { code: 'ENOENT' });
+  const resumed = await capture(page([snapshot()]), { ...options, resume: true });
+  assert.equal(resumed.folder, first.folder);
+  assert.ok((await verifyArchive(resumed.folder)).ok);
+});
 
 test('repository form searches verify the landed query before claiming submission took effect', async () => {
   for (const success of [false, true]) {
@@ -195,7 +213,7 @@ test('virtualized tweets survive scrolls; longer expansion wins', async () => {
   const first = snapshot();
   const browser = page([first, first, snapshot({ items: [second] })]);
   const result = await capture(browser, opts('virtual'));
-  assert.equal(result.status, 'captured');
+  assert.equal(result.status, 'captured', result.error || result.limitations?.join(', '));
   assert.equal(result.completeness.items, 2);
   assert.equal(browser.opened.length, 1);
   assert.equal((await verifyArchive(result.folder)).ok, true);

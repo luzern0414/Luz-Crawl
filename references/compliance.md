@@ -36,7 +36,7 @@
 
 ## 浏览器与会话
 
-- 静默 Edge 的 `data/memory/browser-profile-edge*` 保存登录状态，等同 Playwright 文档所说的认证状态文件：可能含能冒充账号的 Cookie 和请求头，不进仓库、不外发（[Playwright 认证](https://playwright.dev/docs/auth)）。
+- 静默 Edge 的 `_browser-profile\edge*`（输出根下，默认 `E:\Skill输出\Luz-Crawl\_browser-profile\`）保存登录状态，等同 Playwright 文档所说的认证状态文件：可能含能冒充账号的 Cookie 和请求头，不进仓库、不外发（[Playwright 认证](https://playwright.dev/docs/auth)）。
 - 本技能不做代理轮换和会话池：[Crawlee](https://crawlee.dev/docs/guides/session-management) 的会话池用于轮换代理 IP 与 Cookie 以避免被封，这与“限流即停止、不规避”的规则相反，不采用。
 - 浏览器自动化信号：`lib/bridge/stealth.mjs` 能隐藏 `navigator.webdriver` 等标志。这会让网站无法识别自动化访问，与上面“不规避”的原则有张力，也让抖音协议第 5.1 条这类限制更难被站点执行。因此默认不注入，浏览器的自动化标志保持可见；只有用户明确授权的一次运行才设置环境变量 `LUZ_STEALTH=1` 打开。
 

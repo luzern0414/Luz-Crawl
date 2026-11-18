@@ -1,16 +1,16 @@
 {
   "name": "luz-crawl",
-  "version": "3.3.0",
+  "version": "3.6.0",
   "private": true,
   "type": "module",
-  "description": "Real-browser search, capture, media download and HTML evidence archives.",
+  "description": "Diligent web research, persistent browser interaction and evidence archives.",
   "license": "PolyForm-Noncommercial-1.0.0",
   "engines": {
     "node": ">=24.5.0"
   },
   "scripts": {
     "test": "node --test \"tests/*.test.mjs\"",
-    "test:preflight": "python -X utf8 -m unittest discover -s scripts -p \"test_*.py\"",
+    "test:preflight": "python -X utf8 -m pytest -q scripts -p no:cacheprovider",
     "test:all": "npm test && npm run test:preflight"
   }
 }

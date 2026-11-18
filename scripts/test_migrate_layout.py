@@ -1,4 +1,4 @@
-"""migrate_layout.py on a small tree that mixes all three older shapes (never touches the real output root)."""
+"""OFFLINE migration fixtures for the three older layouts; never live research or user approval."""
 import hashlib
 import json
 import os
@@ -46,8 +46,9 @@ def make_archive(task, name, url, with_html_in_root=None, downloads=False):
     raw = task / "raw" / name / "raw"
     (raw / "snapshots").mkdir(parents=True)
     stamp = crawl_preflight.now()
-    snapshot = write(raw / "snapshots" / "0000.json", '{"text":"Actual browser body"}')
-    content = write(raw / "content.json", json.dumps({"status": "captured", "captured_at": stamp, "resolved_url": url, "text": "Actual document body", "url_check": {"valid_content": True, "requested": url}, "completeness": {"scope": "rendered_body_and_loaded_items"}}))
+    body = f"OFFLINE migration fixture document body: {name}"
+    snapshot = write(raw / "snapshots" / "0000.json", json.dumps({"text": body}))
+    content = write(raw / "content.json", json.dumps({"fixture": "OFFLINE", "status": "captured", "captured_at": stamp, "resolved_url": url, "text": body, "url_check": {"valid_content": True, "requested": url}, "completeness": {"scope": "rendered_body_and_loaded_items"}}))
     write(raw / "identity.json", json.dumps({"canonical_url": url, "serial": int(name[:4])}))
     html = f"{name}.html"
     manifest = {"schema_version": 2, "output_layout": "html_and_raw_v1", "status": "captured", "canonical_url": url, "primary_file": html,
@@ -65,34 +66,51 @@ def make_archive(task, name, url, with_html_in_root=None, downloads=False):
 
 
 def make_preflight(session, caller, stage, archive_a, task, started):
-    """A finished Crawl preflight (record, conclusion page, logs) in session\\raw\\00-crawl that vouches for archive A."""
+    """Complete OFFLINE evidence, retaining archive A as SRC-001 for migration/hash-chain assertions."""
+    from test_evidence_policy import payload_for
+
     record_dir = session / "raw" / "00-crawl"
     logs = record_dir / "logs" / f"{caller}-{stage}-1"
-    manifest = archive_a / "raw" / "manifest.json"
     source_url = "https://example.org/doc-a"
-    stamp = json.loads((archive_a / "raw" / "content.json").read_text(encoding="utf-8"))["captured_at"]
     steps = []
-    for name, result in [("doctor", {"ready": True}), ("experience", {}), ("capture", {"folder": str(archive_a), "status": "captured", "resolved_url": source_url, "url_check": {"requested": source_url, "valid_content": True}, "run": f"{caller}-{stage}"}), ("summary", {})]:
+    for name, result in [("doctor", {"ready": True, "fixture": "OFFLINE"}), ("experience", {})]:
         log = write(logs / f"{name}.json", json.dumps(result))
-        args = [name, source_url, "--out", str(task)] if name == "capture" else [name]
-        steps.append({"command": name, "args": args, "exit_code": 0, "file": str(log), "sha256": digest(log)})
-    record = {"schema_version": 1, "caller": caller, "stage": stage, "topic": "夹具", "started_at": started, "finished_at": crawl_preflight.now(), "task_root": str(task), "status": "captured", "steps": steps,
-              "sources": [{"id": "SRC-001", "archive": str(archive_a), "manifest_sha256": digest(manifest), "url": source_url, "captured_at": stamp}], "findings": [], "gaps": []}
+        steps.append({"command": name, "args": [name], "exit_code": 0, "file": str(log), "sha256": digest(log)})
+    for number in range(5):
+        query = f"OFFLINE migration evidence question {number}"
+        log = write(logs / f"search-{number}.json", json.dumps({"fixture": "OFFLINE", "status": "captured", "platform": "bing", "query": query, "sources": []}))
+        steps.append({"command": "search", "args": ["search", "bing", query, "--out", str(task)], "exit_code": 0, "file": str(log), "sha256": digest(log)})
+    sources = []
+    for number in range(1, 11):
+        url = source_url if number == 1 else f"https://publisher{number % 3}.example/offline-migration-{number}"
+        archive = archive_a if number == 1 else task / "raw" / f"{1400 + number}_OFFLINE-迁移证据-{number}"
+        if not archive.is_dir():
+            make_archive(task, archive.name, url)
+        evidence = archive / "raw"
+        stamp = json.loads((evidence / "content.json").read_text(encoding="utf-8"))["captured_at"]
+        label = "capture" if number == 1 else f"capture-{number:03d}"
+        log = write(logs / f"{label}.json", json.dumps({"fixture": "OFFLINE", "folder": str(archive), "status": "captured", "resolved_url": url, "url_check": {"requested": url, "valid_content": True}, "run": f"{caller}-{stage}"}))
+        steps.append({"command": "capture", "args": ["capture", url, "--out", str(task)], "exit_code": 0, "file": str(log), "sha256": digest(log)})
+        sources.append({"id": f"SRC-{number:03d}", "archive": str(archive), "manifest_sha256": digest(evidence / "manifest.json"), "url": url, "captured_at": stamp})
+    log = write(logs / "summary.json", json.dumps({"fixture": "OFFLINE"}))
+    steps.append({"command": "summary", "args": ["summary"], "exit_code": 0, "file": str(log), "sha256": digest(log)})
+    record = {"schema_version": 2, "caller": caller, "stage": stage, "topic": "OFFLINE 迁移夹具", "started_at": started, "finished_at": crawl_preflight.now(), "task_root": str(task), "status": "captured", "steps": steps,
+              "sources": sources, "findings": [], "gaps": []}
     write(record_dir / f"{caller}-{stage}.json", json.dumps(record))
-    crawl_preflight.conclude(session, caller, {"findings": [{"source_id": "SRC-001", "summary": "夹具里的结论", "applies_to": "迁移测试", "adopted": True}], "gaps": []}, stage)
+    crawl_preflight.conclude(session, caller, payload_for(record, {"findings": [{"source_id": "SRC-001", "summary": "OFFLINE 夹具里的结论", "applies_to": "迁移测试", "adopted": True}], "gaps": []}), stage)
 
 
 PROJECT_PY = Path(crawl_preflight.__file__).resolve().parents[2] / "Luz-Project" / "scripts" / "project.py"
 
 
 def make_project(base, task, archive_a, started):
-    """A Luz project outside the output root: research approved (its evidence frozen by hash), design still open."""
-    made = subprocess.run([sys.executable, "-X", "utf8", str(PROJECT_PY), "init", "演示项目", "--output-root", str(base / "projects")], capture_output=True, text=True, encoding="utf-8")
-    # This fixture is a project of the old shape (project.json and raw/ in the project root). A Luz-Project whose init follows the
-    # newer output standard (project directory NNN-项目名, state elsewhere) no longer makes one; then there is nothing to rewrite.
-    if made.returncode != 0 or not (base / "projects").is_dir() or not any((p / "project.json").is_file() for p in (base / "projects").iterdir()):
-        raise unittest.SkipTest("Luz-Project 的 init 不再生成旧布局项目：" + ((made.stderr or made.stdout).strip().splitlines() or ["无输出"])[0])
-    project = next((base / "projects").iterdir())
+    """OFFLINE legacy project: synthetic research approval freezes evidence; design stays open."""
+    # Use the maintained legacy fixture rather than asking today's init to create a retired layout.
+    made = subprocess.run([sys.executable, "-X", "utf8", "-c", "import sys; from legacy_fixture import legacy_project; print(legacy_project('OFFLINE-迁移项目', sys.argv[1]))", str(base / "projects")],
+                          cwd=str(PROJECT_PY.parent), capture_output=True, text=True, encoding="utf-8")
+    if made.returncode != 0:
+        raise AssertionError("OFFLINE legacy project fixture failed: " + (made.stderr or made.stdout))
+    project = Path(made.stdout.strip())
     manifest = json.loads((project / "project.json").read_text(encoding="utf-8"))
     stages = {s["id"]: s for s in manifest["stages"]}
     research_owner, design_owner = stages["research"]["owner"], stages["design"]["owner"]
@@ -204,7 +222,7 @@ class MigrateTests(unittest.TestCase):
         self.assertEqual(snapshot_tree(self.base), before)
         plan = migrate_layout.scan(self.root)
         self.assertEqual(plan.counts["旧版任务文件夹"], 3)
-        self.assertEqual(plan.counts["页面存档"], 3)
+        self.assertEqual(plan.counts["页面存档"], 12)   # three migration examples plus nine distinct OFFLINE policy bodies
         self.assertEqual(plan.counts["合集存档"], 1)
         self.assertEqual(plan.counts["根目录网页 html"], 4)
         self.assertEqual(plan.counts["其中归入所属页面存档"], 3)
@@ -367,8 +385,9 @@ class MigrateTests(unittest.TestCase):
         self.assertEqual(json.loads(mirrors[0].decode("utf-8"))["crawl"]["task_root"], str(self.root / TASK))
         run = json.loads(journal.read_text(encoding="utf-8"))["extra_runs"][0]
         self.assertEqual(run["root"], str(project))
-        # only frozen files that still name old paths are listed (of the frozen logs just the capture log does)
-        self.assertEqual(sorted(Path(item["file"]).name for item in run["protected_with_old_paths"]), sorted([f"{research_owner}-research.json", "02-调研结论.html", "capture.json"]))
+        # Only frozen files that still name old paths are listed: the record, review and all ten capture logs.
+        capture_names = ["capture.json", *(f"capture-{number:03d}.json" for number in range(2, 11))]
+        self.assertEqual(sorted(Path(item["file"]).name for item in run["protected_with_old_paths"]), sorted([f"{research_owner}-research.json", "02-调研结论.html", *capture_names]))
         self.assertEqual(sorted(str(Path(item["file"]).parent.name) for item in run["protected_with_old_paths"] if item["file"].endswith("capture.json")), [f"{research_owner}-research-1"])
         self.assertEqual(json.loads((project / "raw" / "00-crawl" / "logs" / f"{design_owner}-design-1" / "capture.json").read_text(encoding="utf-8"))["folder"], str(page))
         self.assertEqual(run["verify"]["项目自带检查新增问题"], {})

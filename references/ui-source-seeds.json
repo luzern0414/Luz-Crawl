@@ -1,0 +1,1209 @@
+{
+  "schema": 1,
+  "purpose": "仅是可检索来源入口，不能算已抓取、已读正文、已取得源码或已通过项目准入。先查本地，针对实际缺口用Crawl检索这些入口及官方源码。",
+  "sources": [
+    {
+      "id": "bootstrap",
+      "name": "Bootstrap examples",
+      "kind": "template",
+      "url": "https://getbootstrap.com/docs/5.3/examples/",
+      "status": "unverified-discovery-seed",
+      "last_verified": null,
+      "version": null,
+      "license": null,
+      "source_code_url": null,
+      "search_templates": [
+        "site:getbootstrap.com {component} documentation source code",
+        "site:getbootstrap.com {component} accessibility keyboard states",
+        "site:getbootstrap.com license version {framework}"
+      ],
+      "admission_required": [
+        "current official body",
+        "actual source files",
+        "fixed version",
+        "applicable license",
+        "required states and actions",
+        "framework compatibility",
+        "whole-page validation"
+      ],
+      "usage_limit": "发现入口，不可直接作为已复用证据。"
+    },
+    {
+      "id": "tabler",
+      "name": "Tabler",
+      "kind": "template",
+      "url": "https://preview.tabler.io/",
+      "status": "unverified-discovery-seed",
+      "last_verified": null,
+      "version": null,
+      "license": null,
+      "source_code_url": null,
+      "search_templates": [
+        "site:preview.tabler.io {component} documentation source code",
+        "site:preview.tabler.io {component} accessibility keyboard states",
+        "site:preview.tabler.io license version {framework}"
+      ],
+      "admission_required": [
+        "current official body",
+        "actual source files",
+        "fixed version",
+        "applicable license",
+        "required states and actions",
+        "framework compatibility",
+        "whole-page validation"
+      ],
+      "usage_limit": "发现入口，不可直接作为已复用证据。"
+    },
+    {
+      "id": "adminkit",
+      "name": "AdminKit",
+      "kind": "template",
+      "url": "https://demo.adminkit.io/",
+      "status": "unverified-discovery-seed",
+      "last_verified": null,
+      "version": null,
+      "license": null,
+      "source_code_url": null,
+      "search_templates": [
+        "site:demo.adminkit.io {component} documentation source code",
+        "site:demo.adminkit.io {component} accessibility keyboard states",
+        "site:demo.adminkit.io license version {framework}"
+      ],
+      "admission_required": [
+        "current official body",
+        "actual source files",
+        "fixed version",
+        "applicable license",
+        "required states and actions",
+        "framework compatibility",
+        "whole-page validation"
+      ],
+      "usage_limit": "发现入口，不可直接作为已复用证据。"
+    },
+    {
+      "id": "adminlte",
+      "name": "AdminLTE",
+      "kind": "template",
+      "url": "https://adminlte.io/themes/v3/",
+      "status": "unverified-discovery-seed",
+      "last_verified": null,
+      "version": null,
+      "license": null,
+      "source_code_url": null,
+      "search_templates": [
+        "site:adminlte.io {component} documentation source code",
+        "site:adminlte.io {component} accessibility keyboard states",
+        "site:adminlte.io license version {framework}"
+      ],
+      "admission_required": [
+        "current official body",
+        "actual source files",
+        "fixed version",
+        "applicable license",
+        "required states and actions",
+        "framework compatibility",
+        "whole-page validation"
+      ],
+      "usage_limit": "发现入口，不可直接作为已复用证据。"
+    },
+    {
+      "id": "shadcn",
+      "name": "shadcn/ui blocks",
+      "kind": "component",
+      "url": "https://ui.shadcn.com/blocks",
+      "status": "unverified-discovery-seed",
+      "last_verified": null,
+      "version": null,
+      "license": null,
+      "source_code_url": null,
+      "search_templates": [
+        "site:ui.shadcn.com {component} documentation source code",
+        "site:ui.shadcn.com {component} accessibility keyboard states",
+        "site:ui.shadcn.com license version {framework}"
+      ],
+      "admission_required": [
+        "current official body",
+        "actual source files",
+        "fixed version",
+        "applicable license",
+        "required states and actions",
+        "framework compatibility",
+        "whole-page validation"
+      ],
+      "usage_limit": "发现入口，不可直接作为已复用证据。"
+    },
+    {
+      "id": "radix",
+      "name": "Radix Themes",
+      "kind": "component",
+      "url": "https://www.radix-ui.com/themes/docs/overview/getting-started",
+      "status": "unverified-discovery-seed",
+      "last_verified": null,
+      "version": null,
+      "license": null,
+      "source_code_url": null,
+      "search_templates": [
+        "site:www.radix-ui.com {component} documentation source code",
+        "site:www.radix-ui.com {component} accessibility keyboard states",
+        "site:www.radix-ui.com license version {framework}"
+      ],
+      "admission_required": [
+        "current official body",
+        "actual source files",
+        "fixed version",
+        "applicable license",
+        "required states and actions",
+        "framework compatibility",
+        "whole-page validation"
+      ],
+      "usage_limit": "发现入口，不可直接作为已复用证据。"
+    },
+    {
+      "id": "aceternity",
+      "name": "Aceternity UI",
+      "kind": "component",
+      "url": "https://ui.aceternity.com/components",
+      "status": "unverified-discovery-seed",
+      "last_verified": null,
+      "version": null,
+      "license": null,
+      "source_code_url": null,
+      "search_templates": [
+        "site:ui.aceternity.com {component} documentation source code",
+        "site:ui.aceternity.com {component} accessibility keyboard states",
+        "site:ui.aceternity.com license version {framework}"
+      ],
+      "admission_required": [
+        "current official body",
+        "actual source files",
+        "fixed version",
+        "applicable license",
+        "required states and actions",
+        "framework compatibility",
+        "whole-page validation"
+      ],
+      "usage_limit": "发现入口，不可直接作为已复用证据。"
+    },
+    {
+      "id": "magicui",
+      "name": "Magic UI",
+      "kind": "component",
+      "url": "https://magicui.design/docs/components",
+      "status": "unverified-discovery-seed",
+      "last_verified": null,
+      "version": null,
+      "license": null,
+      "source_code_url": null,
+      "search_templates": [
+        "site:magicui.design {component} documentation source code",
+        "site:magicui.design {component} accessibility keyboard states",
+        "site:magicui.design license version {framework}"
+      ],
+      "admission_required": [
+        "current official body",
+        "actual source files",
+        "fixed version",
+        "applicable license",
+        "required states and actions",
+        "framework compatibility",
+        "whole-page validation"
+      ],
+      "usage_limit": "发现入口，不可直接作为已复用证据。"
+    },
+    {
+      "id": "heroui",
+      "name": "HeroUI",
+      "kind": "component",
+      "url": "https://www.heroui.com/docs/guide/introduction",
+      "status": "unverified-discovery-seed",
+      "last_verified": null,
+      "version": null,
+      "license": null,
+      "source_code_url": null,
+      "search_templates": [
+        "site:www.heroui.com {component} documentation source code",
+        "site:www.heroui.com {component} accessibility keyboard states",
+        "site:www.heroui.com license version {framework}"
+      ],
+      "admission_required": [
+        "current official body",
+        "actual source files",
+        "fixed version",
+        "applicable license",
+        "required states and actions",
+        "framework compatibility",
+        "whole-page validation"
+      ],
+      "usage_limit": "发现入口，不可直接作为已复用证据。"
+    },
+    {
+      "id": "daisyui",
+      "name": "daisyUI",
+      "kind": "component",
+      "url": "https://daisyui.com/components/",
+      "status": "unverified-discovery-seed",
+      "last_verified": null,
+      "version": null,
+      "license": null,
+      "source_code_url": null,
+      "search_templates": [
+        "site:daisyui.com {component} documentation source code",
+        "site:daisyui.com {component} accessibility keyboard states",
+        "site:daisyui.com license version {framework}"
+      ],
+      "admission_required": [
+        "current official body",
+        "actual source files",
+        "fixed version",
+        "applicable license",
+        "required states and actions",
+        "framework compatibility",
+        "whole-page validation"
+      ],
+      "usage_limit": "发现入口，不可直接作为已复用证据。"
+    },
+    {
+      "id": "flowbite",
+      "name": "Flowbite",
+      "kind": "component",
+      "url": "https://flowbite.com/docs/getting-started/introduction/",
+      "status": "unverified-discovery-seed",
+      "last_verified": null,
+      "version": null,
+      "license": null,
+      "source_code_url": null,
+      "search_templates": [
+        "site:flowbite.com {component} documentation source code",
+        "site:flowbite.com {component} accessibility keyboard states",
+        "site:flowbite.com license version {framework}"
+      ],
+      "admission_required": [
+        "current official body",
+        "actual source files",
+        "fixed version",
+        "applicable license",
+        "required states and actions",
+        "framework compatibility",
+        "whole-page validation"
+      ],
+      "usage_limit": "发现入口，不可直接作为已复用证据。"
+    },
+    {
+      "id": "preline",
+      "name": "Preline UI",
+      "kind": "component",
+      "url": "https://preline.co/docs/index.html",
+      "status": "unverified-discovery-seed",
+      "last_verified": null,
+      "version": null,
+      "license": null,
+      "source_code_url": null,
+      "search_templates": [
+        "site:preline.co {component} documentation source code",
+        "site:preline.co {component} accessibility keyboard states",
+        "site:preline.co license version {framework}"
+      ],
+      "admission_required": [
+        "current official body",
+        "actual source files",
+        "fixed version",
+        "applicable license",
+        "required states and actions",
+        "framework compatibility",
+        "whole-page validation"
+      ],
+      "usage_limit": "发现入口，不可直接作为已复用证据。"
+    },
+    {
+      "id": "hyperui",
+      "name": "HyperUI",
+      "kind": "component",
+      "url": "https://www.hyperui.dev/",
+      "status": "unverified-discovery-seed",
+      "last_verified": null,
+      "version": null,
+      "license": null,
+      "source_code_url": null,
+      "search_templates": [
+        "site:www.hyperui.dev {component} documentation source code",
+        "site:www.hyperui.dev {component} accessibility keyboard states",
+        "site:www.hyperui.dev license version {framework}"
+      ],
+      "admission_required": [
+        "current official body",
+        "actual source files",
+        "fixed version",
+        "applicable license",
+        "required states and actions",
+        "framework compatibility",
+        "whole-page validation"
+      ],
+      "usage_limit": "发现入口，不可直接作为已复用证据。"
+    },
+    {
+      "id": "tailwindtoolbox",
+      "name": "Tailwind Toolbox",
+      "kind": "template",
+      "url": "https://www.tailwindtoolbox.com/templates/admin-template",
+      "status": "unverified-discovery-seed",
+      "last_verified": null,
+      "version": null,
+      "license": null,
+      "source_code_url": null,
+      "search_templates": [
+        "site:www.tailwindtoolbox.com {component} documentation source code",
+        "site:www.tailwindtoolbox.com {component} accessibility keyboard states",
+        "site:www.tailwindtoolbox.com license version {framework}"
+      ],
+      "admission_required": [
+        "current official body",
+        "actual source files",
+        "fixed version",
+        "applicable license",
+        "required states and actions",
+        "framework compatibility",
+        "whole-page validation"
+      ],
+      "usage_limit": "发现入口，不可直接作为已复用证据。"
+    },
+    {
+      "id": "bulma",
+      "name": "Bulma",
+      "kind": "component",
+      "url": "https://bulma.io/documentation/",
+      "status": "unverified-discovery-seed",
+      "last_verified": null,
+      "version": null,
+      "license": null,
+      "source_code_url": null,
+      "search_templates": [
+        "site:bulma.io {component} documentation source code",
+        "site:bulma.io {component} accessibility keyboard states",
+        "site:bulma.io license version {framework}"
+      ],
+      "admission_required": [
+        "current official body",
+        "actual source files",
+        "fixed version",
+        "applicable license",
+        "required states and actions",
+        "framework compatibility",
+        "whole-page validation"
+      ],
+      "usage_limit": "发现入口，不可直接作为已复用证据。"
+    },
+    {
+      "id": "uikit",
+      "name": "UIkit",
+      "kind": "component",
+      "url": "https://getuikit.com/docs/introduction",
+      "status": "unverified-discovery-seed",
+      "last_verified": null,
+      "version": null,
+      "license": null,
+      "source_code_url": null,
+      "search_templates": [
+        "site:getuikit.com {component} documentation source code",
+        "site:getuikit.com {component} accessibility keyboard states",
+        "site:getuikit.com license version {framework}"
+      ],
+      "admission_required": [
+        "current official body",
+        "actual source files",
+        "fixed version",
+        "applicable license",
+        "required states and actions",
+        "framework compatibility",
+        "whole-page validation"
+      ],
+      "usage_limit": "发现入口，不可直接作为已复用证据。"
+    },
+    {
+      "id": "semantic",
+      "name": "Semantic UI",
+      "kind": "component",
+      "url": "https://semantic-ui.com/introduction/getting-started.html",
+      "status": "unverified-discovery-seed",
+      "last_verified": null,
+      "version": null,
+      "license": null,
+      "source_code_url": null,
+      "search_templates": [
+        "site:semantic-ui.com {component} documentation source code",
+        "site:semantic-ui.com {component} accessibility keyboard states",
+        "site:semantic-ui.com license version {framework}"
+      ],
+      "admission_required": [
+        "current official body",
+        "actual source files",
+        "fixed version",
+        "applicable license",
+        "required states and actions",
+        "framework compatibility",
+        "whole-page validation"
+      ],
+      "usage_limit": "发现入口，不可直接作为已复用证据。"
+    },
+    {
+      "id": "fomantic",
+      "name": "Fomantic UI",
+      "kind": "component",
+      "url": "https://fomantic-ui.com/introduction/getting-started.html",
+      "status": "unverified-discovery-seed",
+      "last_verified": null,
+      "version": null,
+      "license": null,
+      "source_code_url": null,
+      "search_templates": [
+        "site:fomantic-ui.com {component} documentation source code",
+        "site:fomantic-ui.com {component} accessibility keyboard states",
+        "site:fomantic-ui.com license version {framework}"
+      ],
+      "admission_required": [
+        "current official body",
+        "actual source files",
+        "fixed version",
+        "applicable license",
+        "required states and actions",
+        "framework compatibility",
+        "whole-page validation"
+      ],
+      "usage_limit": "发现入口，不可直接作为已复用证据。"
+    },
+    {
+      "id": "antdesign",
+      "name": "Ant Design",
+      "kind": "component",
+      "url": "https://ant.design/components/overview",
+      "status": "unverified-discovery-seed",
+      "last_verified": null,
+      "version": null,
+      "license": null,
+      "source_code_url": null,
+      "search_templates": [
+        "site:ant.design {component} documentation source code",
+        "site:ant.design {component} accessibility keyboard states",
+        "site:ant.design license version {framework}"
+      ],
+      "admission_required": [
+        "current official body",
+        "actual source files",
+        "fixed version",
+        "applicable license",
+        "required states and actions",
+        "framework compatibility",
+        "whole-page validation"
+      ],
+      "usage_limit": "发现入口，不可直接作为已复用证据。"
+    },
+    {
+      "id": "antpro",
+      "name": "Ant Design Pro",
+      "kind": "template",
+      "url": "https://pro.ant.design/docs/getting-started/",
+      "status": "unverified-discovery-seed",
+      "last_verified": null,
+      "version": null,
+      "license": null,
+      "source_code_url": null,
+      "search_templates": [
+        "site:pro.ant.design {component} documentation source code",
+        "site:pro.ant.design {component} accessibility keyboard states",
+        "site:pro.ant.design license version {framework}"
+      ],
+      "admission_required": [
+        "current official body",
+        "actual source files",
+        "fixed version",
+        "applicable license",
+        "required states and actions",
+        "framework compatibility",
+        "whole-page validation"
+      ],
+      "usage_limit": "发现入口，不可直接作为已复用证据。"
+    },
+    {
+      "id": "elementplus",
+      "name": "Element Plus",
+      "kind": "component",
+      "url": "https://element-plus.org/en-US/component/overview.html",
+      "status": "unverified-discovery-seed",
+      "last_verified": null,
+      "version": null,
+      "license": null,
+      "source_code_url": null,
+      "search_templates": [
+        "site:element-plus.org {component} documentation source code",
+        "site:element-plus.org {component} accessibility keyboard states",
+        "site:element-plus.org license version {framework}"
+      ],
+      "admission_required": [
+        "current official body",
+        "actual source files",
+        "fixed version",
+        "applicable license",
+        "required states and actions",
+        "framework compatibility",
+        "whole-page validation"
+      ],
+      "usage_limit": "发现入口，不可直接作为已复用证据。"
+    },
+    {
+      "id": "arco",
+      "name": "Arco Design",
+      "kind": "component",
+      "url": "https://arco.design/vue/component/overview",
+      "status": "unverified-discovery-seed",
+      "last_verified": null,
+      "version": null,
+      "license": null,
+      "source_code_url": null,
+      "search_templates": [
+        "site:arco.design {component} documentation source code",
+        "site:arco.design {component} accessibility keyboard states",
+        "site:arco.design license version {framework}"
+      ],
+      "admission_required": [
+        "current official body",
+        "actual source files",
+        "fixed version",
+        "applicable license",
+        "required states and actions",
+        "framework compatibility",
+        "whole-page validation"
+      ],
+      "usage_limit": "发现入口，不可直接作为已复用证据。"
+    },
+    {
+      "id": "naiveui",
+      "name": "Naive UI",
+      "kind": "component",
+      "url": "https://www.naiveui.com/en-US/os-theme/components/button",
+      "status": "unverified-discovery-seed",
+      "last_verified": null,
+      "version": null,
+      "license": null,
+      "source_code_url": null,
+      "search_templates": [
+        "site:www.naiveui.com {component} documentation source code",
+        "site:www.naiveui.com {component} accessibility keyboard states",
+        "site:www.naiveui.com license version {framework}"
+      ],
+      "admission_required": [
+        "current official body",
+        "actual source files",
+        "fixed version",
+        "applicable license",
+        "required states and actions",
+        "framework compatibility",
+        "whole-page validation"
+      ],
+      "usage_limit": "发现入口，不可直接作为已复用证据。"
+    },
+    {
+      "id": "tdesign",
+      "name": "TDesign",
+      "kind": "component",
+      "url": "https://tdesign.tencent.com/vue-next/overview",
+      "status": "unverified-discovery-seed",
+      "last_verified": null,
+      "version": null,
+      "license": null,
+      "source_code_url": null,
+      "search_templates": [
+        "site:tdesign.tencent.com {component} documentation source code",
+        "site:tdesign.tencent.com {component} accessibility keyboard states",
+        "site:tdesign.tencent.com license version {framework}"
+      ],
+      "admission_required": [
+        "current official body",
+        "actual source files",
+        "fixed version",
+        "applicable license",
+        "required states and actions",
+        "framework compatibility",
+        "whole-page validation"
+      ],
+      "usage_limit": "发现入口，不可直接作为已复用证据。"
+    },
+    {
+      "id": "vant",
+      "name": "Vant",
+      "kind": "component",
+      "url": "https://vant-ui.github.io/vant/#/zh-CN/",
+      "status": "unverified-discovery-seed",
+      "last_verified": null,
+      "version": null,
+      "license": null,
+      "source_code_url": null,
+      "search_templates": [
+        "site:vant-ui.github.io {component} documentation source code",
+        "site:vant-ui.github.io {component} accessibility keyboard states",
+        "site:vant-ui.github.io license version {framework}"
+      ],
+      "admission_required": [
+        "current official body",
+        "actual source files",
+        "fixed version",
+        "applicable license",
+        "required states and actions",
+        "framework compatibility",
+        "whole-page validation"
+      ],
+      "usage_limit": "发现入口，不可直接作为已复用证据。"
+    },
+    {
+      "id": "nutui",
+      "name": "NutUI",
+      "kind": "component",
+      "url": "https://nutui.jd.com/h5/vue/4x/#/zh-CN/guide/intro",
+      "status": "unverified-discovery-seed",
+      "last_verified": null,
+      "version": null,
+      "license": null,
+      "source_code_url": null,
+      "search_templates": [
+        "site:nutui.jd.com {component} documentation source code",
+        "site:nutui.jd.com {component} accessibility keyboard states",
+        "site:nutui.jd.com license version {framework}"
+      ],
+      "admission_required": [
+        "current official body",
+        "actual source files",
+        "fixed version",
+        "applicable license",
+        "required states and actions",
+        "framework compatibility",
+        "whole-page validation"
+      ],
+      "usage_limit": "发现入口，不可直接作为已复用证据。"
+    },
+    {
+      "id": "vuetify",
+      "name": "Vuetify",
+      "kind": "component",
+      "url": "https://vuetifyjs.com/en/components/all/",
+      "status": "unverified-discovery-seed",
+      "last_verified": null,
+      "version": null,
+      "license": null,
+      "source_code_url": null,
+      "search_templates": [
+        "site:vuetifyjs.com {component} documentation source code",
+        "site:vuetifyjs.com {component} accessibility keyboard states",
+        "site:vuetifyjs.com license version {framework}"
+      ],
+      "admission_required": [
+        "current official body",
+        "actual source files",
+        "fixed version",
+        "applicable license",
+        "required states and actions",
+        "framework compatibility",
+        "whole-page validation"
+      ],
+      "usage_limit": "发现入口，不可直接作为已复用证据。"
+    },
+    {
+      "id": "quasar",
+      "name": "Quasar",
+      "kind": "component",
+      "url": "https://quasar.dev/components",
+      "status": "unverified-discovery-seed",
+      "last_verified": null,
+      "version": null,
+      "license": null,
+      "source_code_url": null,
+      "search_templates": [
+        "site:quasar.dev {component} documentation source code",
+        "site:quasar.dev {component} accessibility keyboard states",
+        "site:quasar.dev license version {framework}"
+      ],
+      "admission_required": [
+        "current official body",
+        "actual source files",
+        "fixed version",
+        "applicable license",
+        "required states and actions",
+        "framework compatibility",
+        "whole-page validation"
+      ],
+      "usage_limit": "发现入口，不可直接作为已复用证据。"
+    },
+    {
+      "id": "primevue",
+      "name": "PrimeVue",
+      "kind": "component",
+      "url": "https://primevue.org/button/",
+      "status": "unverified-discovery-seed",
+      "last_verified": null,
+      "version": null,
+      "license": null,
+      "source_code_url": null,
+      "search_templates": [
+        "site:primevue.org {component} documentation source code",
+        "site:primevue.org {component} accessibility keyboard states",
+        "site:primevue.org license version {framework}"
+      ],
+      "admission_required": [
+        "current official body",
+        "actual source files",
+        "fixed version",
+        "applicable license",
+        "required states and actions",
+        "framework compatibility",
+        "whole-page validation"
+      ],
+      "usage_limit": "发现入口，不可直接作为已复用证据。"
+    },
+    {
+      "id": "mui",
+      "name": "Material UI templates",
+      "kind": "template",
+      "url": "https://mui.com/material-ui/getting-started/templates/",
+      "status": "unverified-discovery-seed",
+      "last_verified": null,
+      "version": null,
+      "license": null,
+      "source_code_url": null,
+      "search_templates": [
+        "site:mui.com {component} documentation source code",
+        "site:mui.com {component} accessibility keyboard states",
+        "site:mui.com license version {framework}"
+      ],
+      "admission_required": [
+        "current official body",
+        "actual source files",
+        "fixed version",
+        "applicable license",
+        "required states and actions",
+        "framework compatibility",
+        "whole-page validation"
+      ],
+      "usage_limit": "发现入口，不可直接作为已复用证据。"
+    },
+    {
+      "id": "mantine",
+      "name": "Mantine",
+      "kind": "component",
+      "url": "https://mantine.dev/getting-started/",
+      "status": "unverified-discovery-seed",
+      "last_verified": null,
+      "version": null,
+      "license": null,
+      "source_code_url": null,
+      "search_templates": [
+        "site:mantine.dev {component} documentation source code",
+        "site:mantine.dev {component} accessibility keyboard states",
+        "site:mantine.dev license version {framework}"
+      ],
+      "admission_required": [
+        "current official body",
+        "actual source files",
+        "fixed version",
+        "applicable license",
+        "required states and actions",
+        "framework compatibility",
+        "whole-page validation"
+      ],
+      "usage_limit": "发现入口，不可直接作为已复用证据。"
+    },
+    {
+      "id": "chakra",
+      "name": "Chakra UI",
+      "kind": "component",
+      "url": "https://chakra-ui.com/docs/get-started/introduction",
+      "status": "unverified-discovery-seed",
+      "last_verified": null,
+      "version": null,
+      "license": null,
+      "source_code_url": null,
+      "search_templates": [
+        "site:chakra-ui.com {component} documentation source code",
+        "site:chakra-ui.com {component} accessibility keyboard states",
+        "site:chakra-ui.com license version {framework}"
+      ],
+      "admission_required": [
+        "current official body",
+        "actual source files",
+        "fixed version",
+        "applicable license",
+        "required states and actions",
+        "framework compatibility",
+        "whole-page validation"
+      ],
+      "usage_limit": "发现入口，不可直接作为已复用证据。"
+    },
+    {
+      "id": "reactaria",
+      "name": "React Aria",
+      "kind": "component",
+      "url": "https://react-spectrum.adobe.com/react-aria/components.html",
+      "status": "unverified-discovery-seed",
+      "last_verified": null,
+      "version": null,
+      "license": null,
+      "source_code_url": null,
+      "search_templates": [
+        "site:react-spectrum.adobe.com {component} documentation source code",
+        "site:react-spectrum.adobe.com {component} accessibility keyboard states",
+        "site:react-spectrum.adobe.com license version {framework}"
+      ],
+      "admission_required": [
+        "current official body",
+        "actual source files",
+        "fixed version",
+        "applicable license",
+        "required states and actions",
+        "framework compatibility",
+        "whole-page validation"
+      ],
+      "usage_limit": "发现入口，不可直接作为已复用证据。"
+    },
+    {
+      "id": "carbon",
+      "name": "Carbon Design System",
+      "kind": "principle",
+      "url": "https://carbondesignsystem.com/components/overview/",
+      "status": "unverified-discovery-seed",
+      "last_verified": null,
+      "version": null,
+      "license": null,
+      "source_code_url": null,
+      "search_templates": [
+        "site:carbondesignsystem.com {component} documentation source code",
+        "site:carbondesignsystem.com {component} accessibility keyboard states",
+        "site:carbondesignsystem.com license version {framework}"
+      ],
+      "admission_required": [
+        "current official body",
+        "actual source files",
+        "fixed version",
+        "applicable license",
+        "required states and actions",
+        "framework compatibility",
+        "whole-page validation"
+      ],
+      "usage_limit": "发现入口，不可直接作为已复用证据。"
+    },
+    {
+      "id": "polaris",
+      "name": "Shopify Polaris",
+      "kind": "component",
+      "url": "https://polaris.shopify.com/components",
+      "status": "unverified-discovery-seed",
+      "last_verified": null,
+      "version": null,
+      "license": null,
+      "source_code_url": null,
+      "search_templates": [
+        "site:polaris.shopify.com {component} documentation source code",
+        "site:polaris.shopify.com {component} accessibility keyboard states",
+        "site:polaris.shopify.com license version {framework}"
+      ],
+      "admission_required": [
+        "current official body",
+        "actual source files",
+        "fixed version",
+        "applicable license",
+        "required states and actions",
+        "framework compatibility",
+        "whole-page validation"
+      ],
+      "usage_limit": "发现入口，不可直接作为已复用证据。"
+    },
+    {
+      "id": "spectrum",
+      "name": "Adobe Spectrum",
+      "kind": "principle",
+      "url": "https://spectrum.adobe.com/page/components/",
+      "status": "unverified-discovery-seed",
+      "last_verified": null,
+      "version": null,
+      "license": null,
+      "source_code_url": null,
+      "search_templates": [
+        "site:spectrum.adobe.com {component} documentation source code",
+        "site:spectrum.adobe.com {component} accessibility keyboard states",
+        "site:spectrum.adobe.com license version {framework}"
+      ],
+      "admission_required": [
+        "current official body",
+        "actual source files",
+        "fixed version",
+        "applicable license",
+        "required states and actions",
+        "framework compatibility",
+        "whole-page validation"
+      ],
+      "usage_limit": "发现入口，不可直接作为已复用证据。"
+    },
+    {
+      "id": "atlassian",
+      "name": "Atlassian Design System",
+      "kind": "component",
+      "url": "https://atlassian.design/components",
+      "status": "unverified-discovery-seed",
+      "last_verified": null,
+      "version": null,
+      "license": null,
+      "source_code_url": null,
+      "search_templates": [
+        "site:atlassian.design {component} documentation source code",
+        "site:atlassian.design {component} accessibility keyboard states",
+        "site:atlassian.design license version {framework}"
+      ],
+      "admission_required": [
+        "current official body",
+        "actual source files",
+        "fixed version",
+        "applicable license",
+        "required states and actions",
+        "framework compatibility",
+        "whole-page validation"
+      ],
+      "usage_limit": "发现入口，不可直接作为已复用证据。"
+    },
+    {
+      "id": "pajamas",
+      "name": "GitLab Pajamas",
+      "kind": "component",
+      "url": "https://design.gitlab.com/components/overview",
+      "status": "unverified-discovery-seed",
+      "last_verified": null,
+      "version": null,
+      "license": null,
+      "source_code_url": null,
+      "search_templates": [
+        "site:design.gitlab.com {component} documentation source code",
+        "site:design.gitlab.com {component} accessibility keyboard states",
+        "site:design.gitlab.com license version {framework}"
+      ],
+      "admission_required": [
+        "current official body",
+        "actual source files",
+        "fixed version",
+        "applicable license",
+        "required states and actions",
+        "framework compatibility",
+        "whole-page validation"
+      ],
+      "usage_limit": "发现入口，不可直接作为已复用证据。"
+    },
+    {
+      "id": "uswds",
+      "name": "US Web Design System",
+      "kind": "component",
+      "url": "https://designsystem.digital.gov/components/overview/",
+      "status": "unverified-discovery-seed",
+      "last_verified": null,
+      "version": null,
+      "license": null,
+      "source_code_url": null,
+      "search_templates": [
+        "site:designsystem.digital.gov {component} documentation source code",
+        "site:designsystem.digital.gov {component} accessibility keyboard states",
+        "site:designsystem.digital.gov license version {framework}"
+      ],
+      "admission_required": [
+        "current official body",
+        "actual source files",
+        "fixed version",
+        "applicable license",
+        "required states and actions",
+        "framework compatibility",
+        "whole-page validation"
+      ],
+      "usage_limit": "发现入口，不可直接作为已复用证据。"
+    },
+    {
+      "id": "govuk",
+      "name": "GOV.UK Design System",
+      "kind": "component",
+      "url": "https://design-system.service.gov.uk/components/",
+      "status": "unverified-discovery-seed",
+      "last_verified": null,
+      "version": null,
+      "license": null,
+      "source_code_url": null,
+      "search_templates": [
+        "site:design-system.service.gov.uk {component} documentation source code",
+        "site:design-system.service.gov.uk {component} accessibility keyboard states",
+        "site:design-system.service.gov.uk license version {framework}"
+      ],
+      "admission_required": [
+        "current official body",
+        "actual source files",
+        "fixed version",
+        "applicable license",
+        "required states and actions",
+        "framework compatibility",
+        "whole-page validation"
+      ],
+      "usage_limit": "发现入口，不可直接作为已复用证据。"
+    },
+    {
+      "id": "material",
+      "name": "Material Design 3",
+      "kind": "principle",
+      "url": "https://m3.material.io/components",
+      "status": "unverified-discovery-seed",
+      "last_verified": null,
+      "version": null,
+      "license": null,
+      "source_code_url": null,
+      "search_templates": [
+        "site:m3.material.io {component} documentation source code",
+        "site:m3.material.io {component} accessibility keyboard states",
+        "site:m3.material.io license version {framework}"
+      ],
+      "admission_required": [
+        "current official body",
+        "actual source files",
+        "fixed version",
+        "applicable license",
+        "required states and actions",
+        "framework compatibility",
+        "whole-page validation"
+      ],
+      "usage_limit": "发现入口，不可直接作为已复用证据。"
+    },
+    {
+      "id": "awwwards",
+      "name": "Awwwards",
+      "kind": "inspiration",
+      "url": "https://www.awwwards.com/websites/",
+      "status": "unverified-discovery-seed",
+      "last_verified": null,
+      "version": null,
+      "license": null,
+      "source_code_url": null,
+      "search_templates": [
+        "site:www.awwwards.com {component} documentation source code",
+        "site:www.awwwards.com {component} accessibility keyboard states",
+        "site:www.awwwards.com license version {framework}"
+      ],
+      "admission_required": [
+        "current official body",
+        "actual source files",
+        "fixed version",
+        "applicable license",
+        "required states and actions",
+        "framework compatibility",
+        "whole-page validation"
+      ],
+      "usage_limit": "发现入口，不可直接作为已复用证据。灵感页面不授予源码或资产使用许可。"
+    },
+    {
+      "id": "lapa",
+      "name": "Lapa Ninja",
+      "kind": "inspiration",
+      "url": "https://www.lapa.ninja/",
+      "status": "unverified-discovery-seed",
+      "last_verified": null,
+      "version": null,
+      "license": null,
+      "source_code_url": null,
+      "search_templates": [
+        "site:www.lapa.ninja {component} documentation source code",
+        "site:www.lapa.ninja {component} accessibility keyboard states",
+        "site:www.lapa.ninja license version {framework}"
+      ],
+      "admission_required": [
+        "current official body",
+        "actual source files",
+        "fixed version",
+        "applicable license",
+        "required states and actions",
+        "framework compatibility",
+        "whole-page validation"
+      ],
+      "usage_limit": "发现入口，不可直接作为已复用证据。灵感页面不授予源码或资产使用许可。"
+    },
+    {
+      "id": "landbook",
+      "name": "Land-book",
+      "kind": "inspiration",
+      "url": "https://land-book.com/",
+      "status": "unverified-discovery-seed",
+      "last_verified": null,
+      "version": null,
+      "license": null,
+      "source_code_url": null,
+      "search_templates": [
+        "site:land-book.com {component} documentation source code",
+        "site:land-book.com {component} accessibility keyboard states",
+        "site:land-book.com license version {framework}"
+      ],
+      "admission_required": [
+        "current official body",
+        "actual source files",
+        "fixed version",
+        "applicable license",
+        "required states and actions",
+        "framework compatibility",
+        "whole-page validation"
+      ],
+      "usage_limit": "发现入口，不可直接作为已复用证据。灵感页面不授予源码或资产使用许可。"
+    },
+    {
+      "id": "curated",
+      "name": "Curated Design",
+      "kind": "inspiration",
+      "url": "https://www.curated.design/",
+      "status": "unverified-discovery-seed",
+      "last_verified": null,
+      "version": null,
+      "license": null,
+      "source_code_url": null,
+      "search_templates": [
+        "site:www.curated.design {component} documentation source code",
+        "site:www.curated.design {component} accessibility keyboard states",
+        "site:www.curated.design license version {framework}"
+      ],
+      "admission_required": [
+        "current official body",
+        "actual source files",
+        "fixed version",
+        "applicable license",
+        "required states and actions",
+        "framework compatibility",
+        "whole-page validation"
+      ],
+      "usage_limit": "发现入口，不可直接作为已复用证据。灵感页面不授予源码或资产使用许可。"
+    },
+    {
+      "id": "saasframe",
+      "name": "SaaSFrame",
+      "kind": "inspiration",
+      "url": "https://www.saasframe.io/",
+      "status": "unverified-discovery-seed",
+      "last_verified": null,
+      "version": null,
+      "license": null,
+      "source_code_url": null,
+      "search_templates": [
+        "site:www.saasframe.io {component} documentation source code",
+        "site:www.saasframe.io {component} accessibility keyboard states",
+        "site:www.saasframe.io license version {framework}"
+      ],
+      "admission_required": [
+        "current official body",
+        "actual source files",
+        "fixed version",
+        "applicable license",
+        "required states and actions",
+        "framework compatibility",
+        "whole-page validation"
+      ],
+      "usage_limit": "发现入口，不可直接作为已复用证据。灵感页面不授予源码或资产使用许可。"
+    }
+  ],
+  "selection_protocol": [
+    "按System能力清单检索本地真实组件并记录缺口",
+    "按缺口检索官方组件正文、版本、许可、源码和实际样例",
+    "保存采用与淘汰理由，只有实际取得的源码可进入复用计划",
+    "统一框架内适配并验证整页、跨页、状态和完整任务",
+    "无适用来源的新组件提交具体人工例外；灵感站只作发现入口"
+  ]
+}

@@ -28,6 +28,14 @@ test('extension screenshot bytes are saved as a real evidence file', async () =>
   assert.deepEqual(await fs.readFile(file), bytes);
 });
 
+test('native input with a lost response is dispatched once and requires verification', async () => {
+  let inputCalls=0;
+  const page={evaluate:async()=>({ok:true,url,point:{x:20,y:20},target:{selector:'#button'}}),cdp:async()=>{inputCalls++;throw new Error('connection lost');}};
+  const operations=new BrowserOperations(page,testPolicy(tmp),url);
+  await assert.rejects(()=>operations.dom({action:'click',selector:'#button',method:'native'}),error=>error.code==='write_outcome_unknown' && error.outcome_unknown && !error.retryable);
+  assert.equal(inputCalls,1);
+});
+
 test('failure classification preserves Retry-After and separates validation, login and transient errors', () => {
   assert.equal(retryAfter('1.5'), 1500);
   assert.equal(retryAfter('Thu, 01 Jan 1970 00:00:02 GMT', 1000), 1000);
@@ -101,7 +109,7 @@ test('action input validates every step and refuses conflicting or unsafe form d
   for (const step of [{ action: 'wait_for', selector: '#a', condition: 'text' }, { action: 'form', selector: '#f', fields: [{ selector: '#q', value: 'x', checked: true }] }, { action: 'scroll', into_view: true }, { action: 'click', selector: '#a', target: { role: 'button' } }]) assert.throws(() => validateActions([step], true), { code: 'invalid_action' });
   await assert.rejects(() => readActions({ file: 'unused', steps: [{ action: 'read' }] }), { code: 'invalid_action' });
   await assert.rejects(() => readActions({ steps: [{ action: 'submit', selector: '#f' }] }), { code: 'authorization_required' });
-  assert.equal(ACTION_SCHEMA.items.oneOf.length, 11);
+  assert.equal(ACTION_SCHEMA.items.oneOf.length, 14);
 });
 
 test('browser reads retry and report their actual operation count', async () => {

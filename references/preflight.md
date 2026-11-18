@@ -1,76 +1,103 @@
-# 所有 Luz 技能的前置检索
+# 前置检索的命令与判定
 
-一次业务任务、一个项目阶段都必须在形成方案前检索。规则卡、目录查询、doctor、验证和经验维护命令本身不是新的业务任务，不为每条内部命令重新联网。Crawl 执行自己的检索，不递归调用自身。
+七个 Luz 技能按原始请求与实际信息缺口选择本地处理、阅读指定网址、普通搜索或深入调研。联网的数量与依据见 [evidence-policy.md](evidence-policy.md)，调研方法见 [research-diligence.md](research-diligence.md)。
 
-独立调用只创建本技能的编号会话，不生成完整项目树。只有显式 `luz-project`、`LUZ_PROJECT_ROOT` 或 project context 启用完整矩阵。
-
-## 调用与返回
-
-三条命令的 `--caller`、`--session`、`--stage` 必须一致，记录位于 `<session>/raw/00-crawl/<caller>[-stage].json`，结论页同名 `.html`。
-
-项目里 `--session` 传项目目录或状态根（含 `project.json` 的目录；项目目录的状态根是 `D:\Codes\skill输出\Luz-Project\<目录名>\raw`），记录和结论页写在状态根下 `project.json` 的 `crawl.evidence_index`（`00-crawl`；旧项目的 `raw/00-crawl` 保持不变）。项目不保存爬取的原始内容：复用的 Crawl 任务（`crawl.task_root`）在 Crawl 输出根下。
-
-| 命令 | 传入 | 返回 | 退出码 |
-|---|---|---|---|
-| `run` | `--caller` 实际执行者；`--session` 本技能会话、项目目录或状态根；`--topic` 这次缺什么信息；可选 `--task`、`--stage`、`--query`（可重复，缺省用 topic）、`--url`（可重复，已知官方原文）、`--platform`（默认 bing，可用 github、gitee、xhs、douyin 等）、`--read`（每个查询打开的详情数，1 到 5，默认 1） | JSON：`record`、`status`（needs-conclusion）、`task`、`sources[]`（`archive` 指向正文归档）、`next` | 0；未取得有效正文时 1，记录保留为 blocked |
-| `conclude` | 同上加 `--file <补充信息.json>` | JSON：`record`、`report`（结论页路径）、`status: complete` | 0；补充信息不完整或证据无效时 1 |
-| `check` | 同上 | JSON：`ok`、`errors[]`，通过时另有 `report` | 0 通过，1 不通过 |
-
-`run` 依次执行 doctor、begin（或复用任务）、experience、search/capture、summary。一条搜索或采集路线失败（退出码非 0、超时）时，记录保留它的日志和退出码，继续跑其余路线，只有所有路线都没有取得正文才记为 blocked；doctor、experience、summary 失败仍然停下。同一阶段的全部来源放进同一次 `run`（再跑一次会重写该阶段的记录，原来的来源不再列入）。`--topic` 与 `--query` 不含密钥或真实用户数据；`--topic` 写成不带括号说明的短名称，它就是结论页的标题。`--caller` 支持六个专属技能及 Crawl 自己（`luz-crawl`）。
+简单修改和直观问题可直接使用给定材料。本地生成器需要前置记录时，下面两条命令即可完成检查。它们不启动浏览器，不创建 Crawl 抓取任务。独立调用沿用本技能的会话目录。
 
 ```powershell
-python -X utf8 scripts/crawl_preflight.py run --caller luz-design --session "<本技能会话>" --topic "<这次缺什么信息>" --task "<begin 返回的任务目录>" --stage design --query "<关键词>" --url "<已知官方原文>"
+python -X utf8 scripts/crawl_preflight.py run --caller luz-dev --session "<会话>" --stage implementation --topic "修复空列表的索引错误" --research local --reason "调用方源码与现有回归用例可直接核对"
+python -X utf8 scripts/crawl_preflight.py check --caller luz-dev --session "<会话>" --stage implementation
+```
+
+## 命令
+
+每条命令的 `--caller`、`--session`、`--stage` 必须一致。记录是 `<session>/raw/00-crawl/<caller>[-stage].json`，结论页是同名的 `.html`。
+
+| 命令 | 作用 | 退出码 |
+|---|---|---|
+| `run` | 本地写入 `not-required` 判定；联网依次执行 doctor、begin 或复用任务、经验查询、search 或 capture、summary | 本地为 0；联网达到下限为 0，仍须 conclude。数量不足为 1，状态为 `needs-research` 或 `blocked` |
+| `status` | 只读。已有多少查询、正文、站点，候选有多少没进复盘，复盘缺什么，下一步做什么 | 0 |
+| `review-init` | 生成或合并尽责复盘 `…-research-review.json`：绑定字段、候选、查询、各轮日志、经验日志由它填，判断留空 | 0 |
+| `supplement-init` | 生成或合并补充信息 `…-supplement.json`：每篇正文一条结论和一条来源评估、每个问题一条覆盖，内容留空；`--out` 可改位置 | 0 |
+| `conclude --file <补充信息.json>` | 核对通过后写入补充信息、绑定复盘、生成结论页；加 `--dry-run` 只列出全部问题，不写任何文件 | 通过为 0，否则 1 |
+| `check` | 只读。重新核对日志、正文、快照、摘录、来源评估、覆盖、模板和结论页 | 通过为 0，否则 1 |
+
+`run` 的参数：
+
+| 参数 | 含义 |
+|---|---|
+| `--caller` | 实际执行检索的技能 |
+| `--session` | 本技能会话，或项目目录、状态根 |
+| `--topic` | 这次缺什么信息；不含密钥和真实用户数据 |
+| `--research` | 缺省 auto。无查询的网址阅读用 urls；明确要求搜索用 search，大量查找用 deep，本地可解用 local。只给普通主题时默认本地，传查询、原文 URL 或明确的搜索指令会启用对应联网路线 |
+| `--min-sources` | 用户指定的去重正文最低篇数，正整数。直接请求如“搜索五篇原文”也可识别。补搜沿用初次决定 |
+| `--reason` | 本地判断的依据，可写代码位置、测试或给定材料 |
+| `--stage` | 业务阶段或项目阶段 |
+| `--task` | `begin` 返回的任务目录；同一需求的各技能、各阶段共用 |
+| `--query` | 可重复，缺省用 topic。写成 `入口::关键词`（如 `github::browser automation`）时这条查询用自己的入口 |
+| `--url` | 可重复；已知的官方原文 |
+| `--platform` | 查询入口，默认 bing。逗号分隔表示回退顺序（`bing,baidu`）：前一个既没读到正文也没有候选，才用下一个 |
+| `--read` | 每条查询打开的详情数，0 到 5，默认 3；0 只建候选池 |
+| `--append` | 同阶段补搜，保留已有路线与来源 |
+| `--no-screenshot` | 文本调研不截图，仍保留正文与 DOM 快照；界面依据要另行截图并实际查看 |
+
+```powershell
+python -X utf8 scripts/crawl_preflight.py run --caller luz-design --session "<本技能会话>" --topic "<这次缺什么信息>" --task "<begin 返回的任务目录>" --stage design --research deep --read 0 --query "<关键词>" --query "github::<关键词>"
+python -X utf8 scripts/crawl_preflight.py status --caller luz-design --session "<会话>" --stage design
+python -X utf8 scripts/crawl_preflight.py run --caller luz-design --session "<会话>" --topic "<同一主题>" --stage design --append --url "<选中的原文>"
+python -X utf8 scripts/crawl_preflight.py review-init --caller luz-design --session "<会话>" --stage design
+python -X utf8 scripts/crawl_preflight.py supplement-init --caller luz-design --session "<会话>" --stage design
+python -X utf8 scripts/crawl_preflight.py conclude --caller luz-design --session "<会话>" --stage design --file "<补充信息.json>" --dry-run
 python -X utf8 scripts/crawl_preflight.py conclude --caller luz-design --session "<会话>" --stage design --file "<补充信息.json>"
 python -X utf8 scripts/crawl_preflight.py check --caller luz-design --session "<会话>" --stage design
 ```
+
+普通搜索可以直接 `--read 3` 读详情，指定原文直接传 `--url`。深入调研可先 `--read 0` 建候选池，再用 `--append --url` 补读。联网阶段以 `conclude` 和 `check` 核验结论。本地阶段直接 `check`，结果中没有检索报告。阶段内自动生成的是中途汇总，共享缓存留待整个任务结束时用 `summary` 清理。
+
+- 一条路线失败，保留它的日志和退出码，继续其余路线；doctor、经验查询、summary 失败则停下。
+- 第一次 `run` 建立阶段记录；不带 `--append` 再运行会重写本阶段记录。`--append` 必须是同一 caller、session、stage、topic，不能换任务，也不能借别的阶段。补搜会使原结论失效：重读新增正文，重新 `conclude`、`check`。
+- 同阶段的 `run`、`conclude`、`review-init` 用互斥锁；锁在时 `check` 不认旧结论。进程异常终止留下锁时，先核实锁里的 pid 已退出再清理。
+- 旧生成器没有 `--stage` 参数时，在本阶段的命令环境里设 `LUZ_CRAWL_STAGE` 为同一名称，换阶段同步更新；显式参数优先。没有阶段的旧单次记录只供同一个单阶段调用。
+
+## 项目里的位置
+
+`--session` 传项目目录或状态根（含 `project.json` 的目录；项目目录的状态根是 `E:\Skill输出\Luz-Project\<目录名>\raw`）。记录和结论页写在状态根下 `project.json` 的 `crawl.evidence_index`（`00-crawl`；旧项目的 `raw/00-crawl` 保持不变）。项目不保存爬取的原始内容：复用的 Crawl 任务（`crawl.task_root`）在 Crawl 输出根下。
 
 ## 任务与阶段共享
 
 | 情况 | 做法 |
 |---|---|
-| 同一需求的多个技能或阶段 | 主会话 `begin --new` 一次，把返回的目录作为 `--task` 传给每个技能；每个技能每个阶段仍各自 `run`、`conclude`、`check` |
-| 缺省 `--task` | 项目（状态根有 `project.json`）时用其中 `crawl.task_root`；否则自动 doctor、`begin --new`，输出根取环境变量 `LUZ_CRAWL_OUTPUT`，未设置时用 `crawl_preflight.py` 里的 `DEFAULT_OUTPUT`（`D:\Codes\skill输出\Luz-Crawl`），任务目录是其下的“序号-主题”文件夹 |
-| 并发的不同需求 | 各用自己的任务目录，不共用 |
-| 阶段隔离 | 来源只取自本次 `run` 的 search/capture 日志；同一任务里别的阶段读到的页面不能当作本阶段的证据，记录也不能换 caller 或 stage 复用 |
+| 同一需求的多个技能或阶段 | 首个联网阶段用 `begin --new` 建任务，其余联网阶段用 `--task` 复用目录，各自 `run`、`conclude`、`check`。本地阶段仅在生成器需要记录时使用 `run --research local`、`check` |
+| 缺省 `--task` | 项目用 `project.json` 的 `crawl.task_root`；否则自动 `begin --new`，输出根取 `LUZ_CRAWL_OUTPUT`，没设时是 `E:\Skill输出\Luz-Crawl` |
+| 并发的不同需求 | 各用自己的任务目录 |
+| 阶段隔离 | 来源只取本次 `run` 的 search 与 capture 日志；同一任务里别的阶段读到的页面不算本阶段的证据 |
 
-## 补充信息
+## 补充信息怎么写
 
-运行成功只表示已取得可读正文。执行者必须阅读 `sources[].archive` 文件夹里的 `content.json`（旧存档在其 `raw/` 下），核对来源级别与适用边界（[research-method.md](research-method.md)），再写补充信息：
+`run` 成功只说明取到了正文并达到数量下限。执行者读完全部 `sources[].archive` 的 `content.json`，核对来源级别和适用边界，再按 [依据表](evidence-policy.md) 填写。
 
-```json
-{
-  "scope": "响应式布局与图标可读性",
-  "findings": [
-    {"source_id": "SRC-001", "summary": "从正文提炼的事实或设计依据", "applies_to": "方案的哪一页、模块或决定", "adopted": true},
-    {"source_id": "SRC-002", "summary": "另一项参考", "applies_to": "候选比较", "adopted": false, "reason": "不符合本次平台约束"}
-  ],
-  "gaps": ["尚未核实的范围或版本；没有则空数组"]
-}
-```
+补充信息的文字是写给读结论页的人的：`summary`、`findings[].applies_to`、`reason`、`gaps` 不写编号、路径、哈希和采集日期；`coverage[].applies_to` 与 `template_uses[].applies_to` 是过程字段，填一致的具体输出位置供门禁核对。
 
-补充信息的文字写给读结论页的人：页面不显示 `SRC-` 编号，`summary`、`applies_to`、`reason`、`gaps` 里不要引用编号，也不写路径、哈希和采集日期。`conclude` 生成的结论页是给开发者复核的 HTML，版式与 Crawl 的其他报告一致：第一行是标题，之后依次是带表题的三张表（检索结论、检索范围与路线、未覆盖范围），每张表在自己的小节里；来源写在表 1 的“来源”列，给出标题链接和域名，不另列来源清单、数字统计和采集日期。单一字体族，字号按 Markdown 层级分级（见 [CONTRIBUTING.md](../CONTRIBUTING.md)），不含时间戳、哈希、路径、工具名和装饰。页面随所属技能的方案作为输入，关键结论也写入方案相应部分。
-
-结论页不直接交给客户：需要写进客户文件的内容由所属技能用客户的词重写，不带 Crawl 页面、来源统计、路径或哈希；客户明确要求参考来源时，只在文末列标题与链接。
+结论页给开发者复核：第一行是标题，之后是带表题的三张表（检索结论、检索范围与路线、未覆盖范围），来源写在表 1 的“来源”列。它不直接交给客户：要写进客户文件的内容由所属技能用客户的词重写，关键的外部主张按 Design 的 document-evidence.md 保留就近引用和文末原文。
 
 ## 判定
 
-- 完整链路：有连接检查、经验查询、真实搜索或采集日志，且次序正确。连接检查通过指 doctor 返回 `ready: true`（已连接可见 Edge）或 `silent_ready: true`（本机可以启动静默 Edge）；它不证明能读到页面，后面的正文仍须单独成立。
-- 有效来源：任务标识存在（`<任务目录>/raw/luz-task.json`，旧任务在 `<任务目录>/luz-task.json`）；页面确认取得正文；有 content.json 和真实快照文件；清单与文件 SHA-256 一致。网址、正文采集时间与本次成功日志须对应；搜索候选、错误响应、空表、仅 URL、passed 标签、只 doctor 都不通过。某条采集路线未取得正文时保留其状态和限制，可采用同次检索中另一条已核实的来源。
-- 补充信息：至少一项有效来源对应的补充信息被实际采用，写明采用位置；其他参考说明采用决定；列出未覆盖范围。脚本只能检查记录完整性，执行者必须复核结论是否忠于来源。
-- 结论页：`conclude` 把页面名与 SHA-256 写入记录，`check` 复核；页面缺失或被改动即不通过，需重新 `conclude`。
-- 时效：调用记录超过七天须重新检索；发布或交付时仍检查实际文件，不能靠旧的通过状态。
-- 失败：记录 blocked，保留已尝试路线；有限补搜或补采，不以未核实知识伪造完成。需要登录或验证时按 Crawl 协议交给用户。
-- 范围：这是通用最低门禁。System 的多来源覆盖、Dev 的官方/开源研究、Writing 的事实核验、Design 的风格确认、Ops 的测试证据继续执行，不能用一页参考代替专业调查。
-- 合规：批量或重复读取前按 [compliance.md](compliance.md) 核对；平台限制写入未覆盖范围。
+- **完整链路。** 有连接检查、经验查询、真实的搜索或采集日志，且次序正确。doctor 返回 `ready: true`（已连接可见 Edge）或 `silent_ready: true`（可启动静默 Edge）只说明能开始，不证明读到了页面。
+- **有效来源。** 任务标识存在（`<任务目录>/raw/luz-task.json`，旧任务在 `<任务目录>/luz-task.json`）；页面确认取到正文；有 `content.json` 和真实快照；清单与文件的 SHA-256 一致；网址、采集时间与本次成功的日志对应。某条路线没取到正文时保留它的状态和限制，可以采用同次检索里另一条已核实的来源。
+- **结论页。** `conclude` 把页面名和 SHA-256 写进记录，`check` 复核；页面缺失或被改动就重新 `conclude`。
+- **时效。** 记录超过七天要重新检索。项目里七天期限只管正在做的阶段：该阶段的 docs 文件已由用户逐个批准之后，它的记录只核对存在、有效、已 `conclude` 且结论页没被改动，超过七天也不挡下游，不为它重跑；变更重开某个阶段后，它重新算进行中。超期提示固定写“检索记录超过七天，请按当前需求复核”，Luz-Project 的 `project_crawl_gate.crawl_errors(…, waive_expiry=True)` 靠这句话识别并只去掉这一条，其余错误照常返回。不要改这句话的措辞。
+- **失败。** 记录 `blocked`，保留试过的路线；按关键缺口调整查询、阅读与补采。需要登录或验证时交给用户，不用没核实的知识冒充完成。
+- **各技能自己的要求仍然有效。** 这里是通用的最低门禁：System 的多来源覆盖、Dev 的官方与开源研究、Writing 的事实核验、Design 的实际看图与版式检查、Ops 的测试证据继续执行。
+- **合规。** 批量或重复读取前按 [compliance.md](compliance.md) 核对；平台限制写进未覆盖范围。
 
 ## 各技能补充什么
 
 | 技能 | 典型检索范围 | 写回位置 |
 |---|---|---|
 | Project | 行业、范围约束、交付条件、阶段风险 | 需求与阶段计划 |
-| System | 用户任务、同类业务、模块关系、平台能力 | 功能逻辑 / 前端 / 后端三视图 |
-| Design | 信息密度、排版、图标、组件、无障碍、响应式 | 2–3 个候选及确认后的 UI 交接 |
+| System | 用户任务、同类业务、模块关系、平台能力 | 功能逻辑、前端、后端三个视图 |
+| Design | 信息密度、排版、图标、组件、无障碍、响应式 | 设计方向与界面交接 |
 | Dev | 技术版本、API、数据库、实现、依赖、部署 | 技术方案、代码与验证依据 |
 | Ops | 测试方法、发布、监控、备份、回滚 | 验收、发布、运行和移交报告 |
 | Writing | 原始事实、术语、受众、表达边界 | 声明表、提纲、正文或文案键表 |
-| Crawl | 来源权威性、访问方式、已知采集限制 | 可追溯来源与爬取总结 HTML |
+| Crawl | 来源权威性、访问方式、已知的采集限制 | 可追溯的来源与爬取总结页 |

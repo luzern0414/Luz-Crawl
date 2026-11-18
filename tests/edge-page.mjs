@@ -27,8 +27,9 @@ export async function openTestBrowser() {
     for (const resolve of waiters) resolve();
   });
   const waitForLoad = (sessionId) => new Promise((resolve) => {
-    loaded.set(sessionId, [...(loaded.get(sessionId) ?? []), resolve]);
-    setTimeout(resolve, 10000);
+    const done = () => { clearTimeout(timer); loaded.set(sessionId, (loaded.get(sessionId) ?? []).filter(fn => fn !== done)); resolve(); };
+    const timer = setTimeout(done, 10000);
+    loaded.set(sessionId, [...(loaded.get(sessionId) ?? []), done]);
   });
 
   const used = new Set();
@@ -49,6 +50,7 @@ export async function openTestBrowser() {
     };
     return {
       evaluate,
+      cdp: (method, params) => cdp.send(method, params, sessionId),
       async goto(url) {
         const load = waitForLoad(sessionId);
         await cdp.send('Page.navigate', { url }, sessionId);

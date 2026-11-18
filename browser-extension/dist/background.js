@@ -2285,12 +2285,14 @@ async function handleCdp(cmd, leaseKey) {
   }
   const cmdTabId = await resolveCommandTabId(cmd);
   const tabId = await resolveTabId(cmdTabId, leaseKey);
+  let dispatched = false;
   try {
     const aggressive = getSurfaceFromKey(leaseKey) === "browser";
     await ensureAttached(tabId, aggressive);
     const params = cmd.cdpParams ?? {};
     const routeFrameId = typeof params.frameId === "string" && params.sessionId === "target" ? params.frameId : void 0;
     const routeTargetUrl = typeof params.targetUrl === "string" ? params.targetUrl : void 0;
+    dispatched = true;
     const data = routeFrameId ? await sendCommandInFrameTarget(tabId, routeFrameId, cmd.cdpMethod, stripOpenCliFrameRoutingParams(params, true), aggressive, commandCdpTimeoutMs(cmd) ?? 3e4, routeTargetUrl) : await sendDebuggerCommand(
       { tabId },
       cmd.cdpMethod,
@@ -2299,6 +2301,7 @@ async function handleCdp(cmd, leaseKey) {
     );
     return pageScopedResult(cmd.id, tabId, data);
   } catch (err) {
+    if (cmd.once && dispatched) return { id: cmd.id, ok: false, errorCode: "command_result_unknown", error: "Native input result is unknown; inspect the page before continuing.", errorHint: UNKNOWN_OUTCOME_HINT };
     return errorResult(cmd.id, err);
   }
 }

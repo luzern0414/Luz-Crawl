@@ -9,11 +9,48 @@ import { privateAddress, validateMediaURL, fetchBrowserMedia } from '../lib/medi
 import { observedPostVideos } from '../lib/extract-page.mjs';
 import { validateActions, browserActions } from '../lib/browser-actions.mjs';
 import { sourceMarkup } from '../lib/report.mjs';
+import { writeCrawlSummary } from '../lib/crawl-summary.mjs';
+import { LARGE_DOWNLOAD } from '../lib/retention.mjs';
 import { testPolicy, actionArgument } from './helpers.mjs';
 
 const tmp = await fs.mkdtemp(path.join(os.tmpdir(), 'luzcrawl-media-'));
 const downloadArchive = (folder, options) => download(folder, { executionPolicy: testPolicy(tmp), ...options });
 test.after(() => fs.rm(tmp, { recursive: true, force: true }));
+
+test('a final summary reclaims large mux inputs and preserves playable and verifiable delivery', async () => {
+  const task = await createTaskArchive(path.join(tmp, 'retention-output'), '视频调研', { newTask: true });
+  const folder = path.join(task, 'raw', '0001_video');
+  const post = { text: 'Observed video description with a verified source body.', images: [],
+    videos: [{ url: 'https://example.com/video.mp4', audio_url: 'https://example.com/audio.m4a' }] };
+  const content = JSON.stringify({ requested_url: 'https://example.com/watch', status: 'captured', url_check: { valid_content: true }, post });
+  const html = '<!doctype html><body>视频正文</body></html>';
+  await atomicWrite(path.join(folder, 'content.json'), content);
+  await atomicWrite(path.join(folder, 'video.html'), html);
+  await atomicWrite(path.join(folder, 'manifest.json'), { primary_file: 'video.html', output_layout: 'archive_html_v2',
+    files: [{ path: 'content.json', sha256: hash(content) }, { path: 'video.html', sha256: hash(html) }] });
+  const bytes = Buffer.alloc(LARGE_DOWNLOAD);
+  const result = await downloadArchive(folder, {
+    fetchAsset: async url => new Response(bytes, { headers: { 'content-type': url.endsWith('.m4a') ? 'audio/mp4' : 'video/mp4' } }),
+    muxHelper: async (video, audio, dir) => {
+      const file = path.join(dir, 'merged.mp4');
+      await fs.writeFile(file, 'mux fixture');
+      return { file, url: video.url, bytes: 11, sha256: hash('mux fixture'), mime: 'video/mp4', parts: [video, audio] };
+    },
+  });
+  assert.equal(result.status, 'downloaded');
+  const cache = result.files[0].parts.map(part => part.cache_file);
+  assert.equal(cache.length, 2);
+  const manifest = await fs.readFile(path.join(folder, 'manifest.json'));
+  await writeCrawlSummary(task);
+  for (const raw of cache) await fs.access(raw);
+  const report = await writeCrawlSummary(task, { finalize: true });
+  assert.deepEqual(report.cleanup, { removed: 2, freed_bytes: 2 * LARGE_DOWNLOAD, errors: [] });
+  for (const raw of cache) await assert.rejects(fs.access(raw), { code: 'ENOENT' });
+  assert.match(await fs.readFile(path.join(folder, 'video.html'), 'utf8'), /src="media\/merged.mp4"/);
+  assert.ok((await verifyArchive(folder)).ok);
+  assert.deepEqual(await fs.readFile(path.join(folder, 'manifest.json')), manifest);
+  assert.equal((await writeCrawlSummary(task, { finalize: true })).cleanup.freed_bytes, 0);
+});
 async function archive(name, post = { images: [], videos: [] }) {
   const folder = path.join(tmp, name);
   const content = JSON.stringify({ requested_url: 'https://x.com/example/status/123', url_check: { valid_content: true }, post });

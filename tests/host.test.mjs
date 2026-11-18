@@ -2,6 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import os from 'node:os';
 import path from 'node:path';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
+import { fileURLToPath } from 'node:url';
 
 process.env.LUZ_CRAWL_STATE ??= path.join(os.tmpdir(), `luz-host-test-${process.pid}`);
 const { parseCommandLine } = await import('../lib/host.mjs');
@@ -22,6 +25,16 @@ test('the command host parses the argument arrays the CLI entry builds', () => {
   assert.equal(batch['allow-write'], true);
   assert.equal(batch.concurrency, 6);
   assert.equal(parseCommandLine(['luz-crawl', 'capture', 'u', '--no-headless']).options.headless, false);
+});
+
+test('discovery accepts --no-screenshot at the public CLI and browser host', async () => {
+  const cli = fileURLToPath(new URL('../scripts/luz-crawl.mjs', import.meta.url));
+  const { stdout } = await promisify(execFile)(process.execPath, [cli, 'schema', '--no-screenshot']);
+  assert.ok(JSON.parse(stdout).actions);
+  const { options } = parseCommandLine(['luz-crawl', 'search', 'bing', 'query', '--read', '0', '--no-screenshot']);
+  assert.equal(options.screenshot, false);
+  assert.equal(options.__optionSources.screenshot, 'cli');
+  assert.equal(parseCommandLine(['luz-crawl', 'search', 'bing', 'query']).options.screenshot, true);
 });
 
 test('the command host rejects unknown commands, unknown options and missing arguments', () => {

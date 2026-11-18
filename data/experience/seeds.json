@@ -264,6 +264,74 @@
       "when": "GitHub Web 搜索偶发打不开、空白，或静默到可见浏览器补读失败时",
       "action": "GitHub Web 出现 about:blank、连接重置或超时不足以判 IP 被封；同时间 api.github.com、Bing 和 githubstatus.com 可读时，先看状态页，比较浏览器 Web、API、Status 与网络探测并保留各自边界和失败证据。保存的浏览器 profile 断开时选已连接可见浏览器；连接失败不算已尝试网站，不能用泛化网络或登录结论掩盖。",
       "updated": "2026-10-30"
+    },
+    {
+      "key": "captured-body-is-not-reviewed-evidence",
+      "platform": "web",
+      "when": "自动采集返回 captured、需要决定哪些条目能作为研究依据时",
+      "action": "captured 仅表示采集到内容。视频简介、目录导航和只阅读开头的长文不能冒充已通读的有效正文；在来源评估中写阅读范围和排除理由，另选适用原文。候选、已归档、已读和采用四种状态分别保留。",
+      "category": "verification",
+      "tags": [
+        "正文",
+        "阅读",
+        "归档",
+        "视频简介",
+        "目录",
+        "核验"
+      ],
+      "outcome": "success",
+      "updated": "2026-11-07"
+    },
+    {
+      "key": "research-candidates-review-feedback",
+      "platform": "web",
+      "when": "跨来源调查和多轮补搜交接时",
+      "action": "保留完整去重候选及每条发现路线，再逐项关联问题、分类并说明采用或排除。每轮记录新增信息、失败和下一轮调整，按关键问题覆盖及剩余候选说明停止依据；把实证规律写成分类经验并用不同说法反查。数量是下限，不是充分调查的证明。",
+      "category": "method",
+      "tags": [
+        "候选",
+        "分类",
+        "复盘",
+        "停止",
+        "迭代",
+        "反馈",
+        "经验"
+      ],
+      "source": "https://library-guides.imperial.ac.uk/systematic-review/documenting_search",
+      "outcome": "success",
+      "updated": "2026-11-07"
+    },
+    {
+      "key": "live-session-state-reuse",
+      "platform": "web",
+      "when": "多步交互需要跨 CLI 保留同一页面输入和状态",
+      "action": "使用 live open/inspect/act/capture/close，所有命令绑定同一任务 out 和线程。先观察唯一目标，再按授权操作，以业务 expect 核验。复用页面能避免重复导航丢失输入；本地真实 Edge 测试验证跨进程状态保留和提交去重。默认静默，需观看用 headed；结果待定时先核验。",
+      "category": "method",
+      "tags": [
+        "持续会话",
+        "浏览器",
+        "表单",
+        "同页",
+        "live"
+      ],
+      "outcome": "success",
+      "updated": "2026-11-07"
+    },
+    {
+      "key": "browser-partial-write-no-replay",
+      "platform": "web",
+      "when": "点击失联、表单部分写入失败或原生事件返回丢失",
+      "action": "写动作先保存请求指纹，重试用相同请求ID和相同负载。一次请求结果未知时不换新ID或切工具重放；部分表单已写入后后续字段失效也进入待核验。live 用原 expect 或经观察确认的业务条件与说明 verify，再解锁写入。切换工具、重开浏览器并不能证明原写失败。",
+      "category": "verification",
+      "tags": [
+        "部分写入",
+        "重复提交",
+        "结果未知",
+        "请求去重",
+        "核验"
+      ],
+      "outcome": "success",
+      "updated": "2026-11-07"
     }
   ]
 }

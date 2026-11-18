@@ -326,7 +326,9 @@ test('TikTok portals without a video payload remain readable', { skip: !edgeAvai
 test('an interrupted headless operation closes only its dedicated browser', { skip: process.env.LUZ_HEADLESS_INTEGRATION !== '1' || !edgeAvailable }, async () => {
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'luz-headless-'));
   const previous = process.env.LUZ_CRAWL_STATE;
+  const previousProfiles = process.env.LUZ_CRAWL_PROFILES;
   process.env.LUZ_CRAWL_STATE = directory;
+  process.env.LUZ_CRAWL_PROFILES = path.join(directory, 'profiles');
   let browser;
   try {
     await assert.rejects(withHeadlessSession(async (profile, edge) => {
@@ -334,7 +336,11 @@ test('an interrupted headless operation closes only its dedicated browser', { sk
       throw new Error('intentional operation interruption');
     }), /intentional operation interruption/);
     assert.equal(await Promise.race([browser.exited.then(() => 'exited'), new Promise((resolve) => setTimeout(resolve, 5000, 'running'))]), 'exited');
-  } finally { if (previous === undefined) delete process.env.LUZ_CRAWL_STATE; else process.env.LUZ_CRAWL_STATE = previous; await fs.rm(directory, { recursive: true, force: true }); }
+  } finally {
+    if (previous === undefined) delete process.env.LUZ_CRAWL_STATE; else process.env.LUZ_CRAWL_STATE = previous;
+    if (previousProfiles === undefined) delete process.env.LUZ_CRAWL_PROFILES; else process.env.LUZ_CRAWL_PROFILES = previousProfiles;
+    await fs.rm(directory, { recursive: true, force: true });
+  }
 });
 
 test('without a visible browser the silent result is kept and nothing is sent to another session', async () => {

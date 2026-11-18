@@ -2,6 +2,8 @@
 
 用于在一个任务页中执行有限的浏览器动作。所有动作返回 JSON。
 
+`browser URL` 是一次调用，完成后关闭页面。需要跨命令保留输入与页面状态，用 [live 持续会话](browser-live.md)；两者共用动作 schema，`schema` 是字段与范围的机器入口。
+
 ## 调用
 
     node scripts/luz-crawl.mjs schema
@@ -17,6 +19,9 @@
 | locate | 查找可见目标并返回选择器 |
 | click | 点击唯一可见目标 |
 | type | 向唯一输入框输入文字 |
+| select | 按 option value 选择单个或多个选项 |
+| check | 设置 checkbox/radio 状态；单选取消需选另一个选项 |
+| press | 原生键盘操作；支持键见 schema |
 | form | 填写表单字段 |
 | submit | 提交唯一表单 |
 | scroll | 滚动页面或容器 |
@@ -29,7 +34,9 @@
 
     {"action":"click","target":{"role":"button","name":"搜索"}}
 
-click、type、form、submit 属于写操作，必须得到用户对目标和内容的明确授权并加 --allow-write。写操作结果未知时只读核验，不重复派发。
+click、type、form、submit、select、check、press 属于写操作，必须在用户对目标和内容的授权范围内并加 --allow-write。写操作结果未知时只读核验，不重复派发。click/type 支持 `method: dom|native`，默认 dom；press 为 native。作用域、能力限制、分页、表格行偏移和核验方式见 [持续会话](browser-live.md)。
+
+wait_for/expect 可验证可见、隐藏、text/text_equals、value、checked 或 url，默认超时 8 秒，最多 30 秒。selector 与 role/name 二选一；简化语义定位不承诺完整可访问名称计算。form 先验证全部字段，但页面事件仍可能使后续字段失效，此时已经发生的写入不回滚，并标记待核验。
 
 ## 搜索表单
 
@@ -48,6 +55,8 @@ jobs.json 可以包含 URL、动作步骤或搜索任务：
     ]
 
 每批 1–500 项，默认并发 4，允许 1–6。每项独立保存结果；登录、验证、限流只停止对应站点。批量完成后，未取得正文或没有候选的项目会进行一次有限补采。
+
+调用方限制单并发时显式 `--concurrency 1`，不启动子代理；live 会话自身始终串行，不用 batch 把同一页面步骤拆成并行任务。
 
 ## 返回状态
 

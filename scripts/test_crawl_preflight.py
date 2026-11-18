@@ -6,10 +6,11 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import crawl_preflight
-from crawl_preflight import digest, record_path, validate_preflight, conclude, now, plain_title, run
+from crawl_preflight import digest, record_path, validate_preflight, conclude as real_conclude, now, plain_title, run
 
 
 def evidence_dir(archive):
@@ -18,11 +19,13 @@ def evidence_dir(archive):
     return archive if (archive / "manifest.json").is_file() else archive / "raw"
 
 
-def fixture(root, caller="luz-design", stage=None, source_url="https://example.org/doc", layout="v2", task_name="fixture-task", task_parent=None):
+def _single_fixture(root, caller="luz-design", stage=None, source_url="https://example.org/doc", layout="v2", task_name="fixture-task", task_parent=None, source_urls=None):
     """layout "v2": <task>/raw/<archive>/content.json, marker <task>/raw/luz-task.json.
     layout "older": <task>/raw/<archive>/raw/content.json, marker <task>/luz-task.json (sibling_raw_v1).
     The task folder is <task_parent or root/raw>/<task_name>; the gate knows a task by its marker, so any name works
     (NNN-主题, the older NNN_主题, ...). The record, its logs and its pages sit where record_path(root, ...) says."""
+    source_urls = source_urls or [source_url]
+    source_url = source_urls[0]
     timestamp = now()
     label = f"{caller}-{stage or 'standalone'}"
     task = Path(task_parent or root / "raw") / task_name
@@ -55,14 +58,130 @@ def fixture(root, caller="luz-design", stage=None, source_url="https://example.o
         args = [name, source_url, "--out", str(task)] if name == "capture" else [name]
         steps.append({"command": name, "args": args, "exit_code": 0, "file": str(p), "sha256": digest(p)})
     record = {"schema_version": 1, "caller": caller, "stage": stage, "topic": "test", "started_at": timestamp, "finished_at": now(), "task_root": str(task), "status": "captured", "steps": steps, "sources": [{"id": "SRC-001", "archive": str(archive), "manifest_sha256": digest(manifest), "url": source_url, "captured_at": timestamp}], "findings": [], "gaps": []}
+    for number, url in enumerate(source_urls[1:], 2):
+        extra = archive.with_name(f"{label}-{number:03d}")
+        extra_raw = extra if layout == "v2" else extra / "raw"
+        (extra_raw / "snapshots").mkdir(parents=True, exist_ok=True)
+        extra_snapshot = extra_raw / "snapshots" / "0000.json"
+        extra_snapshot.write_text(json.dumps({"text": f"Actual browser body {number}"}), encoding="utf-8")
+        extra_content = extra_raw / "content.json"
+        extra_content.write_text(json.dumps({"status": "captured", "captured_at": timestamp, "resolved_url": url, "text": f"Actual document body {number}", "url_check": {"valid_content": True}, "completeness": {"scope": "rendered_body_and_loaded_items"}}), encoding="utf-8")
+        extra_manifest = extra_raw / "manifest.json"
+        extra_manifest.write_text(json.dumps({"status": "captured", "files": [{"path": str(p.relative_to(extra)), "sha256": digest(p)} for p in (extra_content, extra_snapshot)]}), encoding="utf-8")
+        log = logs / f"capture-{number:03d}.json"
+        log.write_text(json.dumps({"folder": str(extra), "status": "captured", "resolved_url": url, "url_check": {"requested": url, "valid_content": True}}), encoding="utf-8")
+        steps.insert(-1, {"command": "capture", "args": ["capture", url, "--out", str(task)], "exit_code": 0, "file": str(log), "sha256": digest(log)})
+        record["sources"].append({"id": f"SRC-{number:03d}", "archive": str(extra), "manifest_sha256": digest(extra_manifest), "url": url, "captured_at": timestamp})
+    record["finished_at"] = now()
     path.write_text(json.dumps(record), encoding="utf-8")
     return path, record, snapshot
 
 
-def complete_fixture(root, caller, stage=None):
+def fixture(root, caller="luz-design", stage=None, **options):
+    from test_evidence_policy import broad_fixture
+    return broad_fixture(root, caller, stage, **options)
+
+
+def conclude(root, caller, payload, stage=None):
+    from test_evidence_policy import payload_for
+    value = json.loads(record_path(root, caller, stage).read_text(encoding="utf-8"))
+    payload = payload_for(value, payload)
+    write_review_fixture(record_path(root, caller, stage), value, payload)
+    return real_conclude(root, caller, payload, stage)
+
+
+def write_review_fixture(path, value, payload=None):
+    """Synthetic handoff for offline integration tests, never live research evidence."""
+    if not value.get('candidate_inventory'):
+        return
+    inventory = crawl_preflight.read(path.parent / value['candidate_inventory'])
+    if payload is None:
+        from test_evidence_policy import payload_for
+        payload = payload_for(value)
+    from research_inventory import candidate_url
+    adopted = {f['source_id'] for f in payload['findings'] if f.get('adopted') is True}
+    bodies = {candidate_url(s['url']): s['id'] for s in value['sources']}
+    queries = list(dict.fromkeys(s['args'][2] for s in value['steps'] if s['command'] == 'search' and s.get('exit_code') == 0))
+    review = {key: value[key] for key in ('caller', 'stage', 'task_root', 'candidate_inventory_sha256')}
+    review.update(
+        questions=[{'id': 'OFFLINE-Q', 'question': 'Offline evidence handling', 'importance': 'required'}],
+        query_groups=[{'purpose': f'Offline fixture direction {i}', 'queries': [q]} for i, q in enumerate(queries)],
+        candidate_reviews=[{'url': c['url'], 'category': 'unknown', 'question_ids': ['OFFLINE-Q'],
+                            'status': ('read-adopted' if bodies[c['url']] in adopted else 'read-not-adopted') if c['url'] in bodies else 'unread',
+                            'priority': 'low', 'reason': 'Synthetic fixture; not an actual reviewed source'} for c in inventory['candidates']],
+        rounds=[{'logs': [s['file'] for s in value['steps']], 'observation': 'Offline execution fixture', 'next_action': 'Validate gate'}],
+        experience_reuse=[{'status': 'no-hit', 'log': 'offline-experience', 'impact': 'Exercise record shape only'}],
+        experience_updates=[{'key': 'offline-note', 'category': 'method', 'outcome': 'unverified', 'evidence': ['offline-fixture'], 'recall_log': 'offline-recall'}],
+        stop={'reason': 'sufficient', 'basis': 'Offline fixture only; does not establish live diligence', 'remaining': []})
+    crawl_preflight.write(path.with_name(path.stem + '-research-review.json'), review)
+
+
+def broad_routes(queries=None, urls=None):
+    queries = list(queries or [])
+    queries += [f"offline coverage {i}" for i in range(5 - len(queries))]
+    urls = list(urls or [])
+    urls += [f"https://publisher{i % 3}.example/offline-{i}" for i in range(5 - len(urls))]
+    return {"queries": queries, "urls": urls}
+
+
+def complete_fixture(root, caller, stage=None, *, source_urls=None):
     """Offline fixture for integration tests; never a user approval or live search."""
-    fixture(root, caller, stage)
-    return conclude(root, caller, {"findings": [{"source_id": "SRC-001", "summary": "离线夹具中的补充信息", "applies_to": "测试场景的方案输入", "adopted": True}], "gaps": []}, stage)
+    _, record, _ = fixture(root, caller, stage, source_urls=source_urls)
+    return conclude(root, caller, {"findings": [{"source_id": source["id"], "summary": "离线夹具中的补充信息", "applies_to": "测试场景的方案输入", "adopted": True} for source in record["sources"]], "gaps": []}, stage)
+
+
+class CaptureRootUrlTests(unittest.TestCase):
+    def test_browser_added_root_slash_keeps_captured_evidence(self):
+        with tempfile.TemporaryDirectory() as directory:
+            task = Path(directory).resolve()
+            archive = task / "raw" / "page"
+            step = {"command": "capture", "args": ["capture", "https://example.org", "--out", str(task)]}
+            result = {"status": "captured", "folder": str(archive),
+                      "url_check": {"requested": "https://example.org/", "valid_content": True}}
+            self.assertEqual(crawl_preflight._observed_sources(step, result, task), [str(archive)])
+
+    def test_other_document_identities_remain_distinct(self):
+        pairs = [("https://example.org/doc", "https://example.org/doc/"),
+                 ("https://example.org/?q=a", "https://example.org/?q=b"),
+                 ("https://example.org/#/a", "https://example.org/#/b"),
+                 ("https://example.org/#!/a", "https://example.org/#!/b"),
+                 ("https://example.org/", "https://other.example.org/")]
+        for left, right in pairs:
+            with self.subTest(left=left, right=right):
+                self.assertNotEqual(crawl_preflight._document_url(left), crawl_preflight._document_url(right))
+
+
+class SourceBodyGuardTests(unittest.TestCase):
+    def errors_for(self, root, title, body):
+        _, value, _ = _single_fixture(root)
+        source = value['sources'][0]
+        archive = Path(source['archive'])
+        content_path = evidence_dir(archive) / 'content.json'
+        content = json.loads(content_path.read_text(encoding='utf-8'))
+        content.update(title=title, text=body)
+        content_path.write_text(json.dumps(content), encoding='utf-8')
+        manifest_path = evidence_dir(archive) / 'manifest.json'
+        manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
+        for item in manifest['files']:
+            item['sha256'] = digest(archive / item['path'])
+        manifest_path.write_text(json.dumps(manifest), encoding='utf-8')
+        source['manifest_sha256'] = digest(manifest_path)
+        return crawl_preflight.source_errors(source, value['task_root'])
+
+    def test_not_found_title_cannot_count_as_a_document(self):
+        for title in ('Not Found', 'Not Found - docs', 'Page Not Found'):
+            with self.subTest(title=title), tempfile.TemporaryDirectory() as tmp:
+                errors = self.errors_for(Path(tmp), title, 'The requested documentation page is unavailable.')
+                self.assertTrue(any('错误页面' in error for error in errors), errors)
+
+    def test_short_navigation_with_whitespace_is_not_quotable_body(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            errors = self.errors_for(Path(tmp), 'Documentation', ' 12345 \n 67890 \t 1 ')
+            self.assertTrue(any('有效逐字摘录' in error for error in errors), errors)
+
+    def test_twelve_nonspace_characters_are_eligible_for_review(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertEqual(self.errors_for(Path(tmp), 'Documentation', ' 123456 \n 789012 '), [])
 
 
 class OlderLayoutTests(unittest.TestCase):
@@ -161,6 +280,21 @@ class PreflightTests(unittest.TestCase):
             self.assertEqual(validate_preflight(root, "luz-design"), [])
             snapshot.write_text("changed", encoding="utf-8")
             self.assertTrue(any("哈希" in e for e in validate_preflight(root, "luz-design")))
+
+    def test_the_expiry_finding_keeps_the_phrase_luz_project_waives_for_an_approved_stage(self):
+        """Luz-Project drops exactly this finding for a stage whose files the user approved (crawl_gate.crawl_errors(waive_expiry=True)); the other findings stay."""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            p, value, _ = fixture(root)
+            conclude(root, "luz-design", {"findings": [{"source_id": "SRC-001", "summary": "尺寸由容器和内容决定", "applies_to": "响应式布局方案", "adopted": True}], "gaps": []})
+            self.assertEqual(validate_preflight(root, "luz-design"), [])
+            value = json.loads(p.read_text(encoding="utf-8"))
+            old = (datetime.now(timezone.utc) - timedelta(days=8)).isoformat(timespec="microseconds").replace("+00:00", "Z")
+            value["started_at"] = value["finished_at"] = old
+            p.write_text(json.dumps(value), encoding="utf-8")
+            expired = [e for e in validate_preflight(root, "luz-design") if "超过七天" in e]
+            self.assertEqual(len(expired), 1)
+            self.assertIn("检索记录超过七天", expired[0])
 
     def test_another_caller_or_stage_cannot_reuse_completion(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -330,7 +464,7 @@ class ConclusionPageTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             record, page = self.conclude_page(Path(tmp))
             body = page.split("<body>", 1)[1]
-            self.assertTrue(body.startswith("<main><h1>B2B订货系统</h1><section><h2>检索结论</h2>"))
+            self.assertTrue(body.lstrip().startswith("<main>\n<h1>B2B订货系统</h1><section><h2>检索结论</h2>"))
             self.assertEqual(re.findall(r"<caption>(表 \d+　[^<]+)</caption>", page), ["表 1　检索结论", "表 2　检索范围与路线", "表 3　未覆盖范围"])
             self.assertEqual(re.findall(r"<h2>([^<]+)</h2>", page), ["检索结论", "检索范围", "未覆盖范围"])
             self.assertNotIn("<script", page.replace("&lt;script&gt;", ""))
@@ -414,7 +548,7 @@ const archive = (task, label, url) => {
 if (command === 'doctor') out(JSON.parse(process.env.FAKE_DOCTOR || '{"ready":false,"silent_ready":true}'));
 if (command === 'begin') { const folder = path.join(option('--out'), '001-task'); fs.mkdirSync(path.join(folder, 'raw'), { recursive: true }); fs.writeFileSync(path.join(folder, 'raw', 'luz-task.json'), JSON.stringify({ schema_version: 1, kind: 'task_archive', delivery_layout: 'task_folder_v2', title: args[0] })); out({ folder, title: args[0], status: 'ready' }); }
 if (command === 'experience') out({ notes: [] });
-if (command === 'search') { const folder = archive(option('--out'), 'hit', `https://example.org/${args[0]}/${calls.length}`); out({ status: 'partial', platform: args[0], query: args[1], sources: [{ status: 'captured', folder, url_check: { valid_content: true } }] }); }
+if (command === 'search') { const folder = archive(option('--out'), 'hit', `https://example.org/${args[0]}/${calls.length}`); out({ status: 'partial', search_performed: true, platform: args[0], query: args[1], sources: [{ status: 'captured', folder, url_check: { valid_content: true } }] }); }
 if (command === 'capture' && process.env.FAKE_FAIL && args[0].includes(process.env.FAKE_FAIL)) out({ status: 'failed', stop_reason: 'rate_limited', url_check: { requested: args[0], valid_content: false } }, 1);
 if (command === 'capture') { const folder = archive(option('--out'), 'page', args[0]); out({ status: 'captured', folder, url_check: { requested: args[0], valid_content: true } }); }
 if (command === 'summary') out({ file: 'summary.html' });
@@ -447,11 +581,11 @@ class RunFlowTests(unittest.TestCase):
     def test_shared_task_stage_and_search_options(self):
         if not self.node:
             self.skipTest("node unavailable")
-        first = run(self.root / "design", "luz-design", "界面信息密度", queries=["订货系统 界面"], platform="github", read_count=3, stage="design")
+        first = run(self.root / "design", "luz-design", "界面信息密度", **broad_routes(["订货系统 界面"]), platform="github", read_count=3, stage="design")
         self.assertEqual(first["status"], "needs-conclusion")
         search = [c for c in self.calls() if c[0] == "search"][0]
         self.assertEqual(search[1:5], ["github", "订货系统 界面", "--read", "3"])
-        second = run(self.root / "dev", "luz-dev", "订单接口", task=Path(first["task"]), urls=["https://docs.example.com/api"], stage="technical-plan")
+        second = run(self.root / "dev", "luz-dev", "订单接口", task=Path(first["task"]), **broad_routes(urls=["https://docs.example.com/api"]), stage="technical-plan")
         self.assertEqual(second["task"], first["task"])
         self.assertEqual(len([c for c in self.calls() if c[0] == "begin"]), 1)
         for session, caller, stage in ((self.root / "design", "luz-design", "design"), (self.root / "dev", "luz-dev", "technical-plan")):
@@ -465,12 +599,15 @@ class RunFlowTests(unittest.TestCase):
             self.skipTest("node unavailable")
         os.environ["FAKE_FAIL"] = "limited.example"
         try:
-            value = run(self.root / "p", "luz-crawl", "来源取不到", urls=["https://limited.example/data.json", "https://docs.example.com/page"], stage="research")
+            routes = broad_routes(urls=["https://docs.example.com/page"])
+            routes["urls"].insert(0, "https://limited.example/data.json")
+            value = run(self.root / "p", "luz-crawl", "来源取不到", **routes, stage="research")
             self.assertEqual(value["status"], "needs-conclusion")
-            self.assertEqual([s["url"] for s in value["sources"]], ["https://docs.example.com/page"])
+            self.assertIn("https://docs.example.com/page", [s["url"] for s in value["sources"]])
+            self.assertNotIn("https://limited.example/data.json", [s["url"] for s in value["sources"]])
             record = json.loads(record_path(self.root / "p", "luz-crawl", "research").read_text(encoding="utf-8"))
             captures = [s for s in record["steps"] if s["command"] == "capture"]
-            self.assertEqual([s["exit_code"] for s in captures], [1, 0])           # the failed route stays in the record with its exit code
+            self.assertEqual([s["exit_code"] for s in captures], [1, 0, 0, 0, 0, 0])  # failed route stays recorded
             conclude(self.root / "p", "luz-crawl", {"findings": [{"source_id": "SRC-001", "summary": "离线结论", "applies_to": "调研", "adopted": True}], "gaps": ["第一个网址没有读到"]}, "research")
             self.assertEqual(validate_preflight(self.root / "p", "luz-crawl", "research"), [])
             with self.assertRaises(ValueError):                                      # when every route fails there is nothing to conclude from
@@ -485,7 +622,7 @@ class RunFlowTests(unittest.TestCase):
             self.skipTest("node unavailable")
         os.environ["FAKE_DOCTOR"] = '{"ready":false,"silent_ready":false}'
         with self.assertRaises(ValueError):
-            run(self.root / "ops", "luz-ops", "监控方案")
+            run(self.root / "ops", "luz-ops", "监控方案", research="search")
         record = json.loads(record_path(self.root / "ops", "luz-ops").read_text(encoding="utf-8"))
         self.assertEqual(record["status"], "blocked")
         self.assertTrue(validate_preflight(self.root / "ops", "luz-ops"))
@@ -546,7 +683,7 @@ class ProjectModeTests(unittest.TestCase):
             self.assertTrue(path.with_suffix(".html").is_file())
             for session in (state, project):                                                       # both spellings reach the same records
                 self.assertEqual(validate_preflight(session, caller, stage), [])
-        self.assertEqual(sorted(p.name for p in state.iterdir()), ["00-crawl", "project.json"])  # no raw/ and no crawled page in the state root
+        self.assertEqual(sorted(p.name for p in state.iterdir()), ["00-crawl", "00-design", "project.json"])  # template snapshots are process evidence, too
         self.assertEqual([p.name for p in project.iterdir()], ["docs"])                            # the project directory gets nothing
         self.assertEqual([p.name for p in self.crawl_output.iterdir()], ["117-B2B订货系统"])
         self.assertEqual(crawl_preflight.evidence_dir(project), (state / "00-crawl").resolve())
@@ -582,7 +719,7 @@ class ProjectModeTests(unittest.TestCase):
         (task / "raw").mkdir(parents=True)
         (task / "raw" / "luz-task.json").write_text(json.dumps({"schema_version": 1, "kind": "task_archive", "delivery_layout": "task_folder_v2", "title": "B2B订货系统"}), encoding="utf-8")
         project, state = self.new_project(crawl={"task_root": str(task)})
-        value = run(project, "luz-project", "行业范围", queries=["订货系统"], stage="requirements")        # the project directory is enough
+        value = run(project, "luz-project", "行业范围", **broad_routes(["订货系统"]), stage="requirements")  # project directory is enough
         self.assertEqual(value["task"], str(task.resolve()))
         self.assertEqual(Path(value["record"]), (state / "00-crawl" / "luz-project-requirements.json").resolve())
         calls = json.loads((self.root / "calls.json").read_text(encoding="utf-8"))

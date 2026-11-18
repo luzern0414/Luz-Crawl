@@ -22,6 +22,7 @@ import { lzNote, lzNotes, lzNotesCheck, lzNotesList, lzNotesPrune } from '../lib
 import { lzScope } from '../lib/scope.mjs';
 import { lzLibrary } from '../lib/site-library.mjs';
 import { checkRobots } from '../lib/robots.mjs';
+import { startLive, requestLive } from '../lib/live.mjs';
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const print = (value) => console.log(JSON.stringify(value, null, 2));
@@ -44,6 +45,7 @@ function captureArgs(url, options) {
   if (options.comments) args.push('--comments');
   if (options.download) args.push('--download');
   if (options.resume) args.push('--resume');
+  if (options.screenshot === false) args.push('--no-screenshot');
   if (options.profile) args.unshift('--profile', options.profile);
   if (options.window) args.push('--window', options.window);
   return args;
@@ -53,10 +55,10 @@ function captureArgs(url, options) {
 // a time, so each gets its own visible-browser fallback. The better of the two results is kept; the first attempt is
 // recorded in second_pass.
 async function retryIncompleteJobs(batchResult, values, out) {
-  const retry = (batchResult.results || []).map((job, index) => [job, index]).filter(([job]) => job && (job.url || job.query)
+  const retry = (batchResult.results || []).map((job, index) => [job, index]).filter(([job]) => job && job.kind !== 'browser' && (job.url || job.query)
     && !['completed', 'awaiting_user', 'skipped'].includes(job.status)
     && (job.query ? !(job.candidates || []).length : job.status !== 'captured' && !job.url_check?.valid_content)
-    && !['rate_limited', 'operation_budget', 'cancelled', 'site_blocked'].includes(job.stop_reason || job.awaiting_reason)).slice(0, 20);
+    && !['rate_limited', 'operation_budget', 'cancelled', 'site_blocked', 'login_required', 'verification_required', 'access_denied', 'write_outcome_unknown'].includes(job.awaiting_reason || job.stop_reason || job.failure?.code)).slice(0, 20);
   if (!retry.length) return false;
   console.error(`[LuzCrawl] 批量中 ${retry.length} 条未取得正文，逐条补采（必要时转可见浏览器）。`);
   for (const [job, index] of retry) {
@@ -64,8 +66,11 @@ async function retryIncompleteJobs(batchResult, values, out) {
     try {
       let native;
       if (job.query) {
-        native = ['luz-crawl', 'search', job.platform, job.query, '--out', out, '--read', String(job.read ?? 0), '--scrolls', '12', '-f', 'json'];
+        native = ['luz-crawl', 'search', job.platform, job.query, '--out', out, '--read', String(job.read ?? 0), '--scrolls', String(values.scrolls ?? 12), '-f', 'json'];
+        if (job.site) native.push('--site', job.site);
+        for (const key of ['comments', 'download']) if (values[key]) native.push(`--${key}`);
         if (values.profile) native.unshift('--profile', values.profile);
+        if (values.screenshot === false) native.push('--no-screenshot');
       } else native = captureArgs(job.url, { ...values, out, resume: true });
       again = JSON.parse(await hostCommand(native));
     } catch (error) { again = { status: 'failed', error: error.message }; }
@@ -87,18 +92,18 @@ const usage = `LuzCrawl ${VERSION} — skill, browser extension and local memory
   node scripts/luz-crawl.mjs install
   node scripts/luz-crawl.mjs collect "topic or URL" [--platform xhs,github,bing] [--file plan.json] [--read 1] --out TASK_FOLDER
   node scripts/luz-crawl.mjs report COLLECTION_DIRECTORY
-  node scripts/luz-crawl.mjs summary TASK_DIRECTORY
+  node scripts/luz-crawl.mjs summary TASK_DIRECTORY [--keep-raw]
   node scripts/luz-crawl.mjs robots URL
   node scripts/luz-crawl.mjs capture URL --out TASK_FOLDER [--scrolls 20] [--comments] [--download] [--profile ID]
   node scripts/luz-crawl.mjs batch --file jobs.json --out TASK_FOLDER [--concurrency 4] [--allow-write] [--resume]
-  node scripts/luz-crawl.mjs search PLATFORM_OR_DOMAIN "query" --out TASK_FOLDER [--read 1] [--comments] [--download]
+  node scripts/luz-crawl.mjs search PLATFORM_OR_DOMAIN "query" --out TASK_FOLDER [--read 1] [--comments] [--download] [--no-screenshot]
   node scripts/luz-crawl.mjs search web "query" --site example.com --out TASK_FOLDER
-  node scripts/luz-crawl.mjs experience --query "keyword" [--platform x]
+  node scripts/luz-crawl.mjs experience --query "keyword" [--platform x] [--category keyword|route|source|failure|verification|method|general]
   node scripts/luz-crawl.mjs sites [--category analytics]
   node scripts/luz-crawl.mjs remember --out DIRECTORY --format html [--keywords "word1,word2"]
   node scripts/luz-crawl.mjs remember --browser edge --profile PROFILE_ID [--no-reuse-profile]
   node scripts/luz-crawl.mjs remember --site https://example.com --name example --template "https://example.com/search?q={query}"
-  node scripts/luz-crawl.mjs note --kind preference|lesson|fact --key TOPIC --text "one line" [--why WHY] [--platform ID] [--public --when "situation"]
+  node scripts/luz-crawl.mjs note --kind preference|lesson|fact --key TOPIC --text "one line" [--category CATEGORY] [--tags "词,别名"] [--when "适用条件"] [--source URL] [--outcome success|failure|mixed|unverified] [--valid-until YYYY-MM-DD] [--why WHY] [--platform ID] [--public --when "situation"]
   node scripts/luz-crawl.mjs list [--kind lesson]
   node scripts/luz-crawl.mjs prune
   node scripts/luz-crawl.mjs check
@@ -110,6 +115,13 @@ const usage = `LuzCrawl ${VERSION} — skill, browser extension and local memory
   node scripts/luz-crawl.mjs download ARCHIVE_DIRECTORY
   node scripts/luz-crawl.mjs browser URL --file actions.json [--allow-write]
   node scripts/luz-crawl.mjs browser URL --steps JSON [--allow-write]
+  node scripts/luz-crawl.mjs live open URL --out TASK_FOLDER [--headed | --profile ID] [--ttl 900]
+  node scripts/luz-crawl.mjs live inspect SESSION --out TASK_FOLDER [--file reads.json]
+  node scripts/luz-crawl.mjs live act SESSION --out TASK_FOLDER --file actions.json --allow-write [--request-id ID]
+  node scripts/luz-crawl.mjs live navigate SESSION URL --out TASK_FOLDER
+  node scripts/luz-crawl.mjs live capture SESSION --out TASK_FOLDER [--scrolls 1]
+  node scripts/luz-crawl.mjs live verify SESSION --out TASK_FOLDER --file verification.json
+  node scripts/luz-crawl.mjs live status|close SESSION --out TASK_FOLDER
   node scripts/luz-crawl.mjs schema
   node scripts/luz-crawl.mjs policy [--file policy.json]
 Read order: an isolated silent Edge first; if the target body is not confirmed, one retry in the connected visible Edge (the saved profile, or a newly launched Edge) inside a minimized window; only a login or verification brings that window to the front and returns awaiting_user with continue TASK_ID. --profile ID uses that visible profile directly; doctor reports browser preference separately from site login state.
@@ -117,11 +129,28 @@ Output: --out wins, then the saved output preference, else ${DEFAULT_OUTPUT}; ke
 Browser Bridge must be connected. Follow SKILL.md (调用协议); installation is in references/install.md.`;
 
 async function main() {
-  const { values, positionals } = parseArgs({ allowPositionals: true, allowNegative: true, options: { headless: { type: 'boolean' }, out: { type: 'string' }, new: { type: 'boolean' }, scrolls: { type: 'string' }, concurrency: { type: 'string' }, comments: { type: 'boolean' }, download: { type: 'boolean' }, 'allow-write': { type: 'boolean' }, resume: { type: 'boolean' }, file: { type: 'string' }, steps: { type: 'string' }, query: { type: 'string' }, platform: { type: 'string' }, read: { type: 'string' }, site: { type: 'string' }, profile: { type: 'string' }, browser: { type: 'string' }, 'reuse-profile': { type: 'boolean' }, window: { type: 'string' }, format: { type: 'string' }, name: { type: 'string' }, template: { type: 'string' }, keywords: { type: 'string' }, category: { type: 'string' }, compact: { type: 'boolean' }, note: { type: 'string' }, key: { type: 'string' }, kind: { type: 'string' }, text: { type: 'string' }, why: { type: 'string' }, when: { type: 'string' }, public: { type: 'boolean' }, help: { type: 'boolean' } } });
+  const { values, positionals } = parseArgs({ allowPositionals: true, allowNegative: true, options: { 'keep-raw': { type: 'boolean' }, headed: { type: 'boolean' }, ttl: { type: 'string' }, 'request-id': { type: 'string' }, headless: { type: 'boolean' }, out: { type: 'string' }, new: { type: 'boolean' }, scrolls: { type: 'string' }, concurrency: { type: 'string' }, comments: { type: 'boolean' }, download: { type: 'boolean' }, screenshot: { type: 'boolean' }, 'allow-write': { type: 'boolean' }, resume: { type: 'boolean' }, file: { type: 'string' }, steps: { type: 'string' }, query: { type: 'string' }, platform: { type: 'string' }, read: { type: 'string' }, site: { type: 'string' }, profile: { type: 'string' }, browser: { type: 'string' }, 'reuse-profile': { type: 'boolean' }, window: { type: 'string' }, format: { type: 'string' }, name: { type: 'string' }, template: { type: 'string' }, keywords: { type: 'string' }, category: { type: 'string' }, tags: { type: 'string' }, source: { type: 'string' }, outcome: { type: 'string' }, 'valid-until': { type: 'string' }, compact: { type: 'boolean' }, note: { type: 'string' }, key: { type: 'string' }, kind: { type: 'string' }, text: { type: 'string' }, why: { type: 'string' }, when: { type: 'string' }, public: { type: 'boolean' }, help: { type: 'boolean' } } });
   // A pasted page URL is repaired (full-width punctuation, missing or misspelt scheme) before any command validates it.
   if (['capture', 'browser', 'headless-login'].includes(positionals[0]) && positionals[1] && !/^[a-f0-9-]{36}$/.test(positionals[1])) positionals[1] = lzFixURL(positionals[1]);
   const [command, ...args] = positionals;
   if (values.help || !command) { console.log(usage); return; }
+  if (command === 'live') {
+    const [op,id,url]=args;
+    let result;
+    if(op==='open') result=await startLive({out:values.out,url:lzFixURL(id),headed:values.headed,profile:values.profile,ttl:values.ttl});
+    else {
+      const options={out:values.out,requestId:values['request-id']};
+      if(['act','inspect'].includes(op)) { options.steps=op==='inspect' && !values.file && !values.steps ? [{action:'read'}] : await readActions(values); options.allowWrite=values['allow-write']===true; }
+      else if(op==='navigate')options.url=validateURL(lzFixURL(url)).href;
+      else if(op==='capture')Object.assign(options,{scrolls:values.scrolls===undefined?1:Number(values.scrolls),screenshot:values.screenshot!==false,comments:values.comments===true});
+      else if(op==='verify') { if(!values.file)throw new Error('live verify requires --file verification.json.');const verification=JSON.parse(await fs.readFile(path.resolve(values.file),'utf8'));Object.assign(options,{pending_id:verification.pending_id,note:verification.note,expect:verification.expect}); }
+      else if(!['status','close'].includes(op))throw new Error('Unknown live operation; use open/status/inspect/act/navigate/capture/verify/close.');
+      result=await requestLive(id,op,options);
+    }
+    print(result);
+    if(!['ready','completed','captured','partial','verified','closed','closing'].includes(result.status))process.exitCode=2;
+    return;
+  }
   if (command === 'batch') await readBatch(values);
   if (command === 'browser') {
     validateURL(args[0]);
@@ -188,14 +217,15 @@ async function execute(values, positionals) {
   }
   if (command === 'experience') {
     if (values.compact) { print(await lzCompactEvents(true)); return; }
-    print({ notes: await lzNotes(values.query || '', values.platform), ...await findExperience(values.query || '', values.platform) }); return;
+    const notes = await lzNotes(values.query || '', values.platform, { category: values.category });
+    print({ notes, categories: Object.fromEntries([...new Set(notes.map(n => n.category))].map(category => [category, notes.filter(n => n.category === category).length])), ...await findExperience(values.query || '', values.platform, { category: values.category }) }); return;
   }
   // Advice before a bulk or repeated read: what the site's robots.txt says about this path (RFC 9309). Exit 2 = disallowed or unreachable.
   if (command === 'robots') { if (!args[0]) throw new Error('A URL is required.'); const result = await checkRobots(args[0]); print(result); process.exitCode = result.allowed ? 0 : 2; return; }
   if (command === 'sites') { print((await sites()).filter((item) => !values.category || item.category === values.category)); return; }
   if (command === 'pending') { print(await pendingTasks()); return; }
   if (command === 'note') { print(await lzNote(values)); return; }
-  if (command === 'list') { print(await lzNotesList(values.kind)); return; }
+  if (command === 'list') { print(await lzNotesList(values.kind, values.category)); return; }
   if (command === 'prune') { print(await lzNotesPrune()); return; }
   if (command === 'check') { const result = await lzNotesCheck(); print(result); if (!result.ok) process.exitCode = 2; return; }
   if (command === 'remember') {
@@ -218,7 +248,13 @@ async function execute(values, positionals) {
     console.log(await hostCommand(native)); return;
   }
   if (command === 'report') { if (!args[0]) throw new Error('Collection directory is required.'); print(await refreshCollection(args[0])); return; }
-  if (command === 'summary') { if (!args[0]) throw new Error('Task directory is required.'); print(await writeCrawlSummary(args[0])); return; }
+  if (command === 'summary') {
+    if (!args[0]) throw new Error('Task directory is required.');
+    const summary = await writeCrawlSummary(args[0], { finalize: !values['keep-raw'] });
+    print(summary);
+    if (summary.cleanup?.errors.length) process.exitCode = 2;
+    return;
+  }
   if (!['capture', 'batch', 'search', 'browser', 'collect'].includes(command)) throw new Error(`Unknown command: ${command}`);
   const current = await syncBrowserPreferences(values.profile);
   values.out ||= current.output_dir;
@@ -252,6 +288,7 @@ async function execute(values, positionals) {
     const native = ['luz-crawl', 'browser', args[0], '--steps', values.steps, '--out', archiveFolder, '--window', values.window, '-f', 'json'];
     if (values.profile) native.unshift('--profile', values.profile);
     if (values['allow-write']) native.push('--allow-write');
+    if (values.screenshot === false) native.push('--no-screenshot');
     const output = await hostCommand(native); console.log(output);
     if (JSON.parse(output).status !== 'completed') process.exitCode = 2;
   } else if (command === 'search') {
@@ -259,6 +296,7 @@ async function execute(values, positionals) {
     if (values.profile) native.unshift('--profile', values.profile);
     for (const key of ['site', 'window']) if (values[key]) native.push(`--${key}`, values[key]);
     for (const key of ['resume', 'comments', 'download']) if (values[key]) native.push(`--${key}`);
+    if (values.screenshot === false) native.push('--no-screenshot');
     const output = await hostCommand(native); console.log(output);
     const result = JSON.parse(output);
     await lzLibrary([result, ...(result.sources || [])]);
@@ -268,9 +306,15 @@ async function execute(values, positionals) {
     const native = ['luz-crawl', 'batch', '--file', path.resolve(values.file), '--out', archiveFolder, '--concurrency', values.concurrency || '4', '--scrolls', values.scrolls || '20', '-f', 'json'];
     if (values.profile) native.unshift('--profile', values.profile);
     for (const key of ['resume', 'comments', 'download', 'allow-write']) if (values[key]) native.push(`--${key}`);
+    if (values.screenshot === false) native.push('--no-screenshot');
     let output = await hostCommand(native);
     const result = JSON.parse(output);
-    if (await retryIncompleteJobs(result, values, archiveFolder)) output = JSON.stringify(result, null, 2);
+    if (await retryIncompleteJobs(result, values, archiveFolder)) {
+      await atomicWrite(result.batch_file, result);
+      result.summary_report = await writeCrawlSummary(archiveFolder);
+      await atomicWrite(result.batch_file, result);
+      output = JSON.stringify(result, null, 2);
+    }
     await lzLibrary(result.results);
     await lzScope(archiveFolder, result.results);
     console.log(output);

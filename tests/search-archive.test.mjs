@@ -10,6 +10,27 @@ import { rememberSite } from '../lib/memory.mjs';
 const temp = await fs.mkdtemp(path.join(os.tmpdir(), 'luz-crawl-search-'));
 test.after(() => fs.rm(temp, { recursive: true, force: true }));
 
+test('discovery retains the complete observed candidate pool beyond one hundred links', async () => {
+  const previous = process.env.LUZ_CRAWL_STATE;
+  process.env.LUZ_CRAWL_STATE = path.join(temp, 'complete-inventory');
+  try {
+    const result = await search({}, { platform: 'web', query: 'research reference', read: 0, out: path.join(temp, 'many-candidates') }, { summary: () => ({}) }, async (_page, options) => {
+      const folder = path.join(options.out, 'raw', 'discovery');
+      await fs.mkdir(folder, { recursive: true });
+      await fs.writeFile(path.join(folder, 'content.json'), JSON.stringify({
+        requested_url: options.url, text: 'research reference results',
+        links: Array.from({ length: 125 }, (_, i) => ({ url: `https://publisher${i}.example/research-reference`, text: `research reference ${i}` })),
+      }));
+      return { folder, status: 'captured', resolved_url: options.url, url_check: { valid_content: true }, search_action: { submitted: true } };
+    });
+    assert.equal(result.discovered_candidates, 125);
+    assert.equal(result.candidates.length, 125);
+  } finally {
+    if (previous === undefined) delete process.env.LUZ_CRAWL_STATE;
+    else process.env.LUZ_CRAWL_STATE = previous;
+  }
+});
+
 test('business portals and unknown domains never silently fall back to an external index', async () => {
   const previous=process.env.LUZ_CRAWL_STATE;
   process.env.LUZ_CRAWL_STATE=path.join(temp,'native-only-state');

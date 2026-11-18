@@ -85,6 +85,23 @@ test('thrown cooldowns keep their failure code and stop the queued site', async 
   assert.deepEqual(JSON.parse(await fs.readFile(result.batch_file, 'utf8')), JSON.parse(JSON.stringify(result)));
 });
 
+test('different site filters and a page on the search host share its cooldown', async () => {
+  const settings = await options('search-lanes', [
+    { platform: 'Bing', query: 'one', site: 'a.example', read: 2 },
+    { platform: 'bing', query: 'two', site: 'b.example' },
+    { url: 'https://www.bing.com/search' }, { url: 'https://independent.example/guide' },
+  ]);
+  const result = await batch(settings, async (kind, opts) => {
+    assert.equal(opts.deferSummary, true);
+    if (kind === 'search') return { status: 'blocked', stop_reason: 'rate_limited' };
+    return { status: 'captured' };
+  });
+  assert.deepEqual(result.results.map(row => row.status), ['blocked', 'skipped', 'skipped', 'captured']);
+  assert.equal(result.results[0].site, 'a.example');
+  assert.equal(result.results[0].read, 2);
+  assert.equal(result.results[1].blocked_by, 'rate_limited');
+});
+
 test('the native batch keeps its resolved output even if browser preferences change during child runs', async () => {
   const settings = await options('native-output', ['https://a.test/', 'https://b.test/']);
   const source = await fs.readFile(new URL('../lib/commands.mjs', import.meta.url), 'utf8');

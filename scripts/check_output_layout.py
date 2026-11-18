@@ -3,7 +3,7 @@
   py -X utf8 check_output_layout.py session <会话目录> [--project-linked]
   py -X utf8 check_output_layout.py project <项目目录>
 
-session：D:\\Codes\\skill输出\\<技能>\\NNN-主题\\ 根目录只有 raw\\ 和与目录同名的汇总页 NNN-主题.html；
+session：E:\\Skill输出\\<技能>\\NNN-主题\\ 根目录只有 raw\\ 和与目录同名的汇总页 NNN-主题.html；
          没有项目目录的任务，成品文件（PDF、XLSX 等）可放在根目录；--project-linked 表示成品在项目目录，根目录不得再放。
 project：D:\\Codes\\NNN-项目名\\ 只放成果：docs 下三个平铺目录加实现目录，不放任何源文件或过程文件。
 退出码：0 通过（可有提示），1 有错误。
@@ -74,9 +74,9 @@ def check_project(folder: Path) -> tuple[list[str], list[str]]:
         return [f"不是目录: {folder}"], notes
     for item in sorted(folder.iterdir()):
         if item.name in PROJECT_FORBIDDEN_DIRS and item.is_dir():
-            errors.append(f"项目目录不保存源文件或过程文件，请移到 skill输出\\Luz-Project\\{folder.name}\\raw\\：{item.name}\\")
+            errors.append(f"项目目录不保存源文件或过程文件，请移到 Skill输出\\Luz-Project\\{folder.name}\\raw\\：{item.name}\\")
         elif item.name in PROJECT_FORBIDDEN_FILES and item.is_file():
-            errors.append(f"项目目录不放状态与台账文件，请移到 skill输出\\Luz-Project\\{folder.name}\\raw\\：{item.name}")
+            errors.append(f"项目目录不放状态与台账文件，请移到 Skill输出\\Luz-Project\\{folder.name}\\raw\\：{item.name}")
         elif item.is_file() and item.suffix.lower() in PROJECT_FORBIDDEN_SUFFIX:
             errors.append(f"临时或备份文件不入项目：{item.name}")
     for parent, child in PROJECT_STATE_DIRS:

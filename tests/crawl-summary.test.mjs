@@ -3,11 +3,58 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
+import { fileURLToPath } from 'node:url';
+import { LARGE_DOWNLOAD } from '../lib/retention.mjs';
 import { atomicWrite } from '../lib/archive.mjs';
 import { summaryEntry, writeCrawlSummary } from '../lib/crawl-summary.mjs';
 
 const tmp = await fs.mkdtemp(path.join(os.tmpdir(),'luzcrawl-summary-'));
 test.after(()=>fs.rm(tmp,{recursive:true,force:true}));
+
+test('summary CLI only reclaims completed cache files after a verified body and a clean report', async () => {
+  const root = path.join(tmp, 'cleanup');
+  const raw = path.join(root, 'raw');
+  const cache = path.join(raw, 'download-cache');
+  await atomicWrite(path.join(raw, 'luz-task.json'), { schema_version: 1, kind: 'task_archive', title: '本地测试', delivery_layout: 'task_folder_v2' });
+  await fs.mkdir(cache);
+  const large = path.join(cache, 'research.pdf'), pending = path.join(cache, 'next.pdf.part');
+  const small = path.join(cache, 'small.zip'), delivery = path.join(raw, 'delivery.pdf');
+  for (const file of [large, pending, small, delivery]) {
+    await fs.writeFile(file, '');
+    await fs.truncate(file, file === small ? LARGE_DOWNLOAD - 1 : LARGE_DOWNLOAD);
+  }
+  const cli = fileURLToPath(new URL('../scripts/luz-crawl.mjs', import.meta.url));
+  const summarize = async (...args) => JSON.parse((await promisify(execFile)(process.execPath, [cli, 'summary', root, ...args], { windowsHide: true })).stdout);
+  const page = path.join(raw, '0001_page', 'content.json');
+  const data = { status: 'captured', url: 'https://example.org/doc', text: 'A verified local fixture body.', url_check: { valid_content: true } };
+  await atomicWrite(page, { ...data, query: 'topic' });
+  assert.equal((await summarize()).cleanup, undefined);
+  await atomicWrite(page, data);
+  await fs.writeFile(path.join(raw, 'search-incomplete.json'), '{invalid');
+  assert.equal((await summarize()).warnings.length, 1);
+  await fs.access(large);
+  await fs.unlink(path.join(raw, 'search-incomplete.json'));
+  assert.equal((await summarize('--keep-raw')).cleanup, undefined);
+  await fs.access(large);
+  assert.deepEqual((await summarize()).cleanup, { removed: 1, freed_bytes: LARGE_DOWNLOAD, errors: [] });
+  await assert.rejects(fs.access(large), { code: 'ENOENT' });
+  for (const keep of [pending, small, delivery]) await fs.access(keep);
+});
+
+test('a redirected cache cannot remove a file in another directory', async () => {
+  const root = path.join(tmp, 'redirected-cache'), raw = path.join(root, 'raw');
+  await atomicWrite(path.join(raw, 'luz-task.json'), { schema_version: 1, kind: 'task_archive', delivery_layout: 'task_folder_v2' });
+  const outside = path.join(tmp, 'outside');
+  await fs.mkdir(outside);
+  const file = path.join(outside, 'keep.pdf');
+  await fs.writeFile(file, '');
+  await fs.truncate(file, LARGE_DOWNLOAD);
+  await fs.symlink(outside, path.join(raw, 'download-cache'), process.platform === 'win32' ? 'junction' : 'dir');
+  await assert.rejects(writeCrawlSummary(root, { finalize: true }), /redirected/);
+  await fs.access(file);
+});
 
 test('summarizes visible content and candidates without accepting unsafe links',()=>{
   const row=summaryEntry({requested_url:'https://example.com/detail',title:'采购公告',status:'captured',items:[{text:'已取得设备采购正文和供货安装范围。'}],discovered_candidates:3,media:[{kind:'image'},{kind:'audio'}]});

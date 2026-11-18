@@ -104,7 +104,7 @@ test('the docs describe one output layout: 序号-主题 task folders holding ra
   const skill = await fs.readFile(path.join(root, 'SKILL.md'), 'utf8');
   assert.match(skill, /migrate_layout\.py/);
   assert.match(skill, /085-主题\.html/);
-  assert.match(skill, /D:\\Codes\\skill输出\\Luz-Crawl/);
+  assert.match(skill, /E:\\Skill输出\\Luz-Crawl/);
 });
 
 test('the docs say a project keeps no crawled content: its records go to the state root, its crawl task stays in the Crawl output root', async () => {

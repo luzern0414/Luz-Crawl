@@ -46,7 +46,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-DEFAULT_ROOT = r"D:\Codes\skill输出\Luz-Crawl"
+DEFAULT_ROOT = r"E:\Skill输出\Luz-Crawl"
 LEGACY_PAGES = "000_旧版散落网页存档"
 RECORD_DIR = "000_目录整理记录"
 RECORD_NAME = "移动记录.json"
@@ -1533,7 +1533,7 @@ def print_plan(plan: Plan, say):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--root", default=DEFAULT_ROOT, help="Luz-Crawl 输出根（默认 D:\\Codes\\skill输出\\Luz-Crawl）")
+    parser.add_argument("--root", default=DEFAULT_ROOT, help="Luz-Crawl 输出根（默认 E:\\Skill输出\\Luz-Crawl）")
     parser.add_argument("--apply", action="store_true", help="真正移动并改写；不加只预览")
     parser.add_argument("--revert", metavar="移动记录.json", help="按映射文件撤回一次迁移")
     parser.add_argument("--outputs-root", help="其他技能输出所在目录，默认是输出根的上一级")

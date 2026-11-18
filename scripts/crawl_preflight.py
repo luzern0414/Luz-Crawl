@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 """Shared, file-backed Luz research preflight. Browser operations use Luz-Crawl only.
 
-run invokes doctor -> begin/reuse -> experience -> search/capture -> summary.
+run records a local decision directly, or invokes doctor -> begin/reuse -> experience -> search/capture -> summary for online work.
 conclude records the specialist's findings and their intended use and writes the conclusion page.
 check is read-only: it re-verifies the evidence files and the conclusion page.
+status is read-only: what the stage has and what it still lacks. review-init and supplement-init write the files the
+executor must fill in (every judgment left empty), so nobody copies URLs, IDs and hashes by hand; conclude --dry-run
+lists everything conclude would refuse without writing.
 No project scaffolding is created by this helper.
 
 Where the record and the conclusion page go (--session):
@@ -22,15 +25,17 @@ import os
 import re
 import subprocess
 import sys
+from contextlib import contextmanager
 from datetime import datetime, timezone
+from functools import cache
 from pathlib import Path
 from urllib.parse import urlparse
 
 ROOT = Path(__file__).resolve().parents[1]
 CLI = ROOT / "scripts" / "luz-crawl.mjs"
 CALLERS = ("luz-project", "luz-system", "luz-design", "luz-dev", "luz-ops", "luz-writing", "luz-crawl")
-DEFAULT_OUTPUT = os.environ.get("LUZ_CRAWL_OUTPUT") or r"D:\Codes\skill输出\Luz-Crawl"
-PROJECT_OUTPUT = os.environ.get("LUZ_PROJECT_OUTPUT") or r"D:\Codes\skill输出\Luz-Project"  # a project's state root is <PROJECT_OUTPUT>\<project directory name>\raw
+DEFAULT_OUTPUT = os.environ.get("LUZ_CRAWL_OUTPUT") or r"E:\Skill输出\Luz-Crawl"
+PROJECT_OUTPUT = os.environ.get("LUZ_PROJECT_OUTPUT") or r"E:\Skill输出\Luz-Project"  # a project's state root is <PROJECT_OUTPUT>\<project directory name>\raw
 STYLE = ROOT / "lib" / "formal-report.css"  # the one stylesheet shared with lib/formal-html.mjs
 ICON = "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%228%22%20fill%3D%22%23E8F0EB%22%2F%3E%3Ccircle%20cx%3D%2214%22%20cy%3D%2214%22%20r%3D%227%22%20fill%3D%22none%22%20stroke%3D%22%231F5F46%22%20stroke-width%3D%222.6%22%2F%3E%3Cpath%20d%3D%22M19.5%2019.5%2025%2025%22%20stroke%3D%22%231F5F46%22%20stroke-width%3D%222.6%22%20stroke-linecap%3D%22round%22%2F%3E%3C%2Fsvg%3E"
 CSP = "default-src 'none'; img-src data:; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'"
@@ -58,6 +63,23 @@ def write(path, value):
     temp = path.with_suffix(path.suffix + ".tmp")
     temp.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     temp.replace(path)
+
+
+@contextmanager
+def record_lock(path):
+    """Serialize stage mutations before inspecting or invalidating a prior conclusion."""
+    lock = Path(path).with_suffix(".lock")
+    lock.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        stream = lock.open("x", encoding="utf-8")
+    except FileExistsError:
+        raise ValueError(f"本阶段正在检索或生成结论：{lock}；异常中断后先核实原进程已退出再清理锁") from None
+    try:
+        with stream:
+            json.dump({"pid": os.getpid(), "started_at": now()}, stream)
+        yield
+    finally:
+        lock.unlink(missing_ok=True)
 
 
 def state_root(path):
@@ -99,7 +121,14 @@ def evidence_dir(session):
     return target
 
 
+def selected_stage(stage):
+    if stage is None:
+        return os.environ.get("LUZ_CRAWL_STAGE") or None
+    return stage
+
+
 def record_path(session, caller, stage=None):
+    stage = selected_stage(stage)
     if caller not in CALLERS or (stage and not re.fullmatch(r"[a-z][a-z0-9-]*", stage)):
         raise ValueError("无效 caller/stage")
     return evidence_dir(session) / f"{caller}{'-' + stage if stage else ''}.json"
@@ -222,6 +251,9 @@ def source_errors(source, task):
             return [f"来源清单哈希已变化: {source.get('id')}"]
         manifest = read(manifest_path)
         content = read(evidence / "content.json")
+        title = str(content.get("title") or "").strip()
+        if re.match(r"^(?:[45]\d\d\b|(?:page )?not found\b|access denied\b|找不到网页|页面不存在|访问被拒绝)", title, re.I):
+            errors.append(f"来源是错误页面，不能作为正文依据: {source.get('id')}")
         if _timestamp(source.get("captured_at")) != _timestamp(content.get("captured_at")):
             errors.append(f"来源时间与本次抓取正文不符: {source.get('id')}")
         if source.get("url") not in {content.get("resolved_url"), content.get("canonical_url")} or not re.match(r"^https?://", str(source.get("url", ""))):
@@ -232,6 +264,8 @@ def source_errors(source, task):
         if not (_text(content.get("text")) or isinstance(post, dict) and _text(post.get("text"))):
             errors.append(f"来源正文为空: {source.get('id')}")
         body = content.get("text") if _text(content.get("text")) else post.get("text", "") if isinstance(post, dict) else ""
+        if len(re.sub(r"\s+", "", str(body))) < 12:
+            errors.append(f"来源正文不足以形成有效逐字摘录: {source.get('id')}")
         if isinstance(body, str) and re.fullmatch(r"\s*(?:HTTP\s*)?(?:[45]\d\d[\s:-]*)?(?:service unavailable|bad gateway|gateway time[ -]?out|internal server error|access denied|forbidden|not found|too many requests|服务不可用|访问被拒绝|请求过于频繁)[\s.!。]*", body, re.I):
             errors.append(f"来源只是错误响应，未取得正文: {source.get('id')}")
         if content.get("completeness", {}).get("scope") == "search_candidates":
@@ -275,6 +309,16 @@ def findings_errors(value, source_ids):
     return errors
 
 
+def _document_url(value):
+    """Match browser root paths and ordinary anchors; retain SPA routes and queries."""
+    if not isinstance(value, str):
+        return None
+    parsed = urlparse(value)
+    if parsed.scheme in {"http", "https"} and parsed.netloc and not parsed.path:
+        parsed = parsed._replace(path="/")
+    return parsed.geturl() if parsed.fragment.startswith(("/", "!/")) else parsed._replace(fragment="").geturl()
+
+
 def _observed_sources(step, result, task):
     """Archive folders (in log order) that a successful search/capture step really read; only documented success fields count."""
     args = step.get("args")
@@ -287,12 +331,14 @@ def _observed_sources(step, result, task):
     if result.get("status") not in {"captured", "partial"} or result.get("error"):
         return []  # An unsuccessful route supplies no evidence; another route may succeed.
     if step["command"] == "capture":
-        if len(args) < 2 or result.get("url_check", {}).get("requested") != args[1]:
+        if len(args) < 2 or _document_url(result.get("url_check", {}).get("requested")) != _document_url(args[1]):
             raise ValueError("采集命令网址与返回日志不符")
         candidates = [result]
     else:
         if len(args) < 3 or result.get("query") != args[2] or result.get("platform") != args[1]:
             raise ValueError("搜索命令关键词/平台与返回日志不符")
+        if result.get("search_performed") is False:
+            return []
         candidates = result.get("sources", [])
         if not isinstance(candidates, list):
             raise ValueError("搜索正文来源不是数组")
@@ -308,26 +354,144 @@ def _observed_sources(step, result, task):
     return observed
 
 
-def report_errors(path, value):
+def report_errors(path, value, session=None):
     """A record written by conclude names its conclusion page and that page's SHA-256; the page must still match."""
-    if "report_sha256" not in value:
-        return []
     page = Path(path).with_suffix(".html")
-    if value.get("report") != page.name or not page.is_file() or digest(page) != value["report_sha256"]:
+    if value.get("report") != page.name or not page.is_file() or digest(page) != value.get("report_sha256"):
         return ["检索结论 HTML 缺失或与记录不符，请重新运行 conclude 生成"]
-    return []
+    library = _policy().design_library()
+    errors = []
+    if session is not None:
+        try:
+            item = library.require_selected(state_root(session) or session, value["caller"], value.get("stage") or "research",
+                                            page, "reading-html", phase="post")
+            expected = {"id": "reading-html", "applies_to": page.name, "files": item["files"]}
+            if value.get("report_template") != expected:
+                errors.append("检索结论的模板引用与准确原选择不符")
+        except (OSError, ValueError, KeyError, TypeError) as exc:
+            errors.append(f"检索结论的真实模板或最终输出未通过：{exc}")
+    else:
+        errors.extend(library.validate_references([value.get("report_template")]))
+    return errors
+
+
+@cache
+def _policy():
+    file = ROOT / "scripts" / "evidence_policy.py"
+    spec = importlib.util.spec_from_file_location("_luz_evidence_policy", file)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+@cache
+def _inventory_module():
+    spec = importlib.util.spec_from_file_location("_luz_research_inventory", ROOT / "scripts" / "research_inventory.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def research_review_errors(path, value, *, sealed=False, payload=None):
+    # Historical records without an inventory remain readable. Every new run
+    # writes an inventory, and therefore must carry the executor's actual review.
+    if not value.get("candidate_inventory"):
+        return []
+    review_path = path.with_name(path.stem + "-research-review.json")
+    if not review_path.is_file():
+        return [f"缺少尽责复盘 {review_path.name}；填写候选分类、轮次、经验闭环和停止依据"]
+    try:
+        errors = _inventory_module().review_errors(value, read(_inside(path.parent / value["candidate_inventory"], path.parent)),
+                                                   read(review_path), payload=value if sealed else payload)
+        if sealed and (value.get("research_review") != review_path.name or value.get("research_review_sha256") != digest(review_path)):
+            errors.append("尽责复盘未绑定或哈希变化，请复核后重新 conclude")
+        return errors
+    except (OSError, ValueError, TypeError, KeyError) as exc:
+        return [f"尽责复盘无效: {exc}"]
+
+
+def requested_research(topic):
+    """Recognize direct imperatives. The caller supplies the mode for context-dependent requests."""
+    request = re.sub(r"^(?:(?:请|麻烦|帮我|先|please\b)\s*)+", "", topic.strip(), flags=re.I)
+    if re.match(r"(?:不要|不用|无需|无须|不必|不需要|别|禁止|跳过)\s*(?:上网|联网|搜索|检索)|(?:do not|don't|no) (?:web )?(?:search|browse)\b", request, re.I):
+        return "local"
+    if re.match(r"(?:深入|广泛|大量|全面)(?:搜索|检索|调研)|(?:deep research|thoroughly research)\b", request, re.I):
+        return "deep"
+    if re.match(r"(?:上网|联网|网上)(?:查|搜|检索|调研)|搜一下|搜一搜|查一下资料|(?:查找|找)\s*(?:资料|原文|(?:\d+|[一二两三四五六七八九十百千]+)篇)"
+                r"|(?:搜索|检索)(?!\s*(?:框|栏|页|功能|算法|模块|门禁|策略|组件|引擎|结果|按钮|接口|本地|仓库|代码库))"
+                r"|(?:search (?:the web|online|for)|look up|browse the web|research(?! (?:mode|gate|workflow|button|tool)\b))\b", request, re.I):
+        return "search"
+    return None
+
+
+def requested_source_count(topic):
+    match = re.search(r"(\d+|[零〇一二两三四五六七八九十百千]+)\s*(?:篇|条(?:来源|正文)|个来源|(?:distinct\s+)?sources?\b|articles?\b)", topic, re.I)
+    if not match:
+        return None
+    number = match[1]
+    if number.isdecimal():
+        return int(number)
+    digits = {char: index for index, char in enumerate("零一二三四五六七八九")}
+    digits.update({"〇": 0, "两": 2})
+    units = {"十": 10, "百": 100, "千": 1000}
+    total = pending = 0
+    for char in number:
+        if char in units:
+            total += (pending or 1) * units[char]
+            pending = 0
+        else:
+            pending = digits[char]
+    return total + pending
+
+
+def research_mode(topic, mode, queries, urls, min_sources):
+    if mode not in ("auto", "local", "urls", "search", "deep"):
+        raise ValueError("无效的 --research 模式")
+    if min_sources is not None and (type(min_sources) is not int or min_sources < 1):
+        raise ValueError("--min-sources 必须是正整数")
+    intent = requested_research(topic)
+    if mode == "auto":
+        if intent:
+            mode = intent
+        elif urls and not queries:
+            mode = "urls"
+        elif queries or min_sources is not None:
+            mode = "search"
+        else:
+            mode = "local"
+    if ((intent == "local" and mode != "local") or (intent == "deep" and mode != "deep")
+            or (intent == "search" and mode in {"local", "urls"})):
+        raise ValueError("检索模式与主题中的明确联网要求冲突")
+    if mode == "local" and (queries or urls or min_sources is not None):
+        raise ValueError("本地模式与查询、网址或正文数量要求冲突")
+    if mode == "urls" and (not urls or queries):
+        raise ValueError("指定网址模式需要 --url，提出查询时请用 search")
+    return mode
+
+
+def local_record(path, caller, stage, topic, reason):
+    return {"schema_version": 3, "research_mode": "local", "status": "not-required",
+            "caller": caller, "stage": stage, "session_evidence": str(path.parent.resolve()),
+            "topic": topic, "reason": reason, "sources": [], "findings": [], "steps": []}
 
 
 def validate_preflight(session, caller, stage=None, *, require_findings=True):
     """Check real body evidence AND the caller's supplements, never just a passed label."""
+    stage = selected_stage(stage)
     path = record_path(session, caller, stage)
     prefix = f"Crawl 前置检索 {caller}{'/' + stage if stage else ''}"
+    if require_findings and path.with_suffix(".lock").exists():
+        return [f"{prefix}: 本阶段正在检索或生成结论，旧结论不可用"]
     if not path.is_file():
-        return [f"{prefix}: 缺少记录 {path}；先运行 crawl_preflight.py run，再 conclude"]
+        return [f"{prefix}: 缺少记录 {path}；先用 crawl_preflight.py run 判定本阶段，联网阶段再 conclude"]
     try:
         value = read(path)
         if not isinstance(value, dict):
             raise ValueError("记录必须是 JSON 对象")
+        if value.get("research_mode") == "local":
+            valid = (_text(value.get("topic")) and requested_research(value["topic"]) in (None, "local") and _text(value.get("reason"))
+                     and value == local_record(path, caller, stage, value["topic"], value["reason"]))
+            return [] if valid else [f"{prefix}: 本地判定与会话、阶段或记录内容不符"]
         errors = []
         if value.get("caller") != caller or value.get("stage") != stage:
             errors.append("调用者/阶段不匹配")
@@ -355,6 +519,8 @@ def validate_preflight(session, caller, stage=None, *, require_findings=True):
             errors.append("必须执行 doctor → experience → search/capture → summary，不能只有连通检查")
         elif names.index("doctor") > names.index("experience") or names.index("experience") > min(names.index(n) for n in ("search", "capture") if n in names):
             errors.append("前置检索执行顺序错误")
+        elif max(i for i, s in enumerate(steps) if s.get("command") == "summary" and s.get("exit_code") == 0) < max(i for i, s in enumerate(steps) if s.get("command") in {"search", "capture"}):
+            errors.append("前置检索执行顺序错误：summary 必须晚于所有 search/capture 路线")
         observed_archives = set()
         for step in steps:
             log = _log_inside(step["file"], path.parent)
@@ -363,7 +529,15 @@ def validate_preflight(session, caller, stage=None, *, require_findings=True):
             elif step.get("command") == "doctor" and not doctor_ok(read(log)):
                 errors.append("Crawl 未就绪")
             elif step.get("command") in {"search", "capture"} and step.get("exit_code") == 0:
-                observed_archives.update(_observed_sources(step, read(log), task))
+                result = read(log)
+                if step["command"] == "search" and ("search_performed" in step or value.get("research_mode") and "search_performed" in result):
+                    if step.get("search_performed") is not (result.get("search_performed") is True):
+                        errors.append("查询执行状态与浏览器日志不符")
+                observed_archives.update(_observed_sources(step, result, task))
+        if value.get("candidate_inventory"):
+            inventory_file = _inside(path.parent / value["candidate_inventory"], path.parent)
+            if not inventory_file.is_file() or digest(inventory_file) != value.get("candidate_inventory_sha256"):
+                errors.append("候选清单丢失或哈希变化，请按实际检索日志重新生成")
         sources = value.get("sources", [])
         if not isinstance(sources, list) or any(not isinstance(s, dict) for s in sources):
             raise ValueError("来源 sources 必须是对象数组")
@@ -383,10 +557,17 @@ def validate_preflight(session, caller, stage=None, *, require_findings=True):
             errors.append("来源 ID 不唯一或无效")
         findings = value.get("findings", [])
         if require_findings:
+            errors.extend(research_review_errors(path, value, sealed=True))
             if value.get("status") != "complete" or not findings:
                 errors.append("尚未填写检索补充信息及采用位置（conclude）")
-            errors.extend(findings_errors(value, ids))
-            errors.extend(report_errors(path, value))
+            shape_errors = findings_errors(value, ids)
+            errors.extend(shape_errors)
+            if not shape_errors:
+                errors.extend(_policy().research_errors(value, value, resolve=canon,
+                              template_context=(state_root(session) or session, caller, stage or "research")))
+            errors.extend(report_errors(path, value, session))
+            if path.with_suffix(".lock").exists():
+                errors.append("本阶段正在检索或生成结论，旧结论不可用")
         return [f"{prefix}: {e}" for e in dict.fromkeys(errors)]
     except (OSError, ValueError, KeyError, TypeError, AttributeError, IndexError) as exc:
         return [f"{prefix}: 记录无效 ({exc})"]
@@ -472,44 +653,362 @@ def render_report(path, value):
     )
     heading = plain_title(value.get("topic", "前置检索"))
     css = STYLE.read_text(encoding="utf-8").strip()
-    page = (f'<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
-            f'<meta http-equiv="Content-Security-Policy" content="{esc(CSP)}"><meta name="referrer" content="no-referrer">'
-            f'<link rel="icon" href="{ICON}"><title>{esc(heading)}</title><style>{css}</style></head>'
-            f'<body><main><h1>{esc(heading)}</h1>{body}</main></body></html>\n')
+    page = _policy().design_library().render_reading(heading, body, style=css)
+    page = page.replace('</head>', f'<meta http-equiv="Content-Security-Policy" content="{esc(CSP)}"><meta name="referrer" content="no-referrer"></head>', 1)
     target = Path(path).with_suffix(".html")
-    target.write_text(page, encoding="utf-8")
+    temp = target.with_suffix(target.suffix + ".tmp")
+    try:
+        temp.write_text(page, encoding="utf-8")
+        temp.replace(target)
+    finally:
+        temp.unlink(missing_ok=True)
     return target
 
 
 def conclude(session, caller, findings, stage=None):
+    stage = selected_stage(stage)
+    with record_lock(record_path(session, caller, stage)):
+        return _conclude(session, caller, findings, stage)
+
+
+def _conclude(session, caller, findings, stage=None):
     errors = validate_preflight(session, caller, stage, require_findings=False)
     if errors:
         raise ValueError("; ".join(errors))
     path = record_path(session, caller, stage)
     value = read(path)
+    if value.get("research_mode") == "local":
+        raise ValueError("本阶段使用本地依据，直接运行 check")
+    errors = research_review_errors(path, value, payload=findings)
+    if errors:
+        raise ValueError("; ".join(errors))
     errors = findings_errors(findings, {s["id"] for s in value["sources"]})
     if errors:
         raise ValueError("; ".join(errors))
-    for key in ("report", "report_sha256"):
-        value.pop(key, None)
-    value.update({"findings": findings.get("findings", []), "gaps": findings.get("gaps", []), "scope": findings.get("scope", value["topic"]), "status": "complete", "concluded_at": now()})
-    write(path, value)
-    errors = validate_preflight(session, caller, stage)
+    errors = _policy().research_errors(value, findings, resolve=canon)
     if errors:
-        value["status"] = "needs-conclusion"
-        write(path, value)
         raise ValueError("; ".join(errors))
+    for key in ("report", "report_sha256", "concluded_at"):
+        value.pop(key, None)
+    if value.get("candidate_inventory"):
+        review_path = path.with_name(path.stem + "-research-review.json")
+        value.update(research_review=review_path.name, research_review_sha256=digest(review_path))
+    value.update({key: findings[key] for key in ("source_reviews", "coverage", "blocking_gaps", "template_uses")})
+    value.update({"schema_version": 3 if "research_mode" in value else 2, "findings": findings.get("findings", []), "gaps": findings.get("gaps", []), "scope": findings.get("scope", value["topic"]), "status": "needs-conclusion"})
+    # This is the framework's internal research conclusion, not a new business
+    # research stage. Select its real shell and bind its final bytes directly.
+    library = _policy().design_library()
+    template_root, template_stage = state_root(session) or Path(session), stage or "research"
+    library.select(template_root, caller, template_stage, "reading-html", str(path.with_suffix(".html").resolve()))
+    library.require_selected(template_root, caller, template_stage, path.with_suffix(".html"), "reading-html")
+    write(path, value)
     page = render_report(path, value)
-    value.update({"report": page.name, "report_sha256": digest(page)})
+    library.record_output(template_root, caller, template_stage, page, "reading-html",
+                          generator="Luz-Crawl/scripts/crawl_preflight.py:render_report")
+    value.update({"report": page.name, "report_sha256": digest(page), "report_template": _policy().design_library().reference("reading-html", page.name)})
+    # Recheck the real evidence after rendering. Only the last atomic write may
+    # advertise completion; a renderer or filesystem failure leaves it pending.
+    errors = validate_preflight(session, caller, stage, require_findings=False) + research_review_errors(path, value, sealed=True) + report_errors(path, value, session)
+    if errors:
+        raise ValueError("; ".join(errors))
+    value.update({"status": "complete", "concluded_at": now()})
     write(path, value)
     return path
 
 
-def run(session, caller, topic, task=None, queries=None, urls=None, stage=None, platform="bing", read_count=1):
-    if not isinstance(read_count, int) or not 1 <= read_count <= 5:
-        raise ValueError("--read 须为 1 到 5")
+def conclude_errors(session, caller, findings, stage=None):
+    """Everything conclude would refuse, in one pass and without writing: the record, the review, the supplement, the floor."""
+    stage = selected_stage(stage)
+    errors = validate_preflight(session, caller, stage, require_findings=False)
     path = record_path(session, caller, stage)
-    value = {"schema_version": 1, "caller": caller, "stage": stage, "topic": topic, "started_at": now(), "finished_at": None, "status": "running", "sources": [], "findings": [], "gaps": [], "steps": []}
+    if not path.is_file():
+        return errors
+    try:
+        value = read(path)
+        if value.get("research_mode") == "local":
+            return errors + ["本阶段使用本地依据，直接运行 check"]
+        errors += research_review_errors(path, value, payload=findings)
+        shape = findings_errors(findings, {s["id"] for s in value.get("sources", []) if isinstance(s, dict) and _text(s.get("id"))})
+        errors += shape
+        if not shape:
+            errors += _policy().research_errors(value, findings, resolve=canon)
+    except (OSError, ValueError, KeyError, TypeError, AttributeError) as exc:
+        errors.append(f"补充信息无法核对: {exc}")
+    return list(dict.fromkeys(errors))
+
+
+def _query_key(value):
+    return " ".join(str(value).split()).casefold()
+
+
+def _executed_queries(value):
+    """The distinct queries of the successful search steps, in order, each with the entry it ran on."""
+    seen, rows = set(), []
+    for step in value.get("steps", []):
+        args = step.get("args") or []
+        if _policy().executed_search(step) and _query_key(args[2]) not in seen:
+            seen.add(_query_key(args[2]))
+            rows.append({"platform": args[1], "query": args[2]})
+    return rows
+
+
+def _stage_files(session, caller, stage):
+    stage = selected_stage(stage)
+    path = record_path(session, caller, stage)
+    if not path.is_file():
+        raise ValueError(f"缺少本阶段记录 {path}；先运行 crawl_preflight.py run")
+    value = read(path)
+    if not isinstance(value, dict):
+        raise ValueError("记录必须是 JSON 对象")
+    inventory = None
+    if value.get("candidate_inventory"):
+        inventory = read(_inside(path.parent / value["candidate_inventory"], path.parent))
+    return path, value, inventory
+
+
+def status(session, caller, stage=None):
+    """Read-only: what this stage's research has and what it still lacks. Counts are the floor, never the finish line."""
+    stage = selected_stage(stage)
+    path = record_path(session, caller, stage)
+    if not path.is_file():
+        return {"record": str(path), "status": "missing", "next": ["运行 crawl_preflight.py run 建立本阶段记录"]}
+    path, value, inventory = _stage_files(session, caller, stage)
+    if value.get("research_mode") == "local":
+        errors = validate_preflight(session, caller, stage)
+        return {"record": str(path), "status": "invalid" if errors else "not-required", "research_mode": "local",
+                "topic": value.get("topic"), "reason": value.get("reason"), "errors": errors, "next": []}
+    policy = _policy()
+    floor = policy.research_floor(value)
+    try:
+        counts = policy.breadth_counts(value, resolve=canon)
+        floor_errors = policy.breadth_errors(value, counts=counts)
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        counts = {"sources": None, "publishers": None}
+        floor_errors = [f"无法核对正文: {exc}"]
+    review_path = path.with_name(path.stem + "-research-review.json")
+    review = read(review_path) if review_path.is_file() else None
+    reviewed = {row.get("url") for row in (review or {}).get("candidate_reviews", []) if isinstance(row, dict)}
+    candidates = [row["url"] for row in (inventory or {}).get("candidates", [])]
+    review_errors = research_review_errors(path, value) if inventory is not None else []
+    questions = [q for q in (review or {}).get("questions", []) if isinstance(q, dict)]
+    age = None
+    if _text(value.get("finished_at")):
+        age = round((datetime.now(timezone.utc) - _timestamp(value["finished_at"])).total_seconds() / 86400, 1)
+    steps = []
+    if path.with_suffix(".lock").exists():
+        steps.append("本阶段正在检索或生成结论；等它结束，或核实原进程已退出后清理锁")
+    if floor_errors:
+        steps.append("补搜：run --append 加新的 --query 或 --url（同一 caller、session、stage、topic），先 --read 0 建候选池再读选中的正文")
+    if inventory is not None and (review is None or set(candidates) != reviewed):
+        steps.append("review-init：生成或合并尽责复盘，再逐项填写候选分类、问题、轮次、经验与停止依据")
+    elif review_errors:
+        steps.append("补全尽责复盘中的空项（见 review.errors）")
+    if not floor_errors and not review_errors and value.get("status") != "complete":
+        steps.append("supplement-init → 读全部正文并填写补充信息 → conclude --dry-run → conclude → check")
+    if value.get("status") == "complete":
+        steps.append("已 conclude；交付前运行 check")
+    return {
+        "record": str(path), "status": value.get("status"), "topic": value.get("topic"), "age_days": age,
+        "research_mode": value.get("research_mode", "deep"),
+        "queries": {"have": len(_executed_queries(value)), "need": floor["queries"], "list": _executed_queries(value)},
+        "bodies": {"have": counts["sources"], "need": floor["sources"]},
+        "sites": {"have": counts["publishers"], "need": floor["publishers"],
+                  "note": "按站点估算；真实发布主体和一手来源数在补充信息的 source_reviews 里核定"},
+        "primary": {"need": floor["primary"]},
+        "floor_errors": floor_errors,
+        "candidates": {"total": len(candidates), "with_body": sum(1 for row in (inventory or {}).get("candidates", []) if row.get("status") == "body-captured"),
+                       "not_in_review": len([u for u in candidates if u not in reviewed])},
+        "review": {"file": str(review_path), "exists": review is not None, "errors": review_errors,
+                   "required_questions": [q.get("id") for q in questions if q.get("importance") == "required"]},
+        "next": steps,
+    }
+
+
+def _experience_rows(value, known_logs):
+    """One row per experience lookup of this stage that the review does not list yet. What the log shows is filled in;
+    whether a hit was adopted and what it changed is the executor's to write."""
+    rows = []
+    for step in value.get("steps", []):
+        if step.get("command") != "experience" or step.get("exit_code") != 0 or step.get("file") in known_logs:
+            continue
+        args = step.get("args") or []
+        query = args[args.index("--query") + 1] if "--query" in args and args.index("--query") + 1 < len(args) else ""
+        try:
+            notes = read(step["file"]).get("notes", [])
+        except (OSError, ValueError, AttributeError):
+            notes = []
+        keys = [n.get("key") for n in notes if isinstance(n, dict) and n.get("kind") != "preference" and n.get("key")][:8]
+        row = {"query": query, "log": step["file"], "keys": keys, "status": "", "impact": ""}
+        if not keys:
+            row.update(status="无命中", impact="没有可复用的路线、来源或失败经验，按问题计划查询")
+        rows.append(row)
+    return rows
+
+
+def review_init(session, caller, stage=None):
+    """Write or update <record>-research-review.json: bound to the record and the current candidate pool, one row per
+    candidate, per executed query, per run and per experience lookup. Decisions already written are kept; every new
+    judgment is left empty, so conclude refuses the file until the executor has really reviewed it."""
+    stage = selected_stage(stage)
+    with record_lock(record_path(session, caller, stage)):
+        path, value, inventory = _stage_files(session, caller, stage)
+        if inventory is None:
+            raise ValueError("本阶段记录没有候选清单；先运行 run（历史记录不需要复盘）")
+        review_path = path.with_name(path.stem + "-research-review.json")
+        old = read(review_path) if review_path.is_file() else {}
+        if not isinstance(old, dict):
+            raise ValueError("现有尽责复盘不是 JSON 对象")
+        review = json.loads(json.dumps(old))
+        review.update({field: value.get(field) for field in ("caller", "stage", "task_root", "candidate_inventory_sha256")})
+        review.setdefault("questions", [])
+        by_url = {row.get("url"): row for row in review.get("candidate_reviews", []) if isinstance(row, dict)}
+        rows, added = [], 0
+        for item in inventory["candidates"]:
+            row = by_url.get(item["url"])
+            if row is None:
+                added += 1
+                row = {"url": item["url"], "title": item.get("title", ""), "category": "", "question_ids": [], "status": "", "priority": "", "reason": ""}
+            if item.get("source_ids"):
+                row["source_ids"] = item["source_ids"]  # an archived body of this stage exists; reading it is still the executor's
+            rows.append(row)
+        current = {item["url"] for item in inventory["candidates"]}
+        review["candidate_reviews"] = rows
+        groups = [g for g in review.get("query_groups", []) if isinstance(g, dict)]
+        grouped = {_query_key(q) for g in groups for q in (g.get("queries") if isinstance(g.get("queries"), list) else []) if isinstance(q, str)}
+        for item in _executed_queries(value):
+            if _query_key(item["query"]) not in grouped:
+                groups.append({"purpose": "", "queries": [item["query"]], "platform": item["platform"], "question_ids": []})
+        review["query_groups"] = groups
+        rounds = [r for r in review.get("rounds", []) if isinstance(r, dict)]
+        known = {str(log) for r in rounds for log in (r["logs"] if isinstance(r.get("logs"), list) else [r.get("logs")])}
+        for folder in dict.fromkeys(str(Path(s["file"]).parent) for s in value.get("steps", []) if s.get("command") in {"search", "capture"}):
+            if folder not in known:
+                rounds.append({"logs": [folder], "observation": "", "next_action": ""})
+        review["rounds"] = rounds
+        reuse = [r for r in review.get("experience_reuse", []) if isinstance(r, dict)]
+        review["experience_reuse"] = reuse + _experience_rows(value, {r.get("log") for r in reuse})
+        review.setdefault("experience_updates", [])
+        review.setdefault("stop", {"reason": "", "basis": "", "remaining": []})
+        if review != old:
+            write(review_path, review)
+        errors = research_review_errors(path, value)
+        return {"review": str(review_path), "changed": review != old, "candidates": len(rows), "added": added,
+                "removed": sorted(url for url in by_url if url not in current), "to_fill": errors,
+                "protocol": str(ROOT / "references" / "research-diligence.md"),
+                "next": "逐项填写空项：问题、查询组目的、每个候选的分类／状态／优先级／理由、每轮观察与下一步、经验采用与更新、停止依据；填完运行 status。"}
+
+
+def supplement_init(session, caller, stage=None, out=None):
+    """Write or update the supplement that conclude takes: one finding and one review row per body of this stage, one
+    coverage row per question of the review. Quotes, locators, conclusions, publishers and decisions are left empty."""
+    path, value, _ = _stage_files(session, caller, stage)
+    if value.get("research_mode") == "local":
+        raise ValueError("本阶段使用本地依据，无需生成检索补充信息")
+    target = Path(out) if out else path.with_name(path.stem + "-supplement.json")
+    old = read(target) if target.is_file() else {}
+    if not isinstance(old, dict):
+        raise ValueError("现有补充信息不是 JSON 对象")
+    payload = json.loads(json.dumps(old))
+    sources = [s for s in value.get("sources", []) if isinstance(s, dict) and _text(s.get("id"))]
+    findings = [f for f in payload.get("findings", []) if isinstance(f, dict)]
+    numbers = [int(m.group(1)) for f in findings if (m := re.fullmatch(r"F-(\d+)", str(f.get("id", ""))))]
+    number = max(numbers, default=0)
+    covered = {f.get("source_id") for f in findings}
+    for source in sources:
+        if source["id"] not in covered:
+            number += 1
+            findings.append({"id": f"F-{number:03d}", "source_id": source["id"], "kind": "", "quote": "", "locator": "", "summary": "", "applies_to": "", "adopted": None, "reason": ""})
+    reviews = [r for r in payload.get("source_reviews", []) if isinstance(r, dict)]
+    reviewed = {r.get("source_id") for r in reviews}
+    reviews += [{"source_id": s["id"], "publisher": "", "authority": "", "reason": ""} for s in sources if s["id"] not in reviewed]
+    review_path = path.with_name(path.stem + "-research-review.json")
+    questions = [q for q in (read(review_path).get("questions", []) if review_path.is_file() else []) if isinstance(q, dict) and _text(q.get("id"))]
+    coverage = [c for c in payload.get("coverage", []) if isinstance(c, dict)]
+    asked = {c.get("question_id") for c in coverage}
+    coverage += [{"question_id": q["id"], "question": q.get("question", ""), "applies_to": "", "finding_ids": []} for q in questions if q["id"] not in asked]
+    payload.update({"scope": payload.get("scope") or value.get("topic", ""), "findings": findings, "source_reviews": reviews, "coverage": coverage})
+    for field in ("template_uses", "blocking_gaps", "gaps"):
+        payload.setdefault(field, [])
+    if payload != old:
+        write(target, payload)
+    bodies = []
+    for source in sources:
+        try:
+            body = str(archive_dir(canon(source["archive"])) / "content.json")
+        except (OSError, FileNotFoundError):
+            body = None
+        bodies.append({"id": source["id"], "title": source.get("title"), "url": source.get("url"), "content": body})
+    return {"supplement": str(target), "changed": payload != old, "sources": bodies, "contract": str(ROOT / "references" / "evidence-policy.md"),
+            "next": "读每篇 content.json 的正文，再填 kind、逐字 quote、locator、summary、applies_to、adopted（未采用写 reason）、"
+                    "publisher、authority 与理由、coverage 的输出位置和 finding_ids、template_uses；conclude --dry-run 无错误后 conclude。"}
+
+
+def _query_route(query, platforms):
+    """A query may name its own entry as "入口::关键词" (github::browser automation); otherwise it runs on the --platform chain."""
+    head, mark, rest = query.partition("::")
+    if mark and re.fullmatch(r"[a-z0-9][a-z0-9-]*", head.strip()) and rest.strip():
+        return [head.strip()], rest.strip()
+    return platforms, query
+
+
+def run(session, caller, topic, task=None, queries=None, urls=None, stage=None, platform="bing", read_count=3, append=False, screenshot=True,
+        *, research="auto", min_sources=None, reason=None):
+    stage = selected_stage(stage)
+    with record_lock(record_path(session, caller, stage)):
+        return _run(session, caller, topic, task, queries, urls, stage, platform, read_count, append, screenshot,
+                    research, min_sources, reason)
+
+
+def _run(session, caller, topic, task, queries, urls, stage, platform, read_count, append, screenshot, research, min_sources, reason):
+    if not _text(topic):
+        raise ValueError("--topic 需要非空主题")
+    if type(read_count) is not int or not 0 <= read_count <= 5:
+        raise ValueError("--read 须为 0 到 5；0 只发现候选，不代表已读正文")
+    platforms = [name.strip() for name in str(platform).split(",") if name.strip()]
+    if not platforms or any(not re.fullmatch(r"[a-z0-9][a-z0-9-]*", name) for name in platforms):
+        raise ValueError("--platform 是检索入口，或用逗号分隔的回退顺序，如 bing,baidu")
+    path = record_path(session, caller, stage)
+    value = {"schema_version": 3, "caller": caller, "stage": stage, "topic": topic, "started_at": now(), "finished_at": None, "status": "running", "sources": [], "findings": [], "gaps": [], "steps": []}
+    if append:
+        if not path.is_file():
+            raise ValueError("--append 需要本调用者、本阶段的现有检索记录")
+        previous = read(path)
+        if previous.get("caller") != caller or previous.get("stage") != stage or previous.get("topic") != topic:
+            raise ValueError("--append 的调用者、阶段与主题必须匹配，不能借用另一阶段")
+        old_mode = previous.get("research_mode", "deep")
+        if old_mode == "local":
+            raise ValueError("本地判定没有可追加的检索；用新的 run 开始联网检索")
+        if research not in ("auto", old_mode) or min_sources is not None and min_sources != _policy().research_floor(previous)["sources"]:
+            raise ValueError("--append 须沿用本阶段原定检索模式和数量")
+        research, min_sources = old_mode, previous.get("min_sources")
+        if previous.get("status") == "running":
+            raise ValueError("本阶段仍在检索，不能并发追加")
+        if task is not None and previous.get("task_root") and canon(task).resolve() != canon(previous["task_root"]).resolve():
+            raise ValueError("--append 不能更换 Crawl 任务")
+        if previous.get("task_root"):
+            task = canon(previous["task_root"])
+        value.update({key: previous[key] for key in ("started_at", "steps")})
+    mode = research_mode(topic, research, queries, urls, min_sources)
+    if mode == "local":
+        if path.is_file():
+            old = read(path)
+            if old.get("research_mode") != "local" and old.get("topic") == topic:
+                raise ValueError("本阶段已有此主题的联网记录；用 --append 沿用原检索要求")
+        value = local_record(path, caller, stage, topic, reason or "本阶段可用已有材料、代码或测试直接核对")
+        write(path, value)
+        return {"record": str(path), "status": value["status"], "research_mode": mode, "reason": value["reason"], "sources": []}
+    value["research_mode"] = mode
+    if min_sources is None and not append:
+        if requested_research(topic) in ("search", "deep"):
+            min_sources = requested_source_count(topic)
+        elif mode == "urls":
+            min_sources = len({_policy().canonical(url) for url in urls})
+    if min_sources is not None:
+        value["min_sources"] = min_sources
+        read_count = min(read_count, min_sources)
+    _policy().research_floor(value)  # Validate the requested count before starting any browser process.
+    # Invalidate completion before any subprocess can run or block.
+    write(path, value)
     run_id = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%f")
     logs = path.parent / "logs" / f"{path.stem}-{run_id}"
     logs.mkdir(parents=True)
@@ -557,13 +1056,42 @@ def run(session, caller, topic, task=None, queries=None, urls=None, stage=None, 
         value["task_root"] = str(task)
         command("experience", "--query", topic)
         archives = []
-        for query in (queries or ([] if urls else [topic])):
-            result = command("search", platform, query, "--read", read_count, "--out", task, route=True)
-            archives += _observed_sources(value["steps"][-1], result, task)
+        if append:
+            for step in value["steps"]:
+                if step.get("command") in {"search", "capture"} and step.get("exit_code") == 0:
+                    if digest(_log_inside(step["file"], path.parent)) != step.get("sha256"):
+                        raise ValueError("追加前发现旧检索日志哈希变化，拒绝复用")
+                    result = read(_log_inside(step["file"], path.parent))
+                    if step["command"] == "search" and "search_performed" in result:
+                        step.setdefault("search_performed", result["search_performed"] is True)
+                    archives += _observed_sources(step, result, task)
+        search_items = queries or ([] if mode == "urls" or append and urls else [topic])
+        for item in dict.fromkeys(search_items):
+            entries, query = _query_route(item, platforms)
+            for entry in entries:
+                command("experience", "--query", query, "--platform", entry)
+                result = command("search", entry, query, "--read", read_count, "--out", task,
+                                 *(["--no-screenshot"] if read_count == 0 or not screenshot else []), route=True)
+                value["steps"][-1]["search_performed"] = result.get("search_performed") is True
+                found = _observed_sources(value["steps"][-1], result, task)
+                archives += found
+                # The next entry of the chain is tried only when this one brought neither a body nor a candidate.
+                if found or result.get("candidates"):
+                    break
+        checked_hosts, checked_urls = set(), set()
         for url in urls or []:
-            result = command("capture", url, "--out", task, route=True)
+            document_url = _policy().canonical(url)
+            if document_url in checked_urls:
+                continue
+            checked_urls.add(document_url)
+            host = urlparse(url).hostname
+            if host and host not in checked_hosts:
+                command("experience", "--query", host)
+                checked_hosts.add(host)
+            result = command("capture", url, "--out", task, *(["--no-screenshot"] if not screenshot else []), route=True)
             archives += _observed_sources(value["steps"][-1], result, task)
-        command("summary", task)
+        # This intermediate report can precede more stages using the same task's downloads.
+        command("summary", task, "--keep-raw")
         seen_urls = set()
         for archive in dict.fromkeys(archives):
             archive = Path(archive)
@@ -576,15 +1104,51 @@ def run(session, caller, topic, task=None, queries=None, urls=None, stage=None, 
                 continue
             content = read(content_path)
             source = {"id": f'SRC-{len(value["sources"]) + 1:03d}', "archive": str(archive), "manifest_sha256": digest(manifest), "url": content.get("resolved_url") or content.get("canonical_url"), "title": content.get("title"), "captured_at": content.get("captured_at")}
-            if source["url"] not in seen_urls and not source_errors(source, task):
-                seen_urls.add(source["url"])
+            document_url = _policy().canonical(source["url"])
+            if document_url not in seen_urls and not source_errors(source, task):
+                seen_urls.add(document_url)
                 value["sources"].append(source)
-        value["status"] = "needs-conclusion" if value["sources"] else "blocked"
+        # Keep the whole observed pool across append runs; candidate links never
+        # enter sources or satisfy the existing body/quotation evidence gates.
+        inventory_module = _inventory_module()
+        route_logs = []
+        for step in value["steps"]:
+            if step.get("command") not in {"search", "capture"}:
+                continue
+            log = _log_inside(step["file"], path.parent)
+            if digest(log) != step.get("sha256"):
+                raise ValueError("候选清单的检索日志哈希不符")
+            try:
+                result = read(log)
+            except json.JSONDecodeError:
+                if step.get("exit_code") == 0:
+                    raise
+                result = {"status": "failed", "stop_reason": "invalid_command_output"}
+            route_logs.append((step, result))
+        inventory = inventory_module.build_inventory(route_logs, value["sources"])
+        inventory_path = path.with_name(path.stem + "-candidates.json")
+        write(inventory_path, inventory)
+        value.update(candidate_inventory=inventory_path.name, candidate_inventory_sha256=digest(inventory_path))
+        discovered = any(step.get("command") == "search" and result.get("search_performed") is True and result.get("candidates")
+                         for step, result in route_logs if isinstance(result, dict))
+        policy_errors = _policy().breadth_errors(value, resolve=canon)
+        value["status"] = ("needs-research" if policy_errors else "needs-conclusion") if value["sources"] or discovered else "blocked"
+        value["research_errors"] = policy_errors
         value["finished_at"] = now()
         write(path, value)
-        if not value["sources"]:
+        if not value["sources"] and not discovered:
             raise ValueError("没有取得有效正文，不能标记完成；请补充网址或缩小查询后重跑")
-        return {"record": str(path), "status": value["status"], "task": str(task), "sources": value["sources"], "next": "阅读 sources[].archive 里 content.json 的正文后，用 conclude --file 记录补充信息、采用位置和未覆盖范围"}
+        return {"record": str(path), "status": value["status"], "research_mode": mode, "floor": _policy().research_floor(value),
+                "task": str(task), "sources": value["sources"], "research_errors": policy_errors,
+                "candidate_inventory": str(inventory_path), "candidate_count": inventory["candidate_count"], "site_count": inventory["site_count"],
+                "experience_logs": [step["file"] for step in value["steps"] if step.get("command") == "experience"],
+                "research_protocol": str(ROOT / "references" / "research-diligence.md"),
+                "research_review": str(path.with_name(path.stem + "-research-review.json")),
+                "next": "读尽责调查协议与经验日志，分类完整候选池；按问题覆盖与新发现决定下一轮 --append。数量是下限，不能据此停止。读正文、记录逐轮判断及经验沉淀，再登记摘录、来源评估、coverage 与模板，conclude/check。"}
+    except KeyboardInterrupt:
+        value.update(status="blocked", finished_at=now(), error="检索被中断；已完成日志保留，恢复后使用 --append")
+        write(path, value)
+        raise
     except (OSError, ValueError, subprocess.TimeoutExpired) as exc:
         value.update(status="blocked", finished_at=now(), error=str(exc))
         write(path, value)
@@ -594,36 +1158,61 @@ def run(session, caller, topic, task=None, queries=None, urls=None, stage=None, 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
-    for name in ("run", "conclude", "check"):
+    for name in ("run", "conclude", "check", "status", "review-init", "supplement-init"):
         p = sub.add_parser(name)
         p.add_argument("--session", type=Path, required=True, help="本技能会话目录（记录写在其 raw/00-crawl/），或项目目录/状态根（写在状态根下 project.json 的 crawl.evidence_index）")
         p.add_argument("--caller", choices=CALLERS, required=True, help="实际执行检索的技能")
-        p.add_argument("--stage", help="项目阶段，如 research、design；三条命令必须一致")
+        p.add_argument("--stage", help="独立业务或项目阶段，如 research、design；缺省用 LUZ_CRAWL_STAGE，三条命令必须一致")
         if name == "run":
             p.add_argument("--topic", required=True, help="这次缺什么信息；不含密钥或真实用户数据")
+            p.add_argument("--research", choices=("auto", "local", "urls", "search", "deep"), default="auto",
+                           help="本地可解用 local，指定网页用 urls，要求搜索用 search，大量调研用 deep。auto 按输入分流")
+            p.add_argument("--min-sources", type=int, help="用户指定的去重正文数量（正整数）")
+            p.add_argument("--reason", help="本地判定依据，如涉及的源码、测试或用户给定材料")
             p.add_argument("--task", type=Path, help="begin 返回的任务目录；同一需求的各技能、各阶段共用")
             p.add_argument("--query", action="append", help="可重复；缺省用 --topic")
             p.add_argument("--url", action="append", help="可重复；已知官方原文")
-            p.add_argument("--platform", default="bing", help="--query 使用的检索入口，默认 bing；也可用 github、gitee、xhs、douyin 等")
-            p.add_argument("--read", type=int, default=1, help="每个查询打开的详情数，1 到 5，默认 1")
+            p.add_argument("--platform", default="bing", help="--query 使用的检索入口，默认 bing；也可用 github、gitee、xhs、douyin 等。"
+                           "逗号分隔表示回退顺序（bing,baidu：前一个既没有正文也没有候选才用下一个）；单条查询可写成 入口::关键词 指定自己的入口")
+            p.add_argument("--read", type=int, default=3, help="每个查询打开的详情数，0 到 5，默认 3；0 只建候选池，之后 --append --url 读选中的正文")
+            p.add_argument("--append", action="store_true", help="本阶段补搜，保留原路线与来源；仍须重新 conclude/check")
+            p.add_argument("--no-screenshot", action="store_true", help="技术正文跳过图片采集，仍保留正文与 DOM 快照；UI 视觉依据必须另行截图并实际查看")
         if name == "conclude":
             p.add_argument("--file", type=Path, required=True)
+            p.add_argument("--dry-run", action="store_true", help="只列出 conclude 会拒绝的全部问题，不写记录、不生成结论页")
+        if name == "supplement-init":
+            p.add_argument("--out", type=Path, help="补充信息文件，缺省是记录旁的 <caller>[-stage]-supplement.json")
     a = parser.parse_args()
     try:
         if a.command == "run":
-            value = run(a.session, a.caller, a.topic, a.task, a.query, a.url, a.stage, a.platform, a.read)
+            value = run(a.session, a.caller, a.topic, a.task, a.query, a.url, a.stage, a.platform, a.read, a.append,
+                        screenshot=not a.no_screenshot, research=a.research, min_sources=a.min_sources, reason=a.reason)
+        elif a.command == "conclude" and a.dry_run:
+            errors = conclude_errors(a.session, a.caller, read(a.file), a.stage)
+            print(json.dumps({"ok": not errors, "errors": errors, "dry_run": True}, ensure_ascii=False, indent=2))
+            return 1 if errors else 0
         elif a.command == "conclude":
             record = conclude(a.session, a.caller, read(a.file), a.stage)
             value = {"record": str(record), "report": str(record.with_suffix(".html")), "status": "complete"}
+        elif a.command == "status":
+            value = status(a.session, a.caller, a.stage)
+        elif a.command == "review-init":
+            value = review_init(a.session, a.caller, a.stage)
+        elif a.command == "supplement-init":
+            value = supplement_init(a.session, a.caller, a.stage, a.out)
         else:
             errors = validate_preflight(a.session, a.caller, a.stage)
             value = {"ok": not errors, "errors": errors}
             if not errors:
-                value["report"] = str(record_path(a.session, a.caller, a.stage).with_suffix(".html"))
+                path = record_path(a.session, a.caller, a.stage)
+                record = read(path)
+                value["status"] = record["status"]
+                if record["status"] == "complete":
+                    value["report"] = str(path.with_suffix(".html"))
             print(json.dumps(value, ensure_ascii=False, indent=2))
             return 1 if errors else 0
         print(json.dumps(value, ensure_ascii=False, indent=2))
-        return 0
+        return 1 if a.command == "run" and value.get("status") == "needs-research" else 0
     except (OSError, ValueError) as exc:
         print(str(exc), file=sys.stderr)
         return 1

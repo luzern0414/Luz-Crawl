@@ -1,6 +1,24 @@
 # 更新记录
 
-## 未发布
+## 3.6.0
+
+- 新增 live 持续会话：跨 CLI 保留专属页面、默认静默/可选可见、任务与线程绑定、串行派发、空闲回收和显式关闭；支持 inspect/act/navigate/capture/verify/status。
+- 请求 ID 去重并在派发前记日志；未知写结果先核验，阻止后续写、导航和会改变页面的归档。部分表单写入后失败也按未知结果处理。
+- 增加 select/check/press 与 CDP 原生 click/type；原生输入不做语义重放，手势内部不插入站点节流等待。支持同源 iframe 与 open Shadow DOM 的显式 DOM 作用域。
+- read 增加分页控件、链接、frame、Shadow host、表格及行偏移、正文偏移、截断信息；保持输出预算。
+- 修复浏览器启动和关闭后遗留的 Promise.race 计时器，避免已完成的短命令仍等待 30 秒。
+- 增加本地真实浏览器端到端测试、性能记录入口、持续操作指南及插件/外部驱动方案比较。保留 3.5.0 的尽责调查与经验复用协议。
+
+## 3.5.0
+
+- 新前置记录的结论必须绑定完整候选复盘、经验更新和停止依据；检查复盘哈希，追加后重新复核。发现模式支持 `--no-screenshot`，避免无正文筛选阶段等待截图。
+- 所有调用方执行尽责调查协议：问题驱动的扩展、原文与反例核验、完整分类候选、逐轮补搜、停止依据及经验反查；最低数量不再被表述为研究上限。
+- 经验支持用途分类、标签、适用条件、依据、结果和复核日期；中文长句按词召回并排序，保留失败经验，读取不增加确认次数，损坏的经验文件不静默重置。
+- 自动采集范围经验标记为待语义复核，不再把已归档内容称为已评审的有效来源。
+- 前置检索支持 `--read 0` 先发现候选，再按问题选正文；逐查询和新域名查询经验，返回完整去重候选文件与经验日志。候选不满足正文门禁。
+- 搜索不再截掉第 100 项之后的已发现候选，跨轮清单保留发现路线、正文状态及失败原因。
+
+## 3.4.0
 
 - 目录：输出目录改为 `task_folder_v2`，遵守 Luz 技能输出目录统一规范。输出根默认 `D:\Codes\skill输出\Luz-Crawl`（命令行和前置检索一致，可用 `--out` 或 `LUZ_CRAWL_OUTPUT` 改），下面只有“序号-主题”任务文件夹（三位序号加短横线，如 `117-主题`）；序号取输出根下所有一级文件夹的最大序号加一，旧的 `NNN_主题` 也计入，不补洞、不复用。任务根目录只有 `raw/`（全部爬取内容和机器记录，任务标记 `raw/luz-task.json`，页面存档文件直接放在“四位序号_标题”文件夹里，不再套一层 `raw/`）和同级的总结页 `NNN-主题.html`；`begin` 建好任务就写出只有标题的总结页，之后每次采集重写。总结页没有内容的节不写。旧的下划线任务目录和标记在 `raw/` 旁边的旧任务（`sibling_raw_v1`）、旧存档不改名，仍可读取、续接和生成总结；输出根里有散落文件时 `begin` 报错并指向 `scripts/migrate_layout.py`。`crawl_preflight.py` 先认 `<存档>/content.json`，再认 `<存档>/raw/content.json`。
 - 项目模式：项目不保存爬取的原始内容，复用的 Crawl 任务就在 Crawl 输出根下（`project.json` 的 `crawl.task_root`）。`crawl_preflight.py` 的 `--session` 可以是项目目录或状态根（含 `project.json` 的目录；项目目录对应 `D:\Codes\skill输出\Luz-Project\<目录名>\raw`），前置检索记录与结论页写在状态根下 `crawl.evidence_index`（`00-crawl`）；旧项目的 `raw/00-crawl` 保持原行为。新增 `state_root`、`evidence_dir`。
@@ -12,7 +30,9 @@
 - 合规：新增 `robots URL`（RFC 9309 判定，只请求 `/robots.txt`）、`references/compliance.md` 和 `references/research-method.md`；证据说明补充 WARC 的区别。
 - 搜索：搜索引擎回答卡里的厂商帮助页（如“必应如何提供搜索结果”）不再进入候选。
 - 扩展：移除未被调用的 `cookies` 权限与命令和重复的 `activeTab`；自动化标志隐藏改为默认关闭，需要时设置环境变量 `LUZ_STEALTH=1`。需在扩展管理页重新加载。
+- 静默浏览器配置：登录态和浏览器缓存体积大（每份约 1 GB），改放输出根下 `_browser-profile\edge`、`edge-2` 至 `edge-4`（可用 `LUZ_CRAWL_PROFILES` 改），不再占用技能目录 `data/memory/`；旧位置 `data/memory/browser-profile-edge*` 不再读取，需要时手动移动。名字不带“数字-”前缀，不影响任务序号。
 - 清理：删除已完成的内部设计与计划文档（边界并入 `references/platforms.md`）和未使用的 `assets/readme-workflow.svg`。
+- 项目模式：前置检索记录的七天期限只管正在做的阶段；上游已批准阶段的记录只核对存在、有效（任务标记、日志与快照哈希）、已 conclude，超过七天也不挡下游，对应 Luz-Project 的 `crawl_gate.crawl_errors(waive_expiry=)`（它靠超期提示里的“检索记录超过七天”识别，措辞不可改）；变更重开某阶段后期限重新生效。research 阶段没有 docs 文件，调研结论页和 Crawl 记录是内部记录，不让用户审批。新增测试固定超期提示的措辞。
 
 ## 3.3.0
 
