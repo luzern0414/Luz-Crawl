@@ -29,6 +29,7 @@ test('a live browser keeps form state across CLI processes, deduplicates writes,
     out=await createTaskArchive(path.join(tmp,'output'),'live-fixture',{newTask:true});
     const opened=await startLive({out,url:`http://127.0.0.1:${fixture.address().port}/`,ttl:120});session=opened.session;
     assert.equal(opened.status,'ready');metrics.push({op:'open',cli_ms:opened.open_elapsed_ms});
+    assert.deepEqual(opened.page_state,{url:opened.url,title:'Live Fixture',gate:null});
     const steps=[{action:'type',selector:'#q',text:'状态保留',method:'native'},{action:'select',selector:'#select',values:['b']},{action:'check',selector:'#check',checked:true}];
     const file=path.join(out,'raw','actions.json');await fs.writeFile(file,JSON.stringify(steps));
     assert.equal((await cli('act',['--file',file,'--allow-write','--request-id','fill-1'])).status,'completed');

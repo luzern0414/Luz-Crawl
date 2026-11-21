@@ -9,46 +9,12 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 import crawl_preflight as crawl
-from test_crawl_preflight import fixture, write_review_fixture
+from test_crawl_preflight import FAKE_CLI, fixture, write_review_fixture
 from test_evidence_policy import payload_for
 
-FAKE_CLI = r"""
-import fs from 'node:fs';
-import path from 'node:path';
-import { createHash } from 'node:crypto';
-const [command, ...args] = process.argv.slice(2);
-const log = process.env.FAKE_LOG;
-const calls = fs.existsSync(log) ? JSON.parse(fs.readFileSync(log, 'utf8')) : [];
-calls.push([command, ...args]); fs.writeFileSync(log, JSON.stringify(calls));
-const out = (value, code = 0) => { console.log(JSON.stringify(value)); process.exit(code); };
-const option = (name) => args[args.indexOf(name) + 1];
-const sha = (file) => createHash('sha256').update(fs.readFileSync(file)).digest('hex');
-const archive = (task, label, url) => {
-  const folder = path.join(task, 'raw', `${calls.length}_${label}`);
-  fs.mkdirSync(path.join(folder, 'snapshots'), { recursive: true });
-  const content = path.join(folder, 'content.json'), snapshot = path.join(folder, 'snapshots', '0.json');
-  fs.writeFileSync(snapshot, '{"text":"offline"}');
-  fs.writeFileSync(content, JSON.stringify({ status: 'captured', captured_at: new Date().toISOString(), resolved_url: url, title: label, text: 'offline body ' + url, url_check: { valid_content: true }, completeness: { scope: 'rendered_body' } }));
-  fs.writeFileSync(path.join(folder, 'manifest.json'), JSON.stringify({ files: [{ path: 'content.json', sha256: sha(content) }, { path: 'snapshots/0.json', sha256: sha(snapshot) }] }));
-  return folder;
-};
-if (command === 'doctor') out({ ready: false, silent_ready: true });
-if (command === 'begin') { const folder = path.join(option('--out'), '001-task'); fs.mkdirSync(path.join(folder, 'raw'), { recursive: true }); fs.writeFileSync(path.join(folder, 'raw', 'luz-task.json'), JSON.stringify({ schema_version: 1, kind: 'task_archive', delivery_layout: 'task_folder_v2', title: args[0] })); out({ folder }); }
-if (command === 'experience') out({ notes: option('--query').includes('经验') ? [{ key: 'route-offline', kind: 'lesson', text: 'offline' }, { key: 'style', kind: 'preference', text: 'offline' }] : [{ key: 'style', kind: 'preference', text: 'offline' }] });
-if (command === 'search') {
-  if ((process.env.FAKE_EMPTY || '').split(',').includes(args[0])) out({ status: 'partial', platform: args[0], query: args[1], search_performed: true, candidates: [], sources: [] });
-  const base = `https://site${calls.length}.example`;
-  const folder = Number(option('--read')) > 0 ? archive(option('--out'), 'hit', `${base}/read`) : null;
-  out({ status: 'partial', platform: args[0], query: args[1], search_performed: true,
-    candidates: [{ url: `${base}/read`, title: 'read' }, { url: `${base}/other?utm_source=x`, title: 'other' }],
-    sources: folder ? [{ status: 'captured', folder, url_check: { valid_content: true } }] : [] });
-}
-if (command === 'capture') { const folder = archive(option('--out'), 'page', args[0]); out({ status: 'captured', folder, title: 'page', url_check: { requested: args[0], valid_content: true } }); }
-if (command === 'summary') out({ file: 'summary.html' });
-out({ error: 'unknown' }, 1);
-"""
 
 QUERIES = [f"离线方向 {i}" for i in range(5)]
 URLS = [f"https://publisher{i % 3}.example/doc-{i}" for i in range(6)]
@@ -83,17 +49,69 @@ class HelperCommandTests(unittest.TestCase):
     def path(self):
         return crawl.record_path(self.session, "luz-design", "design")
 
+    def test_one_batch_collects_multiple_queries_and_urls_and_writes_one_summary(self):
+        result = self.research(queries=QUERIES[:3], urls=URLS[:2], concurrency=2)
+        self.assertEqual([len(self.calls(command)) for command in ("batch", "search", "capture", "summary", "experience")],
+                         [1, 0, 0, 0, 1])
+        record = crawl.read(self.path())
+        self.assertEqual([step["command"] for step in record["steps"]].count("summary"), 1)
+        self.assertEqual(len(result["sources"]), 5)
+        self.assertEqual(result["candidate_count"], 8)
+        self.assertEqual(crawl.read(result["batch_file"])["concurrency"], 2)
+
+    def test_compact_cli_keeps_research_gaps_and_points_to_all_verified_sources(self):
+        from contextlib import redirect_stdout
+        from io import StringIO
+        argv = [str(crawl.__file__), "run", "--session", str(self.session), "--caller", "luz-design", "--stage", "design",
+                "--topic", "界面依据", "--research", "search", "--read", "1", "--query", QUERIES[0], "--compact", "--concurrency", "8"]
+        output = StringIO()
+        with patch.object(sys, "argv", argv), redirect_stdout(output):
+            self.assertEqual(crawl.main(), 1)
+        self.assertEqual(len(output.getvalue().splitlines()), 1)
+        receipt = json.loads(output.getvalue())
+        self.assertEqual(receipt["status"], "needs-research")
+        self.assertTrue(receipt["research_errors"])
+        self.assertNotIn("sources", receipt)
+        self.assertEqual(receipt["source_count"], len(crawl.read(receipt["record"])["sources"]))
+        self.assertEqual(crawl.read(receipt["batch_file"])["concurrency"], 8)
+
     def test_a_query_names_its_own_entry_and_a_chain_moves_on_only_when_an_entry_brings_nothing(self):
         os.environ["FAKE_EMPTY"] = "bing"
         value = self.research(queries=["github::browser automation", "列表密度", "site:m3.material.io 表面"], platform="bing,baidu")
-        self.assertEqual([c[1:3] for c in self.calls("search")],
+        record = crawl.read(self.path())
+        self.assertEqual([s["args"][1:3] for s in record["steps"] if s["command"] == "search"],
                          [["github", "browser automation"], ["bing", "列表密度"], ["baidu", "列表密度"], ["bing", "site:m3.material.io 表面"], ["baidu", "site:m3.material.io 表面"]])
-        # the lookup of experience follows the entry that is really searched
-        self.assertIn(["experience", "--query", "列表密度", "--platform", "baidu"], self.calls("experience"))
+        # Prepare experience for the fallback before the browser batch starts.
+        self.assertIn({"query": "列表密度", "platform": "baidu", "notes": []}, crawl.read(value["experience_logs"][0])["lookups"])
         self.assertEqual(value["status"], "needs-research")  # three distinct queries are below the floor, however many entries ran
         self.assertEqual(crawl.status(self.session, "luz-design", "design")["queries"]["have"], 3)
         with self.assertRaises(ValueError):
             self.research(platform="bing, 不是入口")
+
+    def test_a_route_log_with_a_new_hash_still_has_to_match_the_batch(self):
+        self.research()
+        record = crawl.read(self.path())
+        search = next(step for step in record["steps"] if step["command"] == "search")
+        log = crawl.read(search["file"])
+        log["candidates"] = []
+        crawl.write(search["file"], log)
+        search["sha256"] = crawl.digest(search["file"])
+        crawl.write(self.path(), record)
+        self.assertTrue(any("路线日志与批次归档不符" in error for error in
+                            crawl.validate_preflight(self.session, "luz-design", "design", require_findings=False)))
+
+    def test_a_batch_process_failure_keeps_one_receipt_and_allows_an_append(self):
+        argv = [str(crawl.__file__), "run", "--session", str(self.session), "--caller", "luz-design", "--stage", "design",
+                "--topic", "界面依据", "--research", "deep", "--query", QUERIES[0]]
+        args = dict(queries=QUERIES, urls=URLS)
+        with patch.dict(os.environ, {"FAKE_BATCH_FAIL": "1"}), patch.object(sys, "argv", argv), patch("sys.stdout") as stdout:
+            self.assertEqual(crawl.main(), 1)
+            result = json.loads("".join(call.args[0] for call in stdout.write.call_args_list))
+            self.assertEqual(result["status"], "blocked")
+        self.research(append=True, **args)
+        record = crawl.read(self.path())
+        self.assertEqual([step["exit_code"] for step in record["steps"] if step["command"] == "batch"], [1, 2])
+        self.assertEqual(crawl.validate_preflight(self.session, "luz-design", "design", require_findings=False), [])
 
     def test_status_is_read_only_and_names_what_is_missing(self):
         self.assertEqual(crawl.status(self.session, "luz-design", "design")["status"], "missing")

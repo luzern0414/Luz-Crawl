@@ -525,35 +525,9 @@ class ConclusionPageTests(unittest.TestCase):
         self.assertTrue(crawl_preflight.STYLE.is_file())
 
 
-FAKE_CLI = r"""
-import fs from 'node:fs';
-import path from 'node:path';
-import { createHash } from 'node:crypto';
-const [command, ...args] = process.argv.slice(2);
-const log = process.env.FAKE_LOG;
-const calls = fs.existsSync(log) ? JSON.parse(fs.readFileSync(log, 'utf8')) : [];
-calls.push([command, ...args]); fs.writeFileSync(log, JSON.stringify(calls));
-const out = (value, code = 0) => { console.log(JSON.stringify(value)); process.exit(code); };
-const option = (name) => args[args.indexOf(name) + 1];
-const sha = (file) => createHash('sha256').update(fs.readFileSync(file)).digest('hex');
-const archive = (task, label, url) => {
-  const folder = path.join(task, 'raw', `${calls.length}_${label}`);
-  fs.mkdirSync(path.join(folder, 'snapshots'), { recursive: true });
-  const content = path.join(folder, 'content.json'), snapshot = path.join(folder, 'snapshots', '0.json');
-  fs.writeFileSync(snapshot, '{"text":"offline"}');
-  fs.writeFileSync(content, JSON.stringify({ status: 'captured', captured_at: new Date().toISOString(), resolved_url: url, title: label, text: 'offline body ' + url, url_check: { valid_content: true }, completeness: { scope: 'rendered_body' } }));
-  fs.writeFileSync(path.join(folder, 'manifest.json'), JSON.stringify({ files: [{ path: 'content.json', sha256: sha(content) }, { path: 'snapshots/0.json', sha256: sha(snapshot) }] }));
-  return folder;
-};
-if (command === 'doctor') out(JSON.parse(process.env.FAKE_DOCTOR || '{"ready":false,"silent_ready":true}'));
-if (command === 'begin') { const folder = path.join(option('--out'), '001-task'); fs.mkdirSync(path.join(folder, 'raw'), { recursive: true }); fs.writeFileSync(path.join(folder, 'raw', 'luz-task.json'), JSON.stringify({ schema_version: 1, kind: 'task_archive', delivery_layout: 'task_folder_v2', title: args[0] })); out({ folder, title: args[0], status: 'ready' }); }
-if (command === 'experience') out({ notes: [] });
-if (command === 'search') { const folder = archive(option('--out'), 'hit', `https://example.org/${args[0]}/${calls.length}`); out({ status: 'partial', search_performed: true, platform: args[0], query: args[1], sources: [{ status: 'captured', folder, url_check: { valid_content: true } }] }); }
-if (command === 'capture' && process.env.FAKE_FAIL && args[0].includes(process.env.FAKE_FAIL)) out({ status: 'failed', stop_reason: 'rate_limited', url_check: { requested: args[0], valid_content: false } }, 1);
-if (command === 'capture') { const folder = archive(option('--out'), 'page', args[0]); out({ status: 'captured', folder, url_check: { requested: args[0], valid_content: true } }); }
-if (command === 'summary') out({ file: 'summary.html' });
-out({ error: 'unknown' }, 1);
-"""
+REPO = Path(__file__).resolve().parents[1]
+FAKE_CLI = (REPO / "tests" / "fixtures" / "preflight-cli.mjs").read_text(encoding="utf-8").replace(
+    "LUZ_BATCH_MODULE", (REPO / "lib" / "batch.mjs").as_uri())
 
 
 class RunFlowTests(unittest.TestCase):
@@ -583,7 +557,8 @@ class RunFlowTests(unittest.TestCase):
             self.skipTest("node unavailable")
         first = run(self.root / "design", "luz-design", "界面信息密度", **broad_routes(["订货系统 界面"]), platform="github", read_count=3, stage="design")
         self.assertEqual(first["status"], "needs-conclusion")
-        search = [c for c in self.calls() if c[0] == "search"][0]
+        design = crawl_preflight.read(first["record"])
+        search = next(s["args"] for s in design["steps"] if s["command"] == "search")
         self.assertEqual(search[1:5], ["github", "订货系统 界面", "--read", "3"])
         second = run(self.root / "dev", "luz-dev", "订单接口", task=Path(first["task"]), **broad_routes(urls=["https://docs.example.com/api"]), stage="technical-plan")
         self.assertEqual(second["task"], first["task"])

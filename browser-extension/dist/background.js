@@ -2039,13 +2039,19 @@ async function handleNavigate(cmd, leaseKey) {
   const beforeTab = resolved.tab ?? await chrome.tabs.get(tabId);
   const beforeNormalized = normalizeUrlForComparison(beforeTab.url);
   const targetUrl = cmd.url;
-  if (beforeTab.status === "complete" && isTargetUrl(beforeTab.url, targetUrl)) {
+  if (beforeTab.status === "complete" && !beforeTab.pendingUrl && isTargetUrl(beforeTab.url, targetUrl)) {
     return pageScopedResult(cmd.id, tabId, { title: beforeTab.title, url: beforeTab.url, timedOut: false });
   }
-  if (!hasActiveNetworkCapture(tabId)) {
-    await detach(tabId);
+  // Creating an owned tab can already start this navigation. Let it finish
+  // instead of issuing a second request for the same search or source URL.
+  const loadingTarget = beforeTab.pendingUrl ? isTargetUrl(beforeTab.pendingUrl, targetUrl)
+    : beforeTab.status === "loading" && isTargetUrl(beforeTab.url, targetUrl);
+  if (!loadingTarget) {
+    if (!hasActiveNetworkCapture(tabId)) {
+      await detach(tabId);
+    }
+    await chrome.tabs.update(tabId, { url: targetUrl });
   }
-  await chrome.tabs.update(tabId, { url: targetUrl });
   let timedOut = false;
   await new Promise((resolve) => {
     let settled = false;

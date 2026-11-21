@@ -20,6 +20,17 @@ const url = 'https://example.com/fixture';
 const settings = values => ({ ...defaults, defaults: { ...defaults.defaults, ...values } });
 const pageWith = read => ({ goto: async () => {}, evaluate: async code => read(actionArgument(code)) });
 
+test('concurrent source tabs reserve a shared operation budget before awaiting site pacing', async () => {
+  const policy=new ExecutionPolicy({settings:settings({max_operations:2}),directory:path.join(tmp,'shared-budget')});
+  let calls=0;
+  const tabs=Array.from({length:5},()=>policy.fork());
+  const results=await Promise.allSettled(tabs.map((tab,i)=>tab.run('read',`https://site${i}.example/doc`,()=>++calls)));
+  assert.equal(calls,2);
+  assert.equal(results.filter(result=>result.reason?.code==='operation_budget').length,3);
+  assert.equal(tabs.reduce((total,tab)=>total+tab.summary().operations,0),2);
+  await assert.rejects(()=>policy.run('read',url,()=>++calls),error=>error.code==='operation_budget');
+});
+
 test('extension screenshot bytes are saved as a real evidence file', async () => {
   const bytes = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a3ioAAAAASUVORK5CYII=', 'base64');
   const file = path.join(tmp, 'screenshot', 'raw', 'page.png');

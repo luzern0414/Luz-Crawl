@@ -234,9 +234,14 @@ def require_summary_preflight(session: Path, stage: str | None = None) -> dict:
             project = crawl.read(evidence / "project.json")
             if stage and linked_stage and stage != linked_stage:
                 raise ValueError("--stage 与会话关联的项目阶段不一致")
-            stage = stage or linked_stage or {"luz-system": "architecture", "luz-dev": "technical-plan"}.get(caller) or project.get("current_stage")
+            legacy_stage = None
+            if project.get("workflow") != "commercial-v1":
+                legacy_stage = {"luz-system": "architecture", "luz-dev": "technical-plan"}.get(caller)
+            stage = stage or linked_stage or legacy_stage or project.get("current_stage")
             if not stage:
                 raise ValueError("项目汇总页需要会话中的阶段或 --stage")
+            if project.get("workflow") == "commercial-v1":
+                owner = crawl.stage_evidence_caller(evidence, caller, stage)
             if caller == "luz-project":
                 owner = next((item.get("owner") for item in project.get("stages", []) if item.get("id") == stage), None)
                 if owner not in crawl.CALLERS:

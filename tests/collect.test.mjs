@@ -29,7 +29,7 @@ test('plans canonicalize platform aliases and use only confirmed sites for all',
   await assert.rejects(()=>buildSearchPlan('主题',{platform:'missing-platform'}),/Unknown platform/);
 });
 
-test('collect runs sequentially and exports one HTML with complete source text and comments',async()=>{
+test('collect exports one ordered HTML with complete source text and comments',async()=>{
   const out=path.join(temp,'complete'); const visited=[];
   const result=await collect('开源工具',{out,platform:'github,bing',read:1},async(task,options)=>{visited.push(task.platform);return source(task,options);});
   assert.deepEqual(visited,['github','bing']);assert.equal(result.status,'captured');assert.equal(result.verified_sources,2);
@@ -50,8 +50,24 @@ test('missing sources, partial downloads and early cleanup stops remain partial'
   assert.equal(failed.status,'partial');assert.equal(failed.verified_sources,1);assert.equal(failed.attempted_tasks,2);
   const media=await collect('开源工具',{out:path.join(temp,'media'),platform:'github'},(task,options)=>source(task,options,{downloads:{status:'partial',failures:[{error:'HTTP 403'}]}}));
   assert.equal(media.status,'partial');
-  const stopped=await collect('开源工具',{out:path.join(temp,'stopped'),platform:'github,bing'},(task,options)=>source(task,options,{browser:{closed:false}}));
+  const stopped=await collect('开源工具',{out:path.join(temp,'stopped'),platform:'github,bing',concurrency:1},(task,options)=>source(task,options,{browser:{closed:false}}));
   assert.equal(stopped.status,'partial');assert.equal(stopped.attempted_tasks,1);assert.equal(stopped.requested_tasks,2);assert.equal(stopped.browser.closed,false);
+});
+
+test('collection overlaps independent sites, leaves affected queued work parked and retains plan order', async () => {
+  const file = path.join(temp, 'concurrent-plan.json');
+  await atomicWrite(file, [{platform:'github',query:'alpha'},{platform:'github',query:'beta'},{platform:'bing',query:'gamma'}]);
+  let active = 0, peak = 0;
+  const result = await collect('three routes', {out:path.join(temp,'concurrent'), file, concurrency:2}, async task => {
+    peak = Math.max(peak, ++active);
+    await new Promise(resolve => setImmediate(resolve));
+    active--;
+    return task.query === 'alpha' ? {status:'awaiting_user',task_id:'saved',awaiting_reason:'verification_required',browser:{closed:true,parked:true}}
+      : {status:'failed',error:'offline',browser:{closed:true}};
+  });
+  assert.equal(peak, 2);
+  assert.deepEqual(result.results.map(row => row.query), ['alpha','gamma']);
+  assert.equal(result.awaiting_user[0].task_id,'saved');
 });
 
 test('report picks up a continued login task without replacing user-edited output',async()=>{

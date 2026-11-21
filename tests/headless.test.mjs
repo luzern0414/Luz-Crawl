@@ -71,6 +71,20 @@ test('incomplete headless reads retry once in the saved foreground profile, but 
   }
 });
 
+test('an explicit denial does not open a second browser profile', async () => {
+  for (const row of [
+    { status: 'blocked', stop_reason: 'access_denied', url_check: { valid_content: false } },
+    { status: 'failed', failure: { code: 'access_denied' } },
+    { status: 'blocked', stop_reason: 'robots_disallowed' },
+  ]) {
+    assert.equal(visibleFallbackReason(row), null);
+    assert.strictEqual(await retryVisibleIfIncomplete(
+      () => assert.fail('must not repeat a denied visit'),
+      {}, row, { pickProfile: () => assert.fail('must not open a different profile') },
+    ), row);
+  }
+});
+
 test('a disconnected saved profile selects a connected browser before attempting the site', async () => {
   const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'luz-stale-visible-profile-'));
   const priorState = process.env.LUZ_CRAWL_STATE, priorHeadless = process.env.LUZ_HEADLESS_PROFILE;

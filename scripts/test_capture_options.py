@@ -1,13 +1,12 @@
 """Offline transport regression tests; these are not live research evidence."""
-import json
+import os
 import tempfile
 import unittest
 from pathlib import Path
-from types import SimpleNamespace
 from unittest.mock import patch
 
 import crawl_preflight as crawl
-from test_crawl_preflight import _single_fixture
+from test_crawl_preflight import FAKE_CLI, _single_fixture
 
 
 class CaptureOptionsTests(unittest.TestCase):
@@ -28,23 +27,15 @@ class CaptureOptionsTests(unittest.TestCase):
             root = Path(tmp)
             _, value, _ = _single_fixture(root, caller="luz-dev")
             source = value["sources"][0]
-            commands = []
-
-            def execute(args, **kwargs):
-                commands.append(args)
-                name = args[2]
-                result = {"ready": True} if name == "doctor" else {}
-                if name == "capture":
-                    result = {"folder": source["archive"], "status": "captured",
-                              "resolved_url": source["url"], "url_check": {"requested": source["url"], "valid_content": True}}
-                return SimpleNamespace(returncode=0, stdout=json.dumps(result), stderr="")
-
-            with patch.object(crawl.subprocess, "run", side_effect=execute):
+            cli = root / "fake.mjs"
+            cli.write_text(FAKE_CLI, encoding="utf-8")
+            calls = root / "calls.json"
+            with patch.object(crawl, "CLI", cli), patch.dict(os.environ, {"FAKE_LOG": str(calls)}):
                 result = crawl.run(root, "luz-dev", "offline capture options", task=value["task_root"],
                                    urls=[source["url"]], screenshot=False)
-            captures = [cmd for cmd in commands if cmd[2] == "capture"]
-            self.assertEqual(len(captures), 1)
-            self.assertIn("--no-screenshot", captures[0])
+            batches = [cmd for cmd in crawl.read(calls) if cmd[0] == "batch"]
+            self.assertEqual(len(batches), 1)
+            self.assertIn("--no-screenshot", batches[0])
             self.assertEqual(len(result["sources"]), 1)
             record = crawl.read(crawl.record_path(root, "luz-dev"))
             self.assertIn("--no-screenshot", next(s["args"] for s in record["steps"] if s["command"] == "capture"))

@@ -15,7 +15,7 @@ python -X utf8 scripts/crawl_preflight.py check --caller luz-dev --session "<会
 
 | 命令 | 作用 | 退出码 |
 |---|---|---|
-| `run` | 本地写入 `not-required` 判定；联网依次执行 doctor、begin 或复用任务、经验查询、search 或 capture、summary | 本地为 0；联网达到下限为 0，仍须 conclude。数量不足为 1，状态为 `needs-research` 或 `blocked` |
+| `run` | 本地写入 `not-required`。联网一次查阅本轮的相关经验，再用一个浏览器批次执行所有查询、已知网址和任务汇总 | 本地为 0。联网达到下限为 0，仍须 conclude。数量不足为 1，状态为 `needs-research` 或 `blocked` |
 | `status` | 只读。已有多少查询、正文、站点，候选有多少没进复盘，复盘缺什么，下一步做什么 | 0 |
 | `review-init` | 生成或合并尽责复盘 `…-research-review.json`：绑定字段、候选、查询、各轮日志、经验日志由它填，判断留空 | 0 |
 | `supplement-init` | 生成或合并补充信息 `…-supplement.json`：每篇正文一条结论和一条来源评估、每个问题一条覆盖，内容留空；`--out` 可改位置 | 0 |
@@ -36,8 +36,10 @@ python -X utf8 scripts/crawl_preflight.py check --caller luz-dev --session "<会
 | `--task` | `begin` 返回的任务目录；同一需求的各技能、各阶段共用 |
 | `--query` | 可重复，缺省用 topic。写成 `入口::关键词`（如 `github::browser automation`）时这条查询用自己的入口 |
 | `--url` | 可重复；已知的官方原文 |
-| `--platform` | 查询入口，默认 bing。逗号分隔表示回退顺序（`bing,baidu`）：前一个既没读到正文也没有候选，才用下一个 |
+| `--platform` | 查询入口，默认 bing。逗号分隔表示回退顺序（`bing,baidu`）。前一个没有正文或候选且允许继续查找时，用同一批次访问下一个 |
 | `--read` | 每条查询打开的详情数，0 到 5，默认 3；0 只建候选池 |
+| `--concurrency` | 不同站点的并发数，1 到 8，默认 6。同站入口的任务依次运行 |
+| `--compact` | 返回来源计数、研究缺口和归档位置。完整来源清单在 `record` 指向的阶段记录中 |
 | `--append` | 同阶段补搜，保留已有路线与来源 |
 | `--no-screenshot` | 文本调研不截图，仍保留正文与 DOM 快照；界面依据要另行截图并实际查看 |
 
@@ -52,9 +54,10 @@ python -X utf8 scripts/crawl_preflight.py conclude --caller luz-design --session
 python -X utf8 scripts/crawl_preflight.py check --caller luz-design --session "<会话>" --stage design
 ```
 
-普通搜索可以直接 `--read 3` 读详情，指定原文直接传 `--url`。深入调研可先 `--read 0` 建候选池，再用 `--append --url` 补读。联网阶段以 `conclude` 和 `check` 核验结论。本地阶段直接 `check`，结果中没有检索报告。阶段内自动生成的是中途汇总，共享缓存留待整个任务结束时用 `summary` 清理。
+普通搜索可以直接 `--read 3` 读详情，已知原文用一个或多个 `--url` 指定。深入调研可一次传入多组 `--query` 并用 `--read 0` 建候选池，再用一次 `--append` 批量补读选中的原文。联网阶段以 `conclude` 和 `check` 核验结论。本地阶段直接 `check`。
 
-- 一条路线失败，保留它的日志和退出码，继续其余路线；doctor、经验查询、summary 失败则停下。
+- 每轮返回一份结果，提供正文索引、候选清单、批次归档和汇总页位置。每条实际路线及失败原因都可在归档里核对。不同入口的任务可同时搜索和采集，打开详情时按实际目标站的访问节奏控制。
+- 经验查询、浏览器检查或任务汇总失败时，保留本轮日志用于恢复。阶段内的汇总供继续调研时阅读，等整个任务结束再用 `summary` 清理共享缓存。
 - 第一次 `run` 建立阶段记录；不带 `--append` 再运行会重写本阶段记录。`--append` 必须是同一 caller、session、stage、topic，不能换任务，也不能借别的阶段。补搜会使原结论失效：重读新增正文，重新 `conclude`、`check`。
 - 同阶段的 `run`、`conclude`、`review-init` 用互斥锁；锁在时 `check` 不认旧结论。进程异常终止留下锁时，先核实锁里的 pid 已退出再清理。
 - 旧生成器没有 `--stage` 参数时，在本阶段的命令环境里设 `LUZ_CRAWL_STAGE` 为同一名称，换阶段同步更新；显式参数优先。没有阶段的旧单次记录只供同一个单阶段调用。
@@ -70,7 +73,7 @@ python -X utf8 scripts/crawl_preflight.py check --caller luz-design --session "<
 | 同一需求的多个技能或阶段 | 首个联网阶段用 `begin --new` 建任务，其余联网阶段用 `--task` 复用目录，各自 `run`、`conclude`、`check`。本地阶段仅在生成器需要记录时使用 `run --research local`、`check` |
 | 缺省 `--task` | 项目用 `project.json` 的 `crawl.task_root`；否则自动 `begin --new`，输出根取 `LUZ_CRAWL_OUTPUT`，没设时是 `E:\Skill输出\Luz-Crawl` |
 | 并发的不同需求 | 各用自己的任务目录 |
-| 阶段隔离 | 来源只取本次 `run` 的 search 与 capture 日志；同一任务里别的阶段读到的页面不算本阶段的证据 |
+| 阶段隔离 | 本阶段来源核对到本轮浏览器批次、其中的具体路线与对应正文档案。补搜沿用同阶段已登记的来源 |
 
 ## 补充信息怎么写
 

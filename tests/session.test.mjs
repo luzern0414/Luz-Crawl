@@ -150,6 +150,19 @@ test('an incomplete foreground retry stays open with an honest partial status fo
   await cancelTask(result.task_id, browser.factory);
 });
 
+test('a denial during visible fallback stays blocked and does not create a verification task', async () => {
+  const browser = fake();
+  const result = await withBrowser('capture', {
+    url: 'https://example.com/blocked',
+    out: path.join(tmp, 'denied-visible'),
+    _luz_visible_fallback: true,
+  }, async () => ({ status: 'blocked', stop_reason: 'access_denied' }), browser.factory);
+  assert.equal(result.status, 'blocked');
+  assert.equal(result.stop_reason, 'access_denied');
+  assert.equal(result.task_id, undefined);
+  assert.equal(result.browser.closed, true);
+});
+
 test('temporary output does not change saved preferences; custom sites validate domain boundaries', async () => {
   const before = await preferences();
   const browser = fake();

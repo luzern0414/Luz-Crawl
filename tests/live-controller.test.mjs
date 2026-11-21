@@ -48,6 +48,37 @@ test('authenticated live requests are deduplicated, serialized and durably recor
   } finally { await server.close(); await fs.rm(directory,{recursive:true,force:true}); }
 });
 
+test('live resolves a changed identifier in the same lease and reports a closed task tab', async () => {
+  const url = 'https://example.com/';
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(),'luz-live-page-'));
+  let active = 'stale-target';
+  let tabs = [{page: 'current-target', url}];
+  const reads = [];
+  const page = {
+    getActivePage: () => active,
+    setActivePage: target => { active = target; },
+    tabs: async () => tabs,
+    goto: () => assert.fail('A live inspection must not navigate to recover a tab.'),
+    evaluate: async () => {
+      reads.push(active);
+      if (active !== tabs[0]?.page || !tabs.length) throw new Error(`Page not found: ${active} — stale page identity`);
+      return {ok:true,url,title:'Live fixture',text:'Owned page'};
+    },
+  };
+  const controller = createLiveController(page,{id:'test',out:directory,url});
+  try {
+    const result = await controller.dispatch({id:'one',op:'inspect'});
+    assert.equal(result.status,'completed');
+    assert.deepEqual(reads,['stale-target','current-target','current-target']);
+    tabs = [];
+    await assert.rejects(() => controller.dispatch({id:'two',op:'inspect'}),{code:'live_page_closed'});
+    assert.equal(controller.status().status,'page_closed');
+    assert.equal(controller.status().page,undefined);
+    await assert.rejects(() => controller.dispatch({id:'three',op:'navigate',options:{url}}),{code:'live_page_closed'});
+    assert.equal((await controller.dispatch({id:'four',op:'close'})).status,'closing');
+  } finally { await fs.rm(directory,{recursive:true,force:true}); }
+});
+
 test('an interrupted form blocks later writes, navigation and capture until its original condition is observed', async () => {
   const directory=await fs.mkdtemp(path.join(os.tmpdir(),'luz-live-pending-'));
   const previous=process.env.LUZ_CRAWL_STATE;process.env.LUZ_CRAWL_STATE=directory;

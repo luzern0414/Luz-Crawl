@@ -52,6 +52,31 @@ function page(snapshots) {
 }
 const opts = (out, more = {}) => ({ url: 'https://x.com/a/status/123', out: path.join(tmp, out), executionPolicy: testPolicy(tmp), delay: 0, scrolls: 5, screenshot: false, ...more });
 
+test('identical static rounds share lossless files while equal-length body changes remain visible', async () => {
+  const url = 'https://guide.example/docs/doc';
+  const first = snapshot({url, static_web:true, text:'published value A'});
+  const revised = {...first, text:'published value B'};
+  const result = await capture(page([first,first,revised,revised]), opts('distinct-snapshots',{url}));
+  const content = JSON.parse(await fs.readFile(path.join(result.folder,'content.json'),'utf8'));
+  assert.equal(content.text,'published value B');
+  assert.deepEqual(content.snapshots.map(row=>row.path), ['snapshots/0000.json','snapshots/0001.json','snapshots/0001.json']);
+  assert.equal((await fs.readdir(path.join(result.folder,'snapshots'))).length,4);
+  assert.ok((await verifyArchive(result.folder)).ok);
+});
+
+test('candidate ranking distinguishes words from substrings and retains the best duplicate evidence', () => {
+  const base='https://guide.example', url=base+'/docs/reference';
+  const found=sourceCandidates({requested_url:base+'/search',links:[
+    {url,text:''},{url:base+'/docs/noise',text:'Trusted references',context:'A trusted guide for translations'},
+    {url,text:'Rust reference manual',context:'Rust language examples with full text'}
+  ]},{domains:['guide.example']},false,'rust');
+  assert.deepEqual(found.map(item=>[item.url,item.text,item.search_evidence.exact_terms]),[[url,'Rust reference manual',['rust']]]);
+  const cpp=sourceCandidates({requested_url:base+'/search',links:[{url,text:'实用C++参考资料'}]},{},false,'C++');
+  assert.equal(cpp[0].url,url);
+  const compound=sourceCandidates({requested_url:base+'/search',links:[{url,text:'RustParser reference'}]},{},false,'Rust rust');
+  assert.equal(compound[0].url,url);
+});
+
 test('large DOM snapshots round-trip losslessly and remain verifiable on resume', async () => {
   const body = 'Sample browser snapshot text. '.repeat(45000);
   const observed = snapshot({ text: body, html: '<article>' + body + '</article>' });

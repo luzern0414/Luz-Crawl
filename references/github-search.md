@@ -41,12 +41,9 @@ GitHub 已明确限流或验证时停止该站；不要用其他入口规避限�
 
 浏览器搜索只用于少量候选发现；需要批量、持续或带筛选的大范围检索时改用官方 REST API 的搜索接口（认证后每分钟 30 次，未认证 10 次，代码搜索 10 次），遇到 403 或 429 按 `retry-after`、`x-ratelimit-reset` 等待。GitHub 的 robots 与使用政策依据见 [compliance.md](compliance.md)。
 
-PowerShell 示例：
+本次允许查询的入口可以写进一个批次。例如在 `jobs.json` 中填入 `[{"platform":"gitcn","query":"browser automation","read":0},{"platform":"codeberg","query":"browser automation","read":0}]` 并运行：
 
-    node scripts/luz-crawl.mjs search github "browser automation" --read 0 --out TASK_FOLDER
-    node scripts/luz-crawl.mjs search gitcn "browser automation" --read 0 --out TASK_FOLDER
-    node scripts/luz-crawl.mjs search hellogithub "浏览器" --read 0 --out TASK_FOLDER
-    node scripts/luz-crawl.mjs search codeberg "browser automation" --read 0 --out TASK_FOLDER
+    node scripts/luz-crawl.mjs batch --file jobs.json --out TASK_FOLDER --compact --no-screenshot
 
 ## 结果规则
 

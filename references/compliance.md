@@ -22,7 +22,7 @@
 | 小红书 | robots.txt 对 `User-agent: *` 为 `Disallow: /`，仅少数搜索引擎有放行路径；用户协议原文未能取得 | 只做用户指定的少量公开笔记；不批量、不转售；协议未核对，使用前由用户确认 |
 | 抖音 | [用户服务协议](https://www.douyin.com/agreement) 第 2.4、5.1、5.3(4) 条禁止爬虫、使用自动化程序收集内容、模拟下载，第 5.3(7) 条禁止将内容用于任何销售和商业使用；robots.txt 没有对通用爬虫的全站禁止 | 同上；下载的视频只作调研依据，不用于传播或商用 |
 | GitHub | [robots.txt](https://github.com/robots.txt) 对通用爬虫禁止 `/search$` 和带 `?q=` 的页面，并说明抓取请联系 GitHub、数据可用官方 API；[使用政策](https://docs.github.com/en/site-policy/acceptable-use-policies/github-acceptable-use-policies) 把机器人抓取称为 scraping，不含 API，禁止用采集到的个人信息发垃圾信息或出售；[服务条款](https://docs.github.com/en/site-policy/github-terms/github-terms-of-service) 第 D.8 条说明条款不限制第三方合法访问公开仓库 | 浏览器搜索只用于少量候选发现；批量或持续检索改用官方 API（认证后搜索接口每分钟 30 次，未认证 10 次）；不收集用户邮箱、不做招聘或营销名单 |
-| 其他网站 | 以各自 robots.txt 和条款为准 | 先 `robots`，再决定是否读取 |
+| 其他网站 | 以各自 robots.txt 和条款为准 | 批量或重复读取时先查 `robots` |
 
 ## 法律依据
 

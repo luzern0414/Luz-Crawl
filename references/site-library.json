@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-11-18T14:34:11.111Z",
+  "updated_at": "2026-11-20T15:01:51.247Z",
   "description": "可扩展公开网站入口库。probe 仅记录历史派发状态；completed 不代表数据已验收。verification 分别表示单次样本的页面、搜索、详情、统计和媒体验收，默认 untested。入口可失效，执行前仍须观察原站并补充新站。",
   "verification_states": [
     "verified",
@@ -4097,11 +4097,11 @@
       ],
       "probe": {
         "status": "completed",
-        "observations": 33,
-        "observed_at": "2026-11-18T14:29:17.027Z",
+        "observations": 35,
+        "observed_at": "2026-11-20T08:43:45.390Z",
         "last_action_status": "captured",
         "last_stop_reason": "stable_after_2_scrolls",
-        "last_text_chars": 1824
+        "last_text_chars": 6397
       },
       "verification": {
         "page": "untested",
@@ -4294,16 +4294,16 @@
       ],
       "probe": {
         "status": "completed",
-        "observations": 47,
-        "observed_at": "2026-10-29T08:24:41.968Z",
-        "last_action_status": "captured",
-        "last_stop_reason": "stable_after_2_scrolls",
-        "last_text_chars": 1174
+        "observations": 51,
+        "observed_at": "2026-11-20T00:51:25.951Z",
+        "last_action_status": "awaiting_user",
+        "last_stop_reason": "verification_required",
+        "last_text_chars": 985
       },
       "verification": {
         "page": "partial",
         "search": "partial",
-        "detail": "verified",
+        "detail": "blocked",
         "statistics": "untested",
         "media": "untested"
       },
@@ -4384,16 +4384,16 @@
       ],
       "probe": {
         "status": "completed",
-        "observations": 2,
-        "observed_at": "2026-10-25T12:11:45.044Z",
-        "last_action_status": "completed",
-        "last_stop_reason": "browser_actions_complete",
-        "last_text_chars": 2719
+        "observations": 3,
+        "observed_at": "2026-11-20T08:39:07.407Z",
+        "last_action_status": "captured",
+        "last_stop_reason": "stable_after_2_scrolls",
+        "last_text_chars": 2733
       },
       "verification": {
         "page": "untested",
         "search": "untested",
-        "detail": "untested",
+        "detail": "verified",
         "statistics": "untested",
         "media": "untested"
       }
@@ -5460,11 +5460,11 @@
       ],
       "probe": {
         "status": "completed",
-        "observations": 153,
-        "observed_at": "2026-11-16T19:19:57.305Z",
+        "observations": 160,
+        "observed_at": "2026-11-20T14:37:55.165Z",
         "last_action_status": "captured",
         "last_stop_reason": "stable_after_2_scrolls",
-        "last_text_chars": 2064
+        "last_text_chars": 758
       },
       "verification": {
         "page": "verified",
@@ -5627,11 +5627,11 @@
       ],
       "probe": {
         "status": "completed",
-        "observations": 75,
-        "observed_at": "2026-11-18T11:13:26.068Z",
+        "observations": 80,
+        "observed_at": "2026-11-20T15:01:51.247Z",
         "last_action_status": "captured",
         "last_stop_reason": "stable_after_2_scrolls",
-        "last_text_chars": 223
+        "last_text_chars": 14028
       },
       "verification": {
         "page": "verified",
@@ -5681,11 +5681,11 @@
       ],
       "probe": {
         "status": "completed",
-        "observations": 32,
-        "observed_at": "2026-11-18T11:14:41.625Z",
+        "observations": 34,
+        "observed_at": "2026-11-18T15:15:23.611Z",
         "last_action_status": "partial",
         "last_stop_reason": "scroll_budget",
-        "last_text_chars": 6706
+        "last_text_chars": 6801
       },
       "verification": {
         "page": "partial",
@@ -5710,16 +5710,16 @@
       ],
       "probe": {
         "status": "completed",
-        "observations": 80,
-        "observed_at": "2026-11-18T05:13:08.593Z",
-        "last_action_status": "awaiting_user",
-        "last_stop_reason": "unavailable",
-        "last_text_chars": 345
+        "observations": 85,
+        "observed_at": "2026-11-20T15:01:51.247Z",
+        "last_action_status": "partial",
+        "last_stop_reason": "scroll_budget",
+        "last_text_chars": 11598
       },
       "verification": {
         "page": "verified",
         "search": "untested",
-        "detail": "blocked",
+        "detail": "partial",
         "statistics": "untested",
         "media": "untested"
       },
@@ -9518,11 +9518,11 @@
       "discovered_from": "开源项目检索补充入口",
       "probe": {
         "status": "completed",
-        "observations": 401,
-        "observed_at": "2026-11-18T14:34:11.111Z",
+        "observations": 533,
+        "observed_at": "2026-11-20T12:03:36.607Z",
         "last_action_status": "captured",
-        "last_stop_reason": "repository_dom_complete",
-        "last_text_chars": 1652
+        "last_stop_reason": "stable_after_2_scrolls",
+        "last_text_chars": 1242
       }
     },
     {

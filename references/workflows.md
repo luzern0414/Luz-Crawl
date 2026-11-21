@@ -12,13 +12,27 @@
 
 选站、逐站确认 page、search、detail、statistics、media 的状态并更新网站库，按 [site-research.md](site-research.md) 执行。
 
-需要多站、多词时使用 collect --file 或 batch。所有搜索与采集结果写入同一任务目录，登录、验证和限流只停止对应站点。
+多站、多词和已知网址可以写进同一份 `jobs.json`。`--concurrency` 默认 6，可设为 1 到 8。同站入口依次排队，空出的名额供其他就绪站点使用。没有候选且允许回退的查询可立即排入备用站点。登录、验证、限流和拒绝访问时停止对应站点。
+
+```json
+[
+  {"platform":"bing","query":"无障碍 表单 官方指南","read":2},
+  {"platform":"baidu","query":"表单 可访问性 错误提示","read":2},
+  {"url":"https://example.com/guide"}
+]
+```
+
+```powershell
+node scripts/luz-crawl.mjs batch --file jobs.json --out TASK_FOLDER --concurrency 6 --compact --no-screenshot
+```
+
+批次结束后输出一份 JSON，含实际查询数、去重候选数、已采集正文数、待处理任务及归档位置。完整路线和候选可按 `batch_file` 查阅，浏览器过程日志记在 `diagnostics_file`。单条搜索加 `--compact` 可通过 `search_index` 阅读完整候选与逐页结果。图文合集用 `collect --file plan.json --compact`。下载媒体时默认 2 路并发，关闭下载时默认 6 路，可用 `--concurrency` 调整。
 
 ## 候选到详情
 
-先收集、规范化和去重候选 URL，再逐条读取目标详情。核对标题、正文、日期、内容 ID、媒体和已加载评论。推荐卡片、导航、搜索摘要和平台介绍不能代替原文。
+按相关性排序、去重候选 URL，再读取详情。单条普通查询或只有一项搜索的批次中，静默浏览器可同时读取不同网站的公开正文，共享原查询的时间和操作预算。读取数量达到 `--read` 即停。前排链接失效时按剩余名额有限补读。依赖原标签页的点击、已登录会话、评论、媒体和续接保持原顺序。核对标题、正文、日期、内容 ID 与已加载范围。
 
-`search --read 0` 只建候选池，前置调用的写法见 [preflight.md](preflight.md)。实操内容要有实际步骤或可演示操作；广告、招生和引流内容不算教程。
+`search --read 0` 用于单条查询。多条查询的发现阶段统一在批次计划中填 `read: 0`，或在前置调用中一起传 `--query` 和 `--read 0`。前置调用见 [preflight.md](preflight.md)。实操内容要有实际步骤或可演示操作。
 
 ## 交付
 
@@ -29,3 +43,5 @@
 - 所有任务：分开报告搜索、正文、媒体、评论、完整性和关闭状态。
 
 未经核验的内容标为候选或 partial，不能写成完整结果。
+
+调研正文、来源索引和下载目录按阅读网页模板发布。第三方页面的操作截图保留来源与取证条件。客户产品的可操作界面交给 Design 实现与审核；外站截图只用于核对调研事实。

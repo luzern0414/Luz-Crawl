@@ -2,9 +2,13 @@
 
 ## 输出
 
+批次运行期间，`batch-*.json` 的 `progress_file` 指向逐项追加的记录。完成后完整结果写入 `batch_file`，临时记录随即回收。进程意外退出时，已完成的路线和逐页证据仍可读取。
+
+每一轮浏览器观察都保留时间、网址和快照路径。相同采集内，提取数据与 HTML 都逐字节相同的轮次共用一对文件。内容有变化时另存并计算哈希，旧归档和续接前的快照照常验签。
+
 输出根下只放“序号-主题”任务文件夹，`raw/` 放全部爬取内容和机器记录，总结页与 `raw/` 同级；目录全貌见 [SKILL.md](../SKILL.md)。
 
-每个任务自动生成总结页（`序号-主题.html`：标题加带表题的采集结果表，没有内容的节不写，版式与前置检索结论页相同），`begin` 建任务时写出，每次采集重写，`summary` 可随时重建。search、capture、batch、browser 的结果分别保存 JSON，放在任务的 `raw/` 里。
+每个任务自动生成总结页 `序号-主题.html`。`begin` 建任务时写出，批量采集在整批完成后更新一次，`summary` 可随时重建。search、capture、batch、browser 的结果分别保存为 JSON，放在任务的 `raw/` 里。`batch --compact` 从返回的 `batch_file` 可追溯到每条搜索或采集路线。
 
 每个页面存档的文件直接放在“四位序号_标题”文件夹（如 `0001_页面标题`）：content.json（正文与字段）、manifest.json、identity.json、snapshots/（每轮滚动的 JSON 与 HTML）、page.png（截图）、media/（已下载媒体）和页面 html。manifest.json 的文件路径相对该文件夹；记录规范 URL、实际 URL、请求 URL、平台、路线、状态、停止原因、正文范围、媒体统计、`captured_at`、`extractor_version` 和每个文件的 SHA-256。verify 只检查本地文件与记录一致，不证明网页真实性或内容完整。引用字段与来源评估见 [research-method.md](research-method.md)。
 

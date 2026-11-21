@@ -4,9 +4,10 @@ import path from 'node:path';
 import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
 import { parseArgs } from 'node:util';
 import { doctor } from '../lib/doctor.mjs';
-import { atomicWrite, createTaskArchive, DEFAULT_OUTPUT, findExperience, findTaskArchive, lzCompactEvents, verifyArchive } from '../lib/archive.mjs';
+import { atomicWrite, createTaskArchive, DEFAULT_OUTPUT, findExperience, findTaskArchive, loadExperience, lzCompactEvents, verifyArchive } from '../lib/archive.mjs';
 import { lzFixURL, validateURL } from '../lib/platforms.mjs';
 import { preferences, rememberPreferences, rememberSite, sites, pendingTasks, loadTask } from '../lib/memory.mjs';
 import { readActions, ACTION_SCHEMA } from '../lib/browser-actions.mjs';
@@ -16,7 +17,7 @@ import { accessPolicy } from '../lib/execution.mjs';
 import { classifyFailure } from '../lib/failure.mjs';
 import { VERSION, API_VERSION } from '../lib/version.mjs';
 import { pickVisibleProfile, withHeadlessSession } from '../lib/headless.mjs';
-import { readBatch } from '../lib/batch.mjs';
+import { batchConcurrency, DEFAULT_CONCURRENCY, readBatch } from '../lib/batch.mjs';
 import { writeCrawlSummary } from '../lib/crawl-summary.mjs';
 import { lzNote, lzNotes, lzNotesCheck, lzNotesList, lzNotesPrune } from '../lib/notes.mjs';
 import { lzScope } from '../lib/scope.mjs';
@@ -30,14 +31,34 @@ const print = (value) => console.log(JSON.stringify(value, null, 2));
 // Each browser command runs in its own process (lib/host.mjs) so environment changes made by the silent/visible fallback
 // stay confined to that command; stdout carries the JSON result, stderr the progress messages.
 const HOST = path.join(root, 'lib', 'host.mjs');
-async function hostCommand(args, inherit = false) {
-  return new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, [HOST, ...args], { shell: false, windowsHide: true, stdio: inherit ? 'inherit' : ['ignore', 'pipe', 'pipe'], env: { ...process.env, NO_COLOR: '1' } });
-    let output = '';
-    if (!inherit) { child.stdout.setEncoding('utf8'); child.stdout.on('data', (chunk) => { output += chunk; }); child.stderr.on('data', (chunk) => process.stderr.write(chunk)); }
-    child.on('error', reject);
-    child.on('close', (code) => code === 0 ? resolve(output) : reject(new Error(`LuzCrawl runtime exited ${code}: ${output.trim()}`)));
-  });
+async function hostCommand(args, diagnosticsFile) {
+  const log = diagnosticsFile ? await fs.open(diagnosticsFile, 'wx') : null;
+  try {
+    return await new Promise((resolve, reject) => {
+      const child = spawn(process.execPath, [HOST, ...args], { shell: false, windowsHide: true,
+        stdio: ['ignore', 'pipe', log?.fd ?? 'pipe'], env: { ...process.env, NO_COLOR: '1' } });
+      let output = '';
+      child.stdout.setEncoding('utf8');
+      child.stdout.on('data', chunk => { output += chunk; });
+      child.stderr?.on('data', chunk => process.stderr.write(chunk));
+      child.on('error', reject);
+      child.on('close', (code) => {
+        if (code === 0) resolve(output);
+        else reject(new Error(`LuzCrawl runtime exited ${code}. ${diagnosticsFile || output.trim()}`));
+      });
+    });
+  } finally {
+    await log?.close();
+  }
+}
+
+async function lookupExperience(query, platform, category, snapshot) {
+  const [notes, history] = await Promise.all([
+    lzNotes(query, platform, { category }),
+    findExperience(query, platform, { category, snapshot }),
+  ]);
+  const categories = Object.fromEntries([...new Set(notes.map(note => note.category))].map(name => [name, notes.filter(note => note.category === name).length]));
+  return { notes, categories, ...history };
 }
 
 function captureArgs(url, options) {
@@ -51,59 +72,26 @@ function captureArgs(url, options) {
   return args;
 }
 
-// Batch second pass: jobs that came back without a verified body (or a search without candidates) are retried one at
-// a time, so each gets its own visible-browser fallback. The better of the two results is kept; the first attempt is
-// recorded in second_pass.
-async function retryIncompleteJobs(batchResult, values, out) {
-  const retry = (batchResult.results || []).map((job, index) => [job, index]).filter(([job]) => job && job.kind !== 'browser' && (job.url || job.query)
-    && !['completed', 'awaiting_user', 'skipped'].includes(job.status)
-    && (job.query ? !(job.candidates || []).length : job.status !== 'captured' && !job.url_check?.valid_content)
-    && !['rate_limited', 'operation_budget', 'cancelled', 'site_blocked', 'login_required', 'verification_required', 'access_denied', 'write_outcome_unknown'].includes(job.awaiting_reason || job.stop_reason || job.failure?.code)).slice(0, 20);
-  if (!retry.length) return false;
-  console.error(`[LuzCrawl] 批量中 ${retry.length} 条未取得正文，逐条补采（必要时转可见浏览器）。`);
-  for (const [job, index] of retry) {
-    let again;
-    try {
-      let native;
-      if (job.query) {
-        native = ['luz-crawl', 'search', job.platform, job.query, '--out', out, '--read', String(job.read ?? 0), '--scrolls', String(values.scrolls ?? 12), '-f', 'json'];
-        if (job.site) native.push('--site', job.site);
-        for (const key of ['comments', 'download']) if (values[key]) native.push(`--${key}`);
-        if (values.profile) native.unshift('--profile', values.profile);
-        if (values.screenshot === false) native.push('--no-screenshot');
-      } else native = captureArgs(job.url, { ...values, out, resume: true });
-      again = JSON.parse(await hostCommand(native));
-    } catch (error) { again = { status: 'failed', error: error.message }; }
-    const better = again && (again.url_check?.valid_content || again.status === 'awaiting_user' || (job.query && (again.candidates || []).length > 0));
-    batchResult.results[index] = better
-      ? { ...job, ...again, second_pass: { from: job.status, to: again.status } }
-      : { ...job, second_pass: { from: job.status, to: again?.status || 'failed', error: again?.error } };
-  }
-  const statuses = batchResult.results.map((job) => job.status);
-  if (statuses.every((status) => ['captured', 'completed'].includes(status))) batchResult.status = 'completed';
-  else if (statuses.some((status) => status === 'awaiting_user')) batchResult.status = 'awaiting_user';
-  return true;
-}
-
 const usage = `LuzCrawl ${VERSION} — skill, browser extension and local memory
   node scripts/luz-crawl.mjs doctor
   node scripts/luz-crawl.mjs begin "task or request name" --out OUTPUT_ROOT [--new]
   node scripts/luz-crawl.mjs headless-login [TASK_ID or URL]
   node scripts/luz-crawl.mjs install
-  node scripts/luz-crawl.mjs collect "topic or URL" [--platform xhs,github,bing] [--file plan.json] [--read 1] --out TASK_FOLDER
+  node scripts/luz-crawl.mjs collect "topic or URL" [--platform xhs,github,bing] [--file plan.json] [--read 1] --out TASK_FOLDER [--compact] [--concurrency 2]
   node scripts/luz-crawl.mjs report COLLECTION_DIRECTORY
   node scripts/luz-crawl.mjs summary TASK_DIRECTORY [--keep-raw]
   node scripts/luz-crawl.mjs robots URL
   node scripts/luz-crawl.mjs capture URL --out TASK_FOLDER [--scrolls 20] [--comments] [--download] [--profile ID]
-  node scripts/luz-crawl.mjs batch --file jobs.json --out TASK_FOLDER [--concurrency 4] [--allow-write] [--resume]
-  node scripts/luz-crawl.mjs search PLATFORM_OR_DOMAIN "query" --out TASK_FOLDER [--read 1] [--comments] [--download] [--no-screenshot]
+  node scripts/luz-crawl.mjs batch --file jobs.json --out TASK_FOLDER [--compact] [--concurrency 6] [--allow-write] [--resume]
+  node scripts/luz-crawl.mjs search PLATFORM_OR_DOMAIN "query" --out TASK_FOLDER [--read 1] [--compact] [--concurrency 6] [--comments] [--download] [--no-screenshot]
   node scripts/luz-crawl.mjs search web "query" --site example.com --out TASK_FOLDER
   node scripts/luz-crawl.mjs experience --query "keyword" [--platform x] [--category keyword|route|source|failure|verification|method|general]
+  node scripts/luz-crawl.mjs experience --file lookups.json
   node scripts/luz-crawl.mjs sites [--category analytics]
   node scripts/luz-crawl.mjs remember --out DIRECTORY --format html [--keywords "word1,word2"]
   node scripts/luz-crawl.mjs remember --browser edge --profile PROFILE_ID [--no-reuse-profile]
   node scripts/luz-crawl.mjs remember --site https://example.com --name example --template "https://example.com/search?q={query}"
-  node scripts/luz-crawl.mjs note --kind preference|lesson|fact --key TOPIC --text "one line" [--category CATEGORY] [--tags "词,别名"] [--when "适用条件"] [--source URL] [--outcome success|failure|mixed|unverified] [--valid-until YYYY-MM-DD] [--why WHY] [--platform ID] [--public --when "situation"]
+  node scripts/luz-crawl.mjs note --kind preference|lesson|fact --key TOPIC --text "one line" [--category CATEGORY] [--tags "词,别名"] [--when "适用条件"] [--source URL] [--outcome success|failure|mixed|unverified] [--valid-until YYYY-MM-DD] [--why WHY] [--platform ID] [--codified] [--public --when "situation"]
   node scripts/luz-crawl.mjs list [--kind lesson]
   node scripts/luz-crawl.mjs prune
   node scripts/luz-crawl.mjs check
@@ -124,16 +112,17 @@ const usage = `LuzCrawl ${VERSION} — skill, browser extension and local memory
   node scripts/luz-crawl.mjs live status|close SESSION --out TASK_FOLDER
   node scripts/luz-crawl.mjs schema
   node scripts/luz-crawl.mjs policy [--file policy.json]
-Read order: an isolated silent Edge first; if the target body is not confirmed, one retry in the connected visible Edge (the saved profile, or a newly launched Edge) inside a minimized window; only a login or verification brings that window to the front and returns awaiting_user with continue TASK_ID. --profile ID uses that visible profile directly; doctor reports browser preference separately from site login state.
+For a visible visit to the original URL, use live open URL --headed --out TASK_FOLDER followed by live inspect. One-shot reads start in an isolated silent Edge and may supplement incomplete content in a connected browser. Explicit access denial stops automatic retries. --profile ID selects a connected browser.
 Output: --out wins, then the saved output preference, else ${DEFAULT_OUTPUT}; keep the output root outside this skill directory. The coordinator runs begin --out OUTPUT_ROOT --new once per request and passes the returned folder with --out to every operation and delegated agent; delegated agents never run begin. Task folders are bound to the session (CODEX_THREAD_ID or CLAUDE_CODE_SESSION_ID); without a session ID, begin without --new reuses the latest active task under the same output root. Layout: OUTPUT_ROOT/NNN-topic/ holds raw/ (everything crawled and every machine record, one folder per page under raw/NNNN_title/) and NNN-topic.html (the summary) beside it; the number is the highest one under OUTPUT_ROOT plus one, and an older NNN_topic folder counts and stays readable.
 Browser Bridge must be connected. Follow SKILL.md (调用协议); installation is in references/install.md.`;
 
 async function main() {
-  const { values, positionals } = parseArgs({ allowPositionals: true, allowNegative: true, options: { 'keep-raw': { type: 'boolean' }, headed: { type: 'boolean' }, ttl: { type: 'string' }, 'request-id': { type: 'string' }, headless: { type: 'boolean' }, out: { type: 'string' }, new: { type: 'boolean' }, scrolls: { type: 'string' }, concurrency: { type: 'string' }, comments: { type: 'boolean' }, download: { type: 'boolean' }, screenshot: { type: 'boolean' }, 'allow-write': { type: 'boolean' }, resume: { type: 'boolean' }, file: { type: 'string' }, steps: { type: 'string' }, query: { type: 'string' }, platform: { type: 'string' }, read: { type: 'string' }, site: { type: 'string' }, profile: { type: 'string' }, browser: { type: 'string' }, 'reuse-profile': { type: 'boolean' }, window: { type: 'string' }, format: { type: 'string' }, name: { type: 'string' }, template: { type: 'string' }, keywords: { type: 'string' }, category: { type: 'string' }, tags: { type: 'string' }, source: { type: 'string' }, outcome: { type: 'string' }, 'valid-until': { type: 'string' }, compact: { type: 'boolean' }, note: { type: 'string' }, key: { type: 'string' }, kind: { type: 'string' }, text: { type: 'string' }, why: { type: 'string' }, when: { type: 'string' }, public: { type: 'boolean' }, help: { type: 'boolean' } } });
+  const { values, positionals } = parseArgs({ allowPositionals: true, allowNegative: true, options: { codified: { type: 'boolean' }, 'keep-raw': { type: 'boolean' }, headed: { type: 'boolean' }, ttl: { type: 'string' }, 'request-id': { type: 'string' }, headless: { type: 'boolean' }, out: { type: 'string' }, new: { type: 'boolean' }, scrolls: { type: 'string' }, concurrency: { type: 'string' }, comments: { type: 'boolean' }, download: { type: 'boolean' }, screenshot: { type: 'boolean' }, 'allow-write': { type: 'boolean' }, resume: { type: 'boolean' }, file: { type: 'string' }, steps: { type: 'string' }, query: { type: 'string' }, platform: { type: 'string' }, read: { type: 'string' }, site: { type: 'string' }, profile: { type: 'string' }, browser: { type: 'string' }, 'reuse-profile': { type: 'boolean' }, window: { type: 'string' }, format: { type: 'string' }, name: { type: 'string' }, template: { type: 'string' }, keywords: { type: 'string' }, category: { type: 'string' }, tags: { type: 'string' }, source: { type: 'string' }, outcome: { type: 'string' }, 'valid-until': { type: 'string' }, compact: { type: 'boolean' }, note: { type: 'string' }, key: { type: 'string' }, kind: { type: 'string' }, text: { type: 'string' }, why: { type: 'string' }, when: { type: 'string' }, public: { type: 'boolean' }, help: { type: 'boolean' } } });
   // A pasted page URL is repaired (full-width punctuation, missing or misspelt scheme) before any command validates it.
   if (['capture', 'browser', 'headless-login'].includes(positionals[0]) && positionals[1] && !/^[a-f0-9-]{36}$/.test(positionals[1])) positionals[1] = lzFixURL(positionals[1]);
   const [command, ...args] = positionals;
   if (values.help || !command) { console.log(usage); return; }
+  if (values.concurrency !== undefined && ['search','collect'].includes(command)) batchConcurrency(values.concurrency);
   if (command === 'live') {
     const [op,id,url]=args;
     let result;
@@ -151,7 +140,8 @@ async function main() {
     if(!['ready','completed','captured','partial','verified','closed','closing'].includes(result.status))process.exitCode=2;
     return;
   }
-  if (command === 'batch') await readBatch(values);
+  if (command === 'batch') values.batchJobs = await readBatch(values);
+  if (command === 'search' && args.length !== 2) throw new Error('Search requires one platform and one query. Use batch --file for multiple queries.');
   if (command === 'browser') {
     validateURL(args[0]);
     if (values.file === '-') { if (values.steps !== undefined) throw new Error('Use only --steps or --file.'); let input = ''; for await (const chunk of process.stdin) { input += chunk; if (input.length > 5 * 1024 * 1024) throw new Error('Action input exceeds 5 MiB.'); } values.steps = input; values.file = undefined; }
@@ -217,8 +207,18 @@ async function execute(values, positionals) {
   }
   if (command === 'experience') {
     if (values.compact) { print(await lzCompactEvents(true)); return; }
-    const notes = await lzNotes(values.query || '', values.platform, { category: values.category });
-    print({ notes, categories: Object.fromEntries([...new Set(notes.map(n => n.category))].map(category => [category, notes.filter(n => n.category === category).length])), ...await findExperience(values.query || '', values.platform, { category: values.category }) }); return;
+    if (!values.file) { print(await lookupExperience(values.query || '', values.platform, values.category)); return; }
+    if (values.query || values.platform) throw new Error('Use --file or --query/--platform for experience.');
+    const requests = JSON.parse((await fs.readFile(path.resolve(values.file), 'utf8')).replace(/^\uFEFF/, ''));
+    if (!Array.isArray(requests) || !requests.length || requests.some(row => !row || typeof row.query !== 'string' || !row.query.trim()
+      || row.platform !== undefined && typeof row.platform !== 'string')) throw new Error('Experience input is an array of {query, platform?} lookups.');
+    const snapshot = await loadExperience();
+    const lookups = [];
+    for (const { query, platform } of requests) {
+      lookups.push({ query, platform, ...await lookupExperience(query, platform, values.category, snapshot) });
+    }
+    print({ lookups });
+    return;
   }
   // Advice before a bulk or repeated read: what the site's robots.txt says about this path (RFC 9309). Exit 2 = disallowed or unreachable.
   if (command === 'robots') { if (!args[0]) throw new Error('A URL is required.'); const result = await checkRobots(args[0]); print(result); process.exitCode = result.allowed ? 0 : 2; return; }
@@ -261,7 +261,7 @@ async function execute(values, positionals) {
   values.window ||= 'background';
   let batchURLs;
   if (command === 'batch') {
-    batchURLs = (await readBatch(values)).map(job => job.url);
+    batchURLs = values.batchJobs.map(job => job.url).filter(Boolean);
   }
   if (command === 'capture' || command === 'browser') validateURL(args[0]);
   if (command === 'search' && (!args[0] || !args[1])) throw new Error('Search requires platform and query.');
@@ -270,13 +270,26 @@ async function execute(values, positionals) {
   const archiveFolder = (await findTaskArchive(values.out))?.folder || await createTaskArchive(values.out, archiveTitle);
   const health = await doctor({ profile: values.profile });
   if (!health.ready && !(['profile_selection_required', 'profile_disconnected'].includes(health.state) && values.profile)) {
-    await atomicWrite(path.join(archiveFolder, 'raw', 'preflight.json'), { command, status: 'blocked', browser_opened: false, requested: batchURLs?.length ?? (command === 'capture' ? 1 : undefined), sources: batchURLs, attempted: 0, health });
+    await atomicWrite(path.join(archiveFolder, 'raw', 'preflight.json'), { command, status: 'blocked', browser_opened: false, requested: values.batchJobs?.length ?? (command === 'capture' ? 1 : undefined), sources: batchURLs, attempted: 0, health });
     print(health); process.exitCode = 2; return;
   }
-  await atomicWrite(path.join(archiveFolder, 'raw', 'preflight.json'), { command, status: 'ready_to_attempt', requested: batchURLs?.length, health });
+  await atomicWrite(path.join(archiveFolder, 'raw', 'preflight.json'), { command, status: 'ready_to_attempt', requested: values.batchJobs?.length, health });
   if (command === 'collect') {
-    const result=await collect(args[0] || values.name || path.basename(values.file),{...values,out:archiveFolder});
-    print(result); if(!['captured','completed'].includes(result.status)) process.exitCode=2;
+    const input=args[0] || values.name || path.basename(values.file);
+    let result;
+    if (values.compact) {
+      const native=['luz-crawl','collect',input,'--out',archiveFolder,'--compact','-f','json'];
+      if (values.profile) native.unshift('--profile',values.profile);
+      for (const key of ['file','name','platform','window','read','scrolls','concurrency']) if (values[key] !== undefined) native.push(`--${key}`,values[key]);
+      for (const key of ['comments','download','screenshot','resume']) if (typeof values[key] === 'boolean') native.push(`--${values[key] ? '' : 'no-'}${key}`);
+      const diagnostics_file=path.join(archiveFolder,'raw',`collection-${randomUUID()}.log`);
+      result=JSON.parse(await hostCommand(native,diagnostics_file));
+      console.log(JSON.stringify({...result,diagnostics_file}));
+    } else {
+      result=await collect(input,{...values,out:archiveFolder});
+      print(result);
+    }
+    if(!['captured','completed'].includes(result.status)) process.exitCode=2;
   } else if (command === 'capture') {
     const output = await hostCommand(captureArgs(args[0], { ...values, out: archiveFolder }));
     console.log(output);
@@ -297,27 +310,29 @@ async function execute(values, positionals) {
     for (const key of ['site', 'window']) if (values[key]) native.push(`--${key}`, values[key]);
     for (const key of ['resume', 'comments', 'download']) if (values[key]) native.push(`--${key}`);
     if (values.screenshot === false) native.push('--no-screenshot');
-    const output = await hostCommand(native); console.log(output);
+    if (values.compact) native.push('--compact');
+    if (values.concurrency !== undefined) native.push('--concurrency', values.concurrency);
+    const diagnosticsFile = values.compact ? path.join(archiveFolder, 'raw', `search-${randomUUID()}.log`) : undefined;
+    const output = await hostCommand(native, diagnosticsFile);
     const result = JSON.parse(output);
-    await lzLibrary([result, ...(result.sources || [])]);
-    await lzScope(archiveFolder, [result, ...(result.sources || [])]);
+    if (diagnosticsFile) console.log(JSON.stringify({ ...result, diagnostics_file: diagnosticsFile }));
+    else {
+      process.stdout.write(output);
+      await lzLibrary([result, ...(result.sources || [])]);
+      await lzScope(archiveFolder, [result, ...(result.sources || [])]);
+    }
     if (['blocked', 'failed'].includes(result.status)) process.exitCode = 2;
   } else {
-    const native = ['luz-crawl', 'batch', '--file', path.resolve(values.file), '--out', archiveFolder, '--concurrency', values.concurrency || '4', '--scrolls', values.scrolls || '20', '-f', 'json'];
+    const native = ['luz-crawl', 'batch', '--file', path.resolve(values.file), '--out', archiveFolder, '--concurrency', String(values.concurrency ?? DEFAULT_CONCURRENCY), '-f', 'json'];
+    if (values.scrolls !== undefined) native.push('--scrolls', values.scrolls);
     if (values.profile) native.unshift('--profile', values.profile);
-    for (const key of ['resume', 'comments', 'download', 'allow-write']) if (values[key]) native.push(`--${key}`);
+    for (const key of ['resume', 'comments', 'download', 'allow-write', 'compact']) if (values[key]) native.push(`--${key}`);
     if (values.screenshot === false) native.push('--no-screenshot');
-    let output = await hostCommand(native);
+    const diagnosticsFile = values.compact ? path.join(archiveFolder, 'raw', `batch-${randomUUID()}.log`) : undefined;
+    const output = await hostCommand(native, diagnosticsFile);
     const result = JSON.parse(output);
-    if (await retryIncompleteJobs(result, values, archiveFolder)) {
-      await atomicWrite(result.batch_file, result);
-      result.summary_report = await writeCrawlSummary(archiveFolder);
-      await atomicWrite(result.batch_file, result);
-      output = JSON.stringify(result, null, 2);
-    }
-    await lzLibrary(result.results);
-    await lzScope(archiveFolder, result.results);
-    console.log(output);
+    if (diagnosticsFile) console.log(JSON.stringify({ ...result, diagnostics_file: diagnosticsFile }));
+    else process.stdout.write(output);
     if (result.status !== 'completed') process.exitCode = 2;
   }
 }

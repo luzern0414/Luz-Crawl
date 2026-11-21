@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Shared, file-backed Luz research preflight. Browser operations use Luz-Crawl only.
 
-run records a local decision directly, or invokes doctor -> begin/reuse -> experience -> search/capture -> summary for online work.
+run records a local decision directly, or invokes doctor -> begin/reuse -> experience -> batch for online work.
+The batch runs the browser routes and writes one task summary. Its route evidence is bound to the stage record.
 conclude records the specialist's findings and their intended use and writes the conclusion page.
 check is read-only: it re-verifies the evidence files and the conclusion page.
 status is read-only: what the stage has and what it still lacks. review-init and supplement-init write the files the
@@ -90,6 +91,8 @@ def state_root(path):
     path = Path(path)
     if (path / "project.json").is_file():
         return path
+    if (path / "raw" / "project.json").is_file():
+        return path / "raw"
     candidate = Path(PROJECT_OUTPUT) / path.name / "raw"
     return candidate if path.name and (candidate / "project.json").is_file() else None
 
@@ -354,6 +357,61 @@ def _observed_sources(step, result, task):
     return observed
 
 
+def _batch_records(step, receipt, evidence_root, task):
+    """Read the archived batch once and extract only the fields needed for the stage audit."""
+    if not isinstance(receipt, dict) or not _text(receipt.get("batch_file")):
+        raise ValueError("批次未返回采集归档")
+    plan = _log_inside(step["args"][step["args"].index("--file") + 1], evidence_root)
+    batch_file = _inside(receipt["batch_file"], task / "raw")
+    if digest(plan) != step.get("plan_sha256") or digest(batch_file) != receipt.get("batch_sha256"):
+        raise ValueError("批次计划或采集归档哈希不符")
+    jobs, batch = read(plan), read(batch_file)
+    results = batch["results"]
+    if _log_inside(batch["plan_file"], evidence_root) != plan or len(results) != len(jobs):
+        raise ValueError("采集归档与本次批次计划不符")
+    rows = []
+    fields = ("folder", "html_file", "status", "resolved_url", "url_check", "stop_reason", "title",
+              "error", "failure", "task_id", "awaiting_reason", "blocked_by", "browser_opened",
+              "started_at", "finished_at", "second_pass")
+    for job, result in zip(jobs, results):
+        attempts = [*result.get("previous_routes", []), result]
+        platforms = [job.get("platform"), *job.get("fallbacks", [])]
+        current_platform = 0
+        for attempt in attempts:
+            if attempt.get("id") != job["id"]:
+                raise ValueError("批次结果的任务编号与计划不符")
+            log = {field: attempt[field] for field in fields if field in attempt}
+            if "query" in job:
+                name = "search"
+                if attempt.get("platform") != platforms[current_platform]:
+                    current_platform += 1
+                    if current_platform >= len(platforms) or attempt.get("platform") != platforms[current_platform]:
+                        raise ValueError("批次搜索入口与回退计划不符")
+                if attempt.get("query") != job["query"] or attempt.get("read") != job["read"]:
+                    raise ValueError("批次搜索的关键词或阅读数与计划不符")
+                args = [name, attempt["platform"], job["query"], "--read", str(job["read"]), "--out", str(task)]
+                log.update(platform=attempt["platform"], query=job["query"], search_performed=attempt.get("search_performed") is True)
+                if attempt.get("resolved_platform"):
+                    log["resolved_platform"] = attempt["resolved_platform"]
+                log["candidates"] = [{key: item[key] for key in ("url", "title", "text") if key in item}
+                                     for item in attempt.get("candidates", []) if isinstance(item, dict)]
+                log["sources"] = [{key: item[key] for key in fields if key in item}
+                                  for item in attempt.get("sources", []) if isinstance(item, dict)]
+            else:
+                name = "capture"
+                if _policy().canonical(attempt.get("url")) != _policy().canonical(job["url"]):
+                    raise ValueError("批次采集网址与计划不符")
+                args = [name, attempt["url"], "--out", str(task)]
+            if "--no-screenshot" in step["args"] or job.get("screenshot") is False:
+                args.append("--no-screenshot")
+            exit_code = 0 if attempt.get("status") in {"captured", "partial", "awaiting_user"} else 1
+            rows.append((name, args, exit_code, log))
+    summary = batch.get("summary_report")
+    rows.append(("summary", ["summary", str(task), "--keep-raw"], 0 if summary else 1,
+                 summary or {"error": batch.get("summary_error", "批次未生成汇总")}))
+    return rows
+
+
 def report_errors(path, value, session=None):
     """A record written by conclude names its conclusion page and that page's SHA-256; the page must still match."""
     page = Path(path).with_suffix(".html")
@@ -469,6 +527,29 @@ def research_mode(topic, mode, queries, urls, min_sources):
     return mode
 
 
+def stage_evidence_caller(session, caller, stage):
+    """A named contributor can use its commercial stage's owner record."""
+    state = state_root(session)
+    if not state or not stage:
+        return caller
+    project = read(state / "project.json")
+    if project.get("workflow") != "commercial-v1":
+        return caller
+    row = next((r for r in project.get("stages", []) if r.get("id") == stage), {})
+    if caller in row.get("contributors", []) and row.get("owner") in CALLERS:
+        if stage == "scope" or not record_path(state, caller, stage).exists():
+            return row["owner"]
+    return caller
+
+def commercial_scope_search(session, caller, stage):
+    if caller != "luz-system" or stage != "scope":
+        return False
+    state = state_root(session)
+    return state is not None and read(state / "project.json").get("workflow") == "commercial-v1"
+
+
+SCOPE_SEARCH_MESSAGE = "商业项目首次范围确认需要真实搜索和原文依据；用 --research search 或 deep 并提交本阶段的查询。"
+
 def local_record(path, caller, stage, topic, reason):
     return {"schema_version": 3, "research_mode": "local", "status": "not-required",
             "caller": caller, "stage": stage, "session_evidence": str(path.parent.resolve()),
@@ -488,6 +569,9 @@ def validate_preflight(session, caller, stage=None, *, require_findings=True):
         value = read(path)
         if not isinstance(value, dict):
             raise ValueError("记录必须是 JSON 对象")
+        needs_search = commercial_scope_search(session, caller, stage)
+        if needs_search and value.get("research_mode") not in {"search", "deep"}:
+            return [f"{prefix}: {SCOPE_SEARCH_MESSAGE}"]
         if value.get("research_mode") == "local":
             valid = (_text(value.get("topic")) and requested_research(value["topic"]) in (None, "local") and _text(value.get("reason"))
                      and value == local_record(path, caller, stage, value["topic"], value["reason"]))
@@ -512,6 +596,8 @@ def validate_preflight(session, caller, stage=None, *, require_findings=True):
         steps = value.get("steps", [])
         if not isinstance(steps, list) or any(not isinstance(s, dict) for s in steps):
             raise ValueError("命令 steps 必须是对象数组")
+        if needs_search and not any(s.get("command") == "search" and s.get("search_performed") is True for s in steps):
+            errors.append(SCOPE_SEARCH_MESSAGE)
         if any(type(s.get("exit_code")) is not int for s in steps):
             errors.append("命令退出码必须是整数")
         names = [s.get("command") for s in steps if s.get("exit_code") == 0]
@@ -521,19 +607,37 @@ def validate_preflight(session, caller, stage=None, *, require_findings=True):
             errors.append("前置检索执行顺序错误")
         elif max(i for i, s in enumerate(steps) if s.get("command") == "summary" and s.get("exit_code") == 0) < max(i for i, s in enumerate(steps) if s.get("command") in {"search", "capture"}):
             errors.append("前置检索执行顺序错误：summary 必须晚于所有 search/capture 路线")
-        observed_archives = set()
-        for step in steps:
+        observed_archives, batch_records = set(), {}
+        for index, step in enumerate(steps):
             log = _log_inside(step["file"], path.parent)
             if not log.is_file() or digest(log) != step.get("sha256"):
                 errors.append("命令日志哈希不符/丢失")
-            elif step.get("command") == "doctor" and not doctor_ok(read(log)):
-                errors.append("Crawl 未就绪")
-            elif step.get("command") in {"search", "capture"} and step.get("exit_code") == 0:
+                continue
+            if step["command"] == "batch":
+                receipt = read(log)
+                if step.get("exit_code") == 0 or receipt.get("batch_file"):
+                    batch_records[index] = iter(_batch_records(step, receipt, path.parent, task))
+                continue
+            result = None
+            if "batch_step" in step:
                 result = read(log)
-                if step["command"] == "search" and ("search_performed" in step or value.get("research_mode") and "search_performed" in result):
-                    if step.get("search_performed") is not (result.get("search_performed") is True):
-                        errors.append("查询执行状态与浏览器日志不符")
+                expected = next(batch_records.get(step["batch_step"], iter(())), None)
+                if expected != (step["command"], step["args"], step["exit_code"], result):
+                    errors.append("路线日志与批次归档不符")
+            if step.get("command") == "doctor" and not doctor_ok(read(log)):
+                errors.append("Crawl 未就绪")
+            elif step.get("command") in {"search", "capture"}:
+                if step["command"] == "search" and (step.get("exit_code") == 0 or result is not None):
+                    result = read(log) if result is None else result
+                    if ("search_performed" in step or value.get("research_mode") and "search_performed" in result):
+                        if step.get("search_performed") is not (result.get("search_performed") is True):
+                            errors.append("查询执行状态与浏览器日志不符")
+                if step.get("exit_code") != 0:
+                    continue
+                result = read(log) if result is None else result
                 observed_archives.update(_observed_sources(step, result, task))
+        if any(next(rows, None) is not None for rows in batch_records.values()):
+            errors.append("阶段记录缺少批次路线或汇总日志")
         if value.get("candidate_inventory"):
             inventory_file = _inside(path.parent / value["candidate_inventory"], path.parent)
             if not inventory_file.is_file() or digest(inventory_file) != value.get("candidate_inventory_sha256"):
@@ -825,8 +929,7 @@ def status(session, caller, stage=None):
 
 
 def _experience_rows(value, known_logs):
-    """One row per experience lookup of this stage that the review does not list yet. What the log shows is filled in;
-    whether a hit was adopted and what it changed is the executor's to write."""
+    """Expand lookups in each round's shared experience log for review."""
     rows = []
     for step in value.get("steps", []):
         if step.get("command") != "experience" or step.get("exit_code") != 0 or step.get("file") in known_logs:
@@ -834,14 +937,23 @@ def _experience_rows(value, known_logs):
         args = step.get("args") or []
         query = args[args.index("--query") + 1] if "--query" in args and args.index("--query") + 1 < len(args) else ""
         try:
-            notes = read(step["file"]).get("notes", [])
+            log = read(step["file"])
         except (OSError, ValueError, AttributeError):
-            notes = []
-        keys = [n.get("key") for n in notes if isinstance(n, dict) and n.get("kind") != "preference" and n.get("key")][:8]
-        row = {"query": query, "log": step["file"], "keys": keys, "status": "", "impact": ""}
-        if not keys:
-            row.update(status="无命中", impact="没有可复用的路线、来源或失败经验，按问题计划查询")
-        rows.append(row)
+            log = {}
+        for lookup in log.get("lookups", [log]):
+            keys = [n.get("key") for n in lookup.get("notes", []) if isinstance(n, dict) and n.get("kind") != "preference" and n.get("key")][:8]
+            row = {"query": lookup.get("query", query), "log": step["file"], "keys": keys, "status": "", "impact": ""}
+            if lookup.get("platform"):
+                row["platform"] = lookup["platform"]
+            keywords = [item["query"] for item in lookup.get("keywords", []) if item.get("readable") and _text(item.get("query"))][:5]
+            hosts = list(dict.fromkeys(hint["source_host"] for hint in lookup.get("source_hints", []) if _text(hint.get("source_host"))))[:5]
+            if keywords:
+                row["previous_keywords"] = keywords
+            if hosts:
+                row["previous_source_hosts"] = hosts
+            if not (keys or keywords or hosts):
+                row.update(status="无命中", impact="没有可复用的路线、来源或失败经验，按问题计划查询")
+            rows.append(row)
     return rows
 
 
@@ -952,19 +1064,21 @@ def _query_route(query, platforms):
 
 
 def run(session, caller, topic, task=None, queries=None, urls=None, stage=None, platform="bing", read_count=3, append=False, screenshot=True,
-        *, research="auto", min_sources=None, reason=None):
+        *, research="auto", min_sources=None, reason=None, concurrency=6):
     stage = selected_stage(stage)
     with record_lock(record_path(session, caller, stage)):
         return _run(session, caller, topic, task, queries, urls, stage, platform, read_count, append, screenshot,
-                    research, min_sources, reason)
+                    research, min_sources, reason, concurrency)
 
 
-def _run(session, caller, topic, task, queries, urls, stage, platform, read_count, append, screenshot, research, min_sources, reason):
+def _run(session, caller, topic, task, queries, urls, stage, platform, read_count, append, screenshot, research, min_sources, reason, concurrency):
     if not _text(topic):
         raise ValueError("--topic 需要非空主题")
     if type(read_count) is not int or not 0 <= read_count <= 5:
         raise ValueError("--read 须为 0 到 5；0 只发现候选，不代表已读正文")
-    platforms = [name.strip() for name in str(platform).split(",") if name.strip()]
+    if type(concurrency) is not int or not 1 <= concurrency <= 8:
+        raise ValueError("--concurrency 须为 1 到 8")
+    platforms = list(dict.fromkeys(name.strip() for name in str(platform).split(",") if name.strip()))
     if not platforms or any(not re.fullmatch(r"[a-z0-9][a-z0-9-]*", name) for name in platforms):
         raise ValueError("--platform 是检索入口，或用逗号分隔的回退顺序，如 bing,baidu")
     path = record_path(session, caller, stage)
@@ -989,6 +1103,8 @@ def _run(session, caller, topic, task, queries, urls, stage, platform, read_coun
             task = canon(previous["task_root"])
         value.update({key: previous[key] for key in ("started_at", "steps")})
     mode = research_mode(topic, research, queries, urls, min_sources)
+    if commercial_scope_search(session, caller, stage) and mode not in {"search", "deep"}:
+        raise ValueError(SCOPE_SEARCH_MESSAGE)
     if mode == "local":
         if path.is_file():
             old = read(path)
@@ -1013,32 +1129,28 @@ def _run(session, caller, topic, task, queries, urls, stage, platform, read_coun
     logs = path.parent / "logs" / f"{path.stem}-{run_id}"
     logs.mkdir(parents=True)
 
-    def command(name, *args, route=False):
-        """Run one Crawl command and log it. A ``route`` (one search or one capture) that fails keeps its log and its exit code and the run goes on:
-        another route may still bring the body (references/preflight.md 判定); every other command failing stops the run."""
+    def record_step(name, args, code, output):
         index = len(value["steps"])
-        output = logs / f"{index:02d}-{name}.json"
+        log = logs / f"{index:02d}-{name}.json"
+        log.write_text(output or "{}", encoding="utf-8")
+        step = {"command": name, "args": args, "exit_code": code, "file": str(log), "sha256": digest(log)}
+        value["steps"].append(step)
+        return step
+
+    def command(name, *args, timeout=300):
+        index = len(value["steps"])
         print(f"[preflight] {caller}: {name}", file=sys.stderr, flush=True)
+        args = [name, *map(str, args)]
         try:
-            result = subprocess.run(["node", str(CLI), name, *map(str, args)], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=300, shell=False)
+            result = subprocess.run(["node", str(CLI), *args], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=timeout, shell=False)
             code, stdout, stderr = result.returncode, result.stdout, result.stderr
         except subprocess.TimeoutExpired:
-            if not route:
-                raise
-            code, stdout, stderr = 124, "", "timeout after 300 s"
-        output.write_text(stdout or "{}", encoding="utf-8")
+            code, stdout, stderr = 124, "", f"timeout after {timeout} s"
         (logs / f"{index:02d}-{name}.stderr.txt").write_text(stderr, encoding="utf-8")
-        value["steps"].append({"command": name, "args": [name, *map(str, args)], "exit_code": code, "file": str(output), "sha256": digest(output)})
+        step = record_step(name, args, code, stdout)
         write(path, value)
-        if code:
-            if not route:
-                raise ValueError(f"{name} 失败；详情 {output}")
-            print(f"[preflight] {caller}: {name} 没有取得正文（退出码 {code}），保留日志，继续其他路线", file=sys.stderr, flush=True)
-            try:
-                parsed = json.loads(stdout)
-            except ValueError:
-                return {}
-            return parsed if isinstance(parsed, dict) else {}
+        if code and not (name == "batch" and code == 2):
+            raise ValueError(f"{name} 失败；详情 {step['file']}")
         return json.loads(stdout)
 
     try:
@@ -1054,44 +1166,73 @@ def _run(session, caller, topic, task, queries, urls, stage, platform, read_coun
         if task_marker(task).get("kind") != "task_archive":
             raise ValueError("--task 必须是 begin 返回的任务目录")
         value["task_root"] = str(task)
-        command("experience", "--query", topic)
-        archives = []
-        if append:
-            for step in value["steps"]:
-                if step.get("command") in {"search", "capture"} and step.get("exit_code") == 0:
-                    if digest(_log_inside(step["file"], path.parent)) != step.get("sha256"):
-                        raise ValueError("追加前发现旧检索日志哈希变化，拒绝复用")
-                    result = read(_log_inside(step["file"], path.parent))
-                    if step["command"] == "search" and "search_performed" in result:
-                        step.setdefault("search_performed", result["search_performed"] is True)
-                    archives += _observed_sources(step, result, task)
+        jobs, lookups = [], [(topic, None)]
         search_items = queries or ([] if mode == "urls" or append and urls else [topic])
-        for item in dict.fromkeys(search_items):
-            entries, query = _query_route(item, platforms)
-            for entry in entries:
-                command("experience", "--query", query, "--platform", entry)
-                result = command("search", entry, query, "--read", read_count, "--out", task,
-                                 *(["--no-screenshot"] if read_count == 0 or not screenshot else []), route=True)
-                value["steps"][-1]["search_performed"] = result.get("search_performed") is True
-                found = _observed_sources(value["steps"][-1], result, task)
-                archives += found
-                # The next entry of the chain is tried only when this one brought neither a body nor a candidate.
-                if found or result.get("candidates"):
-                    break
-        checked_hosts, checked_urls = set(), set()
+        unique_queries = set()
+        for item in search_items:
+            entries, query = _query_route(item.strip(), platforms)
+            identity = (tuple(entries), _query_key(query))
+            if identity in unique_queries:
+                continue
+            unique_queries.add(identity)
+            jobs.append({"id": f"search-{len(jobs) + 1:03d}", "platform": entries[0], "fallbacks": entries[1:],
+                         "query": query, "read": read_count, "screenshot": read_count > 0 and screenshot})
+            lookups.extend((query, entry) for entry in entries)
+        checked_urls = set()
         for url in urls or []:
             document_url = _policy().canonical(url)
             if document_url in checked_urls:
                 continue
             checked_urls.add(document_url)
             host = urlparse(url).hostname
-            if host and host not in checked_hosts:
-                command("experience", "--query", host)
-                checked_hosts.add(host)
-            result = command("capture", url, "--out", task, *(["--no-screenshot"] if not screenshot else []), route=True)
-            archives += _observed_sources(value["steps"][-1], result, task)
-        # This intermediate report can precede more stages using the same task's downloads.
-        command("summary", task, "--keep-raw")
+            if host:
+                lookups.append((host, None))
+            jobs.append({"id": f"capture-{len(jobs) + 1:03d}", "url": url})
+        lookups_path = logs / "experience-plan.json"
+        write(lookups_path, [{"query": query, **({"platform": entry} if entry else {})} for query, entry in dict.fromkeys(lookups)])
+        command("experience", "--file", lookups_path, "--out", task)
+        plan = logs / "research-plan.json"
+        write(plan, jobs)
+        plan_hash = digest(plan)
+        batch_index = len(value["steps"])
+        # A larger batch gets the same time allowance the old separate route calls had in total.
+        receipt = command("batch", "--file", plan, "--out", task, "--compact", "--concurrency", concurrency,
+                          *([] if screenshot else ["--no-screenshot"]),
+                          timeout=300 * sum(1 + len(job.get("fallbacks", [])) for job in jobs))
+        batch_step = value["steps"][batch_index]
+        batch_step["plan_sha256"] = plan_hash
+        if isinstance(receipt, dict) and _text(receipt.get("batch_file")):
+            value["batch_file"] = receipt["batch_file"]
+            value["awaiting_user"] = receipt.get("awaiting_user", [])
+        batch_records = _batch_records(batch_step, receipt, path.parent, task)
+        for name, args, exit_code, result in batch_records:
+            step = record_step(name, args, exit_code, json.dumps(result, ensure_ascii=False, separators=(",", ":")) + "\n")
+            step["batch_step"] = batch_index
+            if name == "search":
+                step["search_performed"] = result["search_performed"]
+        write(path, value)
+        if batch_records[-1][2] != 0:
+            raise ValueError(f"任务汇总失败；详情 {batch_step['file']}")
+        value["summary_file"] = batch_records[-1][3]["file"]
+
+        route_logs, archives = [], []
+        for step in value["steps"]:
+            if step.get("command") not in {"search", "capture"}:
+                continue
+            log = _log_inside(step["file"], path.parent)
+            if digest(log) != step.get("sha256"):
+                raise ValueError("候选清单的检索日志哈希不符")
+            try:
+                result = read(log)
+            except json.JSONDecodeError:
+                if step.get("exit_code") == 0:
+                    raise
+                result = {"status": "failed", "stop_reason": "invalid_command_output"}
+            route_logs.append((step, result))
+            if step.get("exit_code") == 0:
+                if step["command"] == "search" and "search_performed" in result:
+                    step.setdefault("search_performed", result["search_performed"] is True)
+                archives.extend(_observed_sources(step, result, task))
         seen_urls = set()
         for archive in dict.fromkeys(archives):
             archive = Path(archive)
@@ -1111,20 +1252,6 @@ def _run(session, caller, topic, task, queries, urls, stage, platform, read_coun
         # Keep the whole observed pool across append runs; candidate links never
         # enter sources or satisfy the existing body/quotation evidence gates.
         inventory_module = _inventory_module()
-        route_logs = []
-        for step in value["steps"]:
-            if step.get("command") not in {"search", "capture"}:
-                continue
-            log = _log_inside(step["file"], path.parent)
-            if digest(log) != step.get("sha256"):
-                raise ValueError("候选清单的检索日志哈希不符")
-            try:
-                result = read(log)
-            except json.JSONDecodeError:
-                if step.get("exit_code") == 0:
-                    raise
-                result = {"status": "failed", "stop_reason": "invalid_command_output"}
-            route_logs.append((step, result))
         inventory = inventory_module.build_inventory(route_logs, value["sources"])
         inventory_path = path.with_name(path.stem + "-candidates.json")
         write(inventory_path, inventory)
@@ -1141,6 +1268,7 @@ def _run(session, caller, topic, task, queries, urls, stage, platform, read_coun
         return {"record": str(path), "status": value["status"], "research_mode": mode, "floor": _policy().research_floor(value),
                 "task": str(task), "sources": value["sources"], "research_errors": policy_errors,
                 "candidate_inventory": str(inventory_path), "candidate_count": inventory["candidate_count"], "site_count": inventory["site_count"],
+                "batch_file": value["batch_file"], "summary_file": value["summary_file"], "awaiting_user": value["awaiting_user"], "concurrency": concurrency,
                 "experience_logs": [step["file"] for step in value["steps"] if step.get("command") == "experience"],
                 "research_protocol": str(ROOT / "references" / "research-diligence.md"),
                 "research_review": str(path.with_name(path.stem + "-research-review.json")),
@@ -1149,7 +1277,7 @@ def _run(session, caller, topic, task, queries, urls, stage, platform, read_coun
         value.update(status="blocked", finished_at=now(), error="检索被中断；已完成日志保留，恢复后使用 --append")
         write(path, value)
         raise
-    except (OSError, ValueError, subprocess.TimeoutExpired) as exc:
+    except (OSError, ValueError, KeyError, TypeError, AttributeError, IndexError) as exc:
         value.update(status="blocked", finished_at=now(), error=str(exc))
         write(path, value)
         raise ValueError(f"{exc}；记录 {path}") from exc
@@ -1175,6 +1303,8 @@ def main():
             p.add_argument("--platform", default="bing", help="--query 使用的检索入口，默认 bing；也可用 github、gitee、xhs、douyin 等。"
                            "逗号分隔表示回退顺序（bing,baidu：前一个既没有正文也没有候选才用下一个）；单条查询可写成 入口::关键词 指定自己的入口")
             p.add_argument("--read", type=int, default=3, help="每个查询打开的详情数，0 到 5，默认 3；0 只建候选池，之后 --append --url 读选中的正文")
+            p.add_argument("--concurrency", type=int, default=6, help="不同站点并发数，1 到 8，默认 6")
+            p.add_argument("--compact", action="store_true", help="返回计数、限制与归档位置，完整来源在阶段记录中")
             p.add_argument("--append", action="store_true", help="本阶段补搜，保留原路线与来源；仍须重新 conclude/check")
             p.add_argument("--no-screenshot", action="store_true", help="技术正文跳过图片采集，仍保留正文与 DOM 快照；UI 视觉依据必须另行截图并实际查看")
         if name == "conclude":
@@ -1186,7 +1316,10 @@ def main():
     try:
         if a.command == "run":
             value = run(a.session, a.caller, a.topic, a.task, a.query, a.url, a.stage, a.platform, a.read, a.append,
-                        screenshot=not a.no_screenshot, research=a.research, min_sources=a.min_sources, reason=a.reason)
+                        screenshot=not a.no_screenshot, research=a.research, min_sources=a.min_sources, reason=a.reason, concurrency=a.concurrency)
+            if a.compact:
+                value["source_count"] = len(value.pop("sources", []))
+                value.pop("experience_logs", None)
         elif a.command == "conclude" and a.dry_run:
             errors = conclude_errors(a.session, a.caller, read(a.file), a.stage)
             print(json.dumps({"ok": not errors, "errors": errors, "dry_run": True}, ensure_ascii=False, indent=2))
@@ -1211,10 +1344,24 @@ def main():
                     value["report"] = str(path.with_suffix(".html"))
             print(json.dumps(value, ensure_ascii=False, indent=2))
             return 1 if errors else 0
-        print(json.dumps(value, ensure_ascii=False, indent=2))
+        compact = a.command == "run" and a.compact
+        print(json.dumps(value, ensure_ascii=False, indent=None if compact else 2, separators=(",", ":") if compact else None))
         return 1 if a.command == "run" and value.get("status") == "needs-research" else 0
     except (OSError, ValueError) as exc:
-        print(str(exc), file=sys.stderr)
+        if a.command == "run":
+            result = {"status": "blocked", "error": str(exc)}
+            try:
+                path = record_path(a.session, a.caller, selected_stage(a.stage))
+                record = read(path)
+                if isinstance(record, dict) and record.get("status") == "blocked":
+                    fields = ("task_root", "batch_file", "summary_file", "awaiting_user")
+                    result.update({key: record[key] for key in fields if key in record})
+                    result["record"] = str(path)
+            except (OSError, ValueError):
+                pass
+            print(json.dumps(result, ensure_ascii=False, indent=2))
+        else:
+            print(str(exc), file=sys.stderr)
         return 1
 
 

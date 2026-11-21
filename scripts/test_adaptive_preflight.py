@@ -8,9 +8,8 @@ from unittest.mock import patch
 import pytest
 
 import crawl_preflight as crawl
-from test_crawl_preflight import write_review_fixture
+from test_crawl_preflight import FAKE_CLI, write_review_fixture
 from test_evidence_policy import payload_for
-from test_preflight_helpers import FAKE_CLI
 
 
 @pytest.mark.parametrize("topic", ["修复搜索框的拼写", "搜索算法的复杂度", "整理用户给定资料", "不要联网，修改索引", "Rename the search button"])
@@ -124,3 +123,24 @@ def test_one_requested_article_limits_browser_reads_and_repeated_query(tmp_path,
     result = crawl.run(tmp_path, "luz-crawl", "请搜索一篇原文", queries=["guide", "guide"])
     calls = [step["args"] for step in crawl.read(result["record"])["steps"] if step["command"] == "search"]
     assert len(calls) == 1 and calls[0][calls[0].index("--read") + 1] == "1"
+
+def test_commercial_scope_needs_search_only_in_its_project_context(tmp_path):
+    root = tmp_path / "session" / "raw"
+    root.mkdir(parents=True)
+    manifest = root / "project.json"
+    manifest.write_text(json.dumps({"workflow": "commercial-v1"}), encoding="utf-8")
+    assert crawl.state_root(root.parent) == root
+    for options in ({"research": "local"}, {"research": "urls", "urls": ["https://example.org"]}):
+        with pytest.raises(ValueError, match="真实搜索"):
+            crawl.run(root, "luz-system", "仓储业务", stage="scope", **options)
+    path = crawl.record_path(root, "luz-system", "scope")
+    crawl.write(path, crawl.local_record(path, "luz-system", "scope", "仓储业务", "既有业务说明"))
+    assert any("真实搜索" in error for error in crawl.validate_preflight(root, "luz-system", "scope"))
+    project = {"workflow": "commercial-v1", "stages": [{"id": "scope", "owner": "luz-system",
+                                                       "contributors": ["luz-writing"]}]}
+    manifest.write_text(json.dumps(project), encoding="utf-8")
+    crawl.run(root, "luz-writing", "初稿核对", stage="scope")
+    assert crawl.stage_evidence_caller(root, "luz-writing", "scope") == "luz-system"
+    assert crawl.run(root, "luz-system", "合同复核", stage="design")["research_mode"] == "local"
+    manifest.write_text("{}", encoding="utf-8")
+    assert crawl.validate_preflight(root, "luz-system", "scope") == []

@@ -21,6 +21,7 @@ DELIVERABLE_EXT = {".pdf", ".xlsx", ".xls", ".docx", ".pptx", ".png", ".jpg", ".
 SESSION_PROCESS_FILES = {"BRIEF.md", "MANIFEST.json", "APPROVALS.json", "spec.json"}
 
 DOC_DIRS = {"01-需求对接": {".pdf", ".xlsx"}, "02-产品开发": {".html"}, "03-验收交付": {".pdf", ".xlsx"}}
+COMMERCIAL_DOC_DIRS = {"01-原始资料": None, "02-对接资料": {".pdf", ".xlsx"}, "03-开发资料": {".html"}}
 DOC_FILE = re.compile(r"^\d{2}-.+")
 PROJECT_FORBIDDEN_DIRS = {"raw", "reviews", "uploads", "client-docs", "00-crawl", "00-rules", "99-delivery", "backup", "backups", "_backup", "tmp", "temp"}
 PROJECT_FORBIDDEN_FILES = {"project.json", "MANIFEST.json", "APPROVALS.json", "README.html", "BRIEF.md"}
@@ -67,7 +68,7 @@ def check_session(folder: Path, project_linked: bool) -> tuple[list[str], list[s
     return errors, notes
 
 
-def check_project(folder: Path) -> tuple[list[str], list[str]]:
+def check_project(folder: Path, *, commercial: bool | None = None) -> tuple[list[str], list[str]]:
     errors: list[str] = []
     notes: list[str] = []
     if not folder.is_dir():
@@ -84,14 +85,19 @@ def check_project(folder: Path) -> tuple[list[str], list[str]]:
             errors.append(f"工具状态不放项目目录，请移到会话的 raw\\：{parent}\\{child}")
     docs = folder / "docs"
     if docs.is_dir():
+        if commercial is None:
+            commercial = any((docs / name).is_dir() for name in COMMERCIAL_DOC_DIRS)
+        folders = COMMERCIAL_DOC_DIRS if commercial else DOC_DIRS
         for item in sorted(docs.iterdir()):
             if item.is_file():
                 errors.append(f"docs 下只有三个目录，多出文件 {item.name}")
-            elif item.name not in DOC_DIRS:
-                errors.append(f"docs 下只能是 01-需求对接、02-产品开发、03-验收交付，多出 {item.name}\\")
+            elif item.name not in folders:
+                errors.append(f"docs 下只能是 {'、'.join(folders)}，多出 {item.name}\\")
                 continue
             else:
-                allowed = DOC_DIRS[item.name]
+                allowed = folders[item.name]
+                if allowed is None:  # Original material is retained with its source names, formats and directory structure.
+                    continue
                 for f in sorted(item.iterdir()):
                     if f.is_dir():
                         errors.append(f"docs\\{item.name} 平铺，不建子目录：{f.name}\\")

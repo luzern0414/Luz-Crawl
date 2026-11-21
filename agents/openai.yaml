@@ -4,6 +4,6 @@ interface:
   icon_small: "./assets/icon-400.png"
   icon_large: "./assets/logo.png"
   brand_color: "#8FB396"
-  default_prompt: "使用 $luz-crawl 按原始请求选择本地处理、指定网页、普通搜索或深入调研。联网时核验正文与数量，使用同一任务目录，完成总结后回收大文件缓存。连续页面交互可用 live 会话。"
+  default_prompt: "使用 $luz-crawl 按原始请求选择本地处理、指定网页、普通搜索或深入调研。商业项目由 System 在首次范围确认前发起真实搜索。联网时核验正文与数量，使用同一任务目录，完成总结后回收大文件缓存。连续页面交互可用 live 会话。"
 policy:
   allow_implicit_invocation: true

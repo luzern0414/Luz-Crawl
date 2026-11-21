@@ -6,22 +6,37 @@ import path from 'node:path';
 import { lzNote, lzNotes, lzNotesList, lzNotesCheck } from '../lib/notes.mjs';
 import { createTaskArchive, findExperience, recordExperience } from '../lib/archive.mjs';
 import { lzScope } from '../lib/scope.mjs';
+import { siteObservations } from '../lib/site-library.mjs';
 
 const temp = await fs.mkdtemp(path.join(os.tmpdir(), 'luz-experience-'));
 process.env.LUZ_CRAWL_STATE = temp;
 test.after(() => fs.rm(temp, { recursive: true, force: true }));
 
+test('overlapping search completions retain distinct sites and concurrent note confirmations', async () => {
+  const folder = await createTaskArchive(path.join(temp, 'concurrent-output'), 'concurrent evidence', {newTask:true,threadId:null});
+  const key = 'concurrent-recall';
+  await Promise.all(Array.from({length:8}, (_,i) => Promise.all([
+    lzScope(folder, [{status:'captured',resolved_url:`https://site${i}.example/doc`,url_check:{valid_content:true}}]),
+    lzNote({kind:'lesson',category:'method',key,text:'核验并发结果的正文。'}),
+  ])));
+  const scope = JSON.parse(await fs.readFile(path.join(temp,'scopes.json'),'utf8'))['concurrent evidence'];
+  assert.equal(Object.keys(scope.good).length,8);
+  assert.equal((await lzNotesList()).find(row=>row.key===key).uses,8);
+});
+
 test('classified notes retain reusable conditions, tags, evidence and outcome', async () => {
   const saved = await lzNote({ key: 'query-decomposition', kind: 'lesson', category: 'keyword',
     text: '检索时分别使用原词和领域术语。', tags: '检索,query,检索', when: '自然语言查询过长',
-    source: 'https://example.org/search-method', outcome: 'success', 'valid-until': '2099-01-01' });
+    source: 'https://example.org/search-method', outcome: 'success', 'valid-until': '2099-01-01', codified: true });
   assert.equal(saved.note.category, 'keyword');
   assert.deepEqual(saved.note.tags, ['检索', 'query']);
   assert.equal(saved.note.when, '自然语言查询过长');
   assert.equal(saved.note.source, 'https://example.org/search-method');
   assert.equal(saved.note.outcome, 'success');
   assert.equal(saved.note.valid_until, '2099-01-01');
-  assert.equal((await lzNotesList()).find(n => n.key === saved.note.key).category, 'keyword');
+  const recalled = (await lzNotesList()).find(n => n.key === saved.note.key);
+  assert.equal(recalled.category, 'keyword');
+  assert.equal(recalled.codified, true);
 });
 
 test('long Chinese requests recall applicable notes without matching the complete sentence', async () => {
@@ -63,6 +78,15 @@ test('related successful and failed events are recalled while unrelated routes s
   assert.ok(!found.route_hints.some(h => h.key === 'douyin-single-video'));
 });
 
+test('concurrent updates preserve all observations for a shared source', async () => {
+  const observations = 12;
+  const event = { platform: 'web', canonical_url: 'https://example.org/accessible-table', query: 'accessible table orchestration',
+    status: 'captured', valid_content: true, search_performed: true, candidates: 1 };
+  await Promise.all(Array.from({ length: observations }, () => recordExperience(event)));
+  const found = await findExperience('accessible table orchestration');
+  assert.equal(found.events.find(value => value.canonical_url === event.canonical_url)?.observations, observations);
+});
+
 test('source URL corrections remain available even when the original query differs', async () => {
   await recordExperience({ platform: 'github', canonical_url: 'https://github.com/example/repo',
     query: 'old unrelated term', route_kind: 'source_url_correction', validated_url: 'https://github.com/example/repo', status: 'captured' });
@@ -92,4 +116,14 @@ test('automatic crawl scope never promotes captured pages to reviewed sources', 
   assert.equal(note.needs_revalidation, true);
   assert.doesNotMatch(note.text, /有效来源/);
   assert.match(note.text, /待语义复核/);
+});
+
+test('site capability observations retain the actual index used for a fallback', () => {
+  const rows = siteObservations([{ platform: 'gitcn', query: 'browser tools', candidates: [{}], attempts: [
+    { url: 'https://gitcn.com/search', status: 'failed', candidates: 0, search_performed: false },
+    { url: 'https://www.bing.com/search', status: 'captured', candidates: 1, search_performed: true },
+  ] }]);
+  assert.deepEqual(rows.map(row => [new URL(row.url).hostname, row.platform, row.candidate_count, row.search_performed]), [
+    ['gitcn.com', undefined, 0, false], ['www.bing.com', undefined, 1, true],
+  ]);
 });

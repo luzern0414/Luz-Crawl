@@ -8,9 +8,13 @@ live 在打开页面前检查连接的扩展至少为 3.6.0。默认专属浏览
 
 先按 SKILL.md 完成 doctor、同需求 begin 和经验查询。已有任务直接复用，不为每次点击新建检索或任务。
 
+用户要求打开浏览器直达原页时，在 `live open URL --headed --out TASK` 中指定原网址。该命令打开加载 LuzCrawl 扩展的专属 Edge 窗口。`ready` 表示会话已启动，`page_state` 保存首次读取的地址、标题和限制。用 `live inspect` 核对当前页面。
+
+页面显示 `405：异常访问` 且明确提示访问被阻止时，记录为 `access_denied`，保留页上提示并停止自动补读。页面有登录或验证入口时，可让用户在当前可见会话接手。
+
 ```powershell
 $task = 'E:\Skill输出\Luz-Crawl\NNN-主题' # 实际 begin 返回的目录
-$live = node scripts/luz-crawl.mjs live open 'https://example.com' --out $task --ttl 900 | ConvertFrom-Json
+$live = node scripts/luz-crawl.mjs live open 'https://example.com' --headed --out $task --ttl 900 | ConvertFrom-Json
 $session = $live.session
 node scripts/luz-crawl.mjs live inspect $session --out $task
 # 把下节示例根据实际观察改成动作文件，放入 $task\raw\actions.json
@@ -80,6 +84,7 @@ scope 是按顺序进入的 `{frame: CSS}` / `{shadow: CSS}`，最多 8 层；�
 | `selector_ambiguous` / `target_obscured` / `target_unstable` | inspect 找唯一目标、遮挡或动画；仅确定未产生副作用时更改目标并再操作 |
 | `pending_verification` / `write_outcome_unknown` | 仅 inspect/只读等待/截图；禁止 act 写入、navigate、capture |
 | `live_connection_lost` | 保存返回 request_id；先以同 ID 同负载取回，不能新 ID 重放；worker 死亡则人工核验实际业务结果 |
+| `live_page_closed` | 查看会话保存的首次页面状态并关闭会话 |
 | 登录/验证/限流 | 停止站点动作；需要登录时使用已授权可见会话人工处理；冷却期不切工具绕过 |
 | `scope_inaccessible` / `scope_unsupported` | 检查作用域；按浏览器方案选择切换，但先确认之前动作结果 |
 

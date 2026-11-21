@@ -5,7 +5,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { openTestBrowser, edgeAvailable } from './edge-page.mjs';
 import { domOperation, BrowserOperations } from '../lib/browser-operations.mjs';
-import { validateActions } from '../lib/browser-actions.mjs';
+import { executeActions, validateActions } from '../lib/browser-actions.mjs';
+import { extractPage } from '../lib/extract-page.mjs';
 import { testPolicy } from './helpers.mjs';
 
 test('scoped DOM actions, pagination, selections and partial form side effects', { skip:!edgeAvailable }, async () => {
@@ -36,6 +37,46 @@ test('scoped DOM actions, pagination, selections and partial form side effects',
     const partial=await read({action:'form',selector:'#f',fields:[{selector:'#q',value:'changed'},{selector:'#c',checked:false}]});
     assert.equal(partial.ok,false); assert.equal(partial.error.outcome_unknown,true);
   } finally { await browser.close(); }
+});
+
+test('a rendered 405 denial stops capture and browser actions', { skip: !edgeAvailable }, async () => {
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), 'luz-access-denied-'));
+  const browser = await openTestBrowser();
+  try {
+    const page = await browser.newPage();
+    const url = 'https://example.test/blocked';
+    const notice = '检测到您的请求有异常行为，您的访问被阻止了。';
+    await page.route(url, route => route.fulfill({ body: '<p>Test page</p>' }));
+    await page.goto(url);
+    await page.setContent('<title>出错了</title><main><h1>405：异常访问</h1><p>' + notice + '</p><button>获取帮助</button></main>');
+
+    const snapshot = await page.evaluate(extractPage, { platform: 'web', requestedURL: url, includePresentation: false });
+    assert.equal(snapshot.gate, 'access_denied');
+    assert.equal(snapshot.target_present, false);
+
+    const operations = new BrowserOperations(page, testPolicy(directory), url);
+    const result = await executeActions(page, {
+      url, current_page: true, operations, allowWrite: true,
+      steps: [{ action: 'read' }, { action: 'click', selector: 'button' }],
+    });
+    assert.equal(result.status, 'blocked');
+    assert.equal(result.stop_reason, 'access_denied');
+    assert.equal(result.attempted, 1);
+    assert.match(result.results[0].value.text, /405：异常访问/);
+    const click = await page.evaluate(domOperation, { action: 'click', selector: 'button' });
+    assert.equal(click.error.code, 'access_denied');
+
+    await page.setContent('<title>错误码说明</title><article><h1>405：异常访问</h1><p>常见错误示例：' + notice + '</p></article>');
+    assert.equal((await page.evaluate(extractPage, { platform: 'web', requestedURL: url, includePresentation: false })).gate, null);
+    assert.equal((await page.evaluate(domOperation, { action: 'read' })).gate, null);
+
+    await page.setContent('<title>Security Verification</title><main><h1>Security Verification</h1></main>');
+    assert.equal((await page.evaluate(extractPage, { platform: 'web', requestedURL: url, includePresentation: false })).gate, 'verification_required');
+    assert.equal((await page.evaluate(domOperation, { action: 'read' })).gate, 'verification_required');
+  } finally {
+    await browser.close();
+    await fs.rm(directory, { recursive: true, force: true });
+  }
 });
 
 test('native click, replace text and Enter dispatch trusted input once', { skip:!edgeAvailable }, async () => {

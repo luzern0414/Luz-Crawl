@@ -1,13 +1,13 @@
 """Discovery fixtures are offline tests, never evidence of live research."""
 import importlib.util
-import json
+import os
 import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
-from types import SimpleNamespace
 
 import crawl_preflight as crawl
+from test_crawl_preflight import FAKE_CLI
 
 
 class ResearchInventoryTests(unittest.TestCase):
@@ -75,48 +75,30 @@ class ResearchInventoryTests(unittest.TestCase):
     def test_discovery_can_run_without_reading_arbitrary_top_results(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            task = root / 'task'
-            (task / 'raw').mkdir(parents=True)
-            crawl.write(task / 'raw/luz-task.json', {'kind': 'task_archive'})
-            calls = []
-
-            def invoke(args, **kwargs):
-                command = args[2:]
-                calls.append(command)
-                if command[0] == 'doctor':
-                    result = {'ready': True}
-                elif command[0] == 'search':
-                    result = {'search_performed': True, 'candidates': [{'url': 'https://research.example/doc', 'text': 'Observed candidate'}], 'sources': []}
-                else:
-                    result = {}
-                return SimpleNamespace(returncode=0, stdout=json.dumps(result), stderr='')
-
-            with patch.object(crawl.subprocess, 'run', side_effect=invoke):
-                result = crawl.run(root, 'luz-crawl', 'broad topic', task=task, queries=['precise concept'], read_count=0)
+            cli = root / 'fake.mjs'
+            cli.write_text(FAKE_CLI, encoding='utf-8')
+            with patch.object(crawl, 'CLI', cli), patch.object(crawl, 'DEFAULT_OUTPUT', str(root / 'tasks')), patch.dict(os.environ, {'FAKE_LOG': str(root / 'calls.json')}):
+                result = crawl.run(root, 'luz-crawl', 'broad topic', queries=['precise concept'], read_count=0)
             self.assertEqual(result['status'], 'needs-research')
             self.assertEqual(result['sources'], [])
             self.assertTrue(Path(result['candidate_inventory']).is_file())
-            self.assertIn(['experience', '--query', 'precise concept', '--platform', 'bing'], calls)
+            self.assertIn({'query': 'precise concept', 'platform': 'bing', 'notes': []}, crawl.read(result['experience_logs'][0])['lookups'])
+            self.assertEqual(crawl.read(result['batch_file'])['results'][0]['read'], 0)
             self.assertTrue(crawl.validate_preflight(root, 'luz-crawl'), 'Candidate-only discovery cannot pass completion')
 
-    def test_failed_non_json_route_preserves_other_discovery(self):
+    def test_a_thrown_capture_preserves_other_discovery_in_the_same_batch(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            task = root / 'task'
-            (task / 'raw').mkdir(parents=True)
-            crawl.write(task / 'raw/luz-task.json', {'kind': 'task_archive'})
-
-            def invoke(args, **kwargs):
-                command = args[2:]
-                if command[0] == 'capture':
-                    return SimpleNamespace(returncode=1, stdout='incomplete failed output', stderr='offline failure')
-                result = {'ready': True} if command[0] == 'doctor' else ({'search_performed': True, 'candidates': [{'url': 'https://research.example/doc'}], 'sources': []} if command[0] == 'search' else {})
-                return SimpleNamespace(returncode=0, stdout=json.dumps(result), stderr='')
-
-            with patch.object(crawl.subprocess, 'run', side_effect=invoke):
-                result = crawl.run(root, 'luz-crawl', 'topic', task=task, queries=['concept'], urls=['https://failed.example/doc'], read_count=0)
+            cli = root / 'fake.mjs'
+            cli.write_text(FAKE_CLI, encoding='utf-8')
+            failure = {'FAKE_LOG': str(root / 'calls.json'), 'FAKE_THROW': 'failed.example'}
+            with patch.object(crawl, 'CLI', cli), patch.object(crawl, 'DEFAULT_OUTPUT', str(root / 'tasks')), patch.dict(os.environ, failure):
+                result = crawl.run(root, 'luz-crawl', 'topic', queries=['concept'], urls=['https://failed.example/doc'], read_count=0)
             self.assertEqual(result['status'], 'needs-research')
-            self.assertEqual(result['candidate_count'], 2)
+            self.assertEqual(result['candidate_count'], 3)
+            capture = next(step for step in crawl.read(result['record'])['steps'] if step['command'] == 'capture')
+            self.assertEqual(capture['exit_code'], 1)
+            self.assertEqual(crawl.read(capture['file'])['error'], 'Fixture capture failed')
 
 
 if __name__ == '__main__':

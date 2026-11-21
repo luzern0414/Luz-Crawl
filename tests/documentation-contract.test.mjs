@@ -8,13 +8,32 @@ import { execFile } from 'node:child_process';
 const root = fileURLToPath(new URL('..', import.meta.url));
 
 test('skill instructions describe social search routes and evidence rules', async () => {
-  const skill = await fs.readFile(path.join(root, 'SKILL.md'), 'utf8');
+  const [skill, github, workflows] = await Promise.all(['SKILL.md', 'references/github-search.md', 'references/workflows.md']
+    .map(file => fs.readFile(path.join(root, file), 'utf8')));
   assert.match(skill, /小红书|xhs/);
   assert.match(skill, /抖音|douyin/);
-  assert.match(skill, /GitCN/);
+  assert.match(skill, /references\/github-search\.md/);
+  assert.match(github, /GitCN/);
   assert.match(skill, /评论/);
   assert.match(skill, /公开页面/);
-  assert.match(skill, /详情/);
+  assert.match(workflows, /详情/);
+});
+
+test('the skill groups multi-query requests and points to full evidence after one receipt', async () => {
+  const [skill, workflows, preflight] = await Promise.all(['SKILL.md', 'references/workflows.md', 'references/preflight.md']
+    .map(file => fs.readFile(path.join(root, file), 'utf8')));
+  assert.match(skill, /一次 `run(?: --compact)?`.*`--query`.*`--url`/);
+  assert.match(workflows, /batch --file .*--compact/);
+  assert.match(workflows, /batch_file/);
+  assert.match(preflight, /一份结果.*批次归档/);
+});
+
+test('the skill routes requested visible visits to the extension and requires original pages for evidence', async () => {
+  const skill = await fs.readFile(path.join(root, 'SKILL.md'), 'utf8');
+  const live = await fs.readFile(path.join(root, 'references/browser-live.md'), 'utf8');
+  assert.match(skill, /`live open URL --headed`/);
+  assert.match(skill, /`--read 0`.*候选.*原页/);
+  assert.match(live, /`405：异常访问`.*`access_denied`/);
 });
 
 async function markdownFiles(directory = root) {
@@ -82,14 +101,14 @@ test('user-facing docs stay focused on function, purpose and operation', async (
     fs.readFile(path.join(root, 'browser-extension', 'help.html'), 'utf8'),
   ]);
   for (const text of [readme, help]) {
-    assert.match(text, /功能|作用/);
-    assert.match(text, /操作|使用/);
+    assert.match(text, /功能|作用|能帮你做什么/);
+    assert.match(text, /操作|使用|可以这样开口/);
     assert.doesNotMatch(text, /作者：|作者单位|Author:|来源统计|调研来源/);
   }
 });
 
 test('the docs describe one output layout: 序号-主题 task folders holding raw/ and the summary html', async () => {
-  for (const name of ['SKILL.md', 'README.md', path.join('references', 'evidence.md'), path.join('references', 'workflows.md')]) {
+  for (const name of ['SKILL.md', path.join('references', 'evidence.md'), path.join('references', 'workflows.md')]) {
     const text = await fs.readFile(path.join(root, name), 'utf8');
     assert.match(text, /序号-主题|NNN-主题/, name);
     assert.match(text, /raw/, name);
@@ -101,10 +120,10 @@ test('the docs describe one output layout: 序号-主题 task folders holding ra
     assert.doesNotMatch(text, /序号_主题/, name);
     for (const line of text.split('\n').filter((line) => /NNN_主题|\d{3}_主题/.test(line))) assert.match(line, /旧|下划线|older|不改名/, `${name}: ${line.slice(0, 80)}`);
   }
-  const skill = await fs.readFile(path.join(root, 'SKILL.md'), 'utf8');
-  assert.match(skill, /migrate_layout\.py/);
-  assert.match(skill, /085-主题\.html/);
-  assert.match(skill, /E:\\Skill输出\\Luz-Crawl/);
+  const [evidence, install] = await Promise.all(['references/evidence.md', 'references/install.md'].map(file => fs.readFile(path.join(root, file), 'utf8')));
+  assert.match(evidence, /migrate_layout\.py/);
+  assert.match(evidence, /序号-主题\.html/);
+  assert.match(install, /E:\\Skill输出\\Luz-Crawl/);
 });
 
 test('the docs say a project keeps no crawled content: its records go to the state root, its crawl task stays in the Crawl output root', async () => {
@@ -112,9 +131,9 @@ test('the docs say a project keeps no crawled content: its records go to the sta
   const preflight = await fs.readFile(path.join(root, 'references', 'preflight.md'), 'utf8');
   for (const text of [skill, preflight]) {
     assert.match(text, /状态根/);
-    assert.match(text, /00-crawl/);
     assert.match(text, /crawl\.task_root/);
     assert.doesNotMatch(text, /保存在项目的 `?raw/);
   }
-  assert.match(skill, /项目不保存爬取的原始内容/);
+  assert.match(preflight, /00-crawl/);
+  assert.match(skill, /状态根登记依据.*页面归档放在.*crawl\.task_root/);
 });

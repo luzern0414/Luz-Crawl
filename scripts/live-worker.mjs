@@ -19,16 +19,21 @@ try {
   const run=async profile=>{
     requireLiveExtension(await fetchDaemonStatus({contextId:profile}),profile);
     return withBrowser('live',{out:state.out,url:state.url,profile,window:state.headed?'foreground':'background',idleTimeout:state.ttl+60,access_mode:state.profile?'authorized_browser':'public'},async(page,options,_kind,operations)=>{
-    await operations.navigate(state.url);
-    if(interrupted || await fs.access(file+'.cancel').then(()=>true,()=>false))throw new Error('Live startup cancelled.');
-    const controller=createLiveController(page,{...options,id:state.id});
-    const done=new Promise(resolve=>{stop=resolve;});
-    server=await createLiveServer({directory:path.join(audit,'requests'),token:state.token,session:state.id,out:state.out,ttl:state.ttl,...controller,onExpire:()=>stop('idle_expired'),onClose:()=>stop('explicit_close')});
-    await atomicWrite(path.join(audit,'session.json'),{id:state.id,out:state.out,url:state.url,opened_at:state.opened_at,status:'ready',page:page.getActivePage(),context_id:page.contextId});
-    await privateWrite(file,{...state,status:'ready',pid:process.pid,endpoint:server.url});
-    const reason=await done;
-    await server.close();server=null;
-    return {status:'completed',stop_reason:reason || 'interrupted',live:controller.status()};
+      await operations.navigate(state.url);
+      const firstPage=await operations.dom({action:'read',max_chars:400,limit:1});
+      state.page_state={
+        url:firstPage.url, title:firstPage.title, gate:firstPage.gate,
+        ...(firstPage.gate && firstPage.text ? { notice:firstPage.text } : {}),
+      };
+      if(interrupted || await fs.access(file+'.cancel').then(()=>true,()=>false))throw new Error('Live startup cancelled.');
+      const controller=createLiveController(page,{...options,url:operations.url,id:state.id});
+      const done=new Promise(resolve=>{stop=resolve;});
+      server=await createLiveServer({directory:path.join(audit,'requests'),token:state.token,session:state.id,out:state.out,ttl:state.ttl,...controller,onExpire:()=>stop('idle_expired'),onClose:()=>stop('explicit_close')});
+      await atomicWrite(path.join(audit,'session.json'),{id:state.id,out:state.out,url:state.url,opened_at:state.opened_at,status:'ready',page:page.getActivePage(),context_id:page.contextId,page_state:state.page_state});
+      await privateWrite(file,{...state,status:'ready',pid:process.pid,endpoint:server.url});
+      const reason=await done;
+      await server.close();server=null;
+      return {status:'completed',stop_reason:reason || 'interrupted',live:controller.status()};
     });
   };
   const result=state.profile ? await run(state.profile):await withHeadlessSession(run,{headed:state.headed});
